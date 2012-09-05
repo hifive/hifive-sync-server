@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tomcatProjectProperties>
-    <rootDir></rootDir>
+    <rootDir>src/main/webapp</rootDir>
     <exportSource>false</exportSource>
     <reloadable>true</reloadable>
-    <redirectLogger>false</redirectLogger>
-    <updateXml>false</updateXml>
+    <redirectLogger>true</redirectLogger>
+    <updateXml>true</updateXml>
     <warLocation></warLocation>
     <extraInfo></extraInfo>
-    <webPath></webPath>
+    <webPath>hifiveSyncServer</webPath>
     <webClassPathEntries>
+        <webClassPathEntry>/hifiveSyncServer/target/classes</webClassPathEntry>
         <webClassPathEntry>M2_REPO/antlr/antlr/2.7.7/antlr-2.7.7.jar</webClassPathEntry>
         <webClassPathEntry>M2_REPO/aopalliance/aopalliance/1.0/aopalliance-1.0.jar</webClassPathEntry>
         <webClassPathEntry>M2_REPO/cglib/cglib-nodep/2.2/cglib-nodep-2.2.jar</webClassPathEntry>
