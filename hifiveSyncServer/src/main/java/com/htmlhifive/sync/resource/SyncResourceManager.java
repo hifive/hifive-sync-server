@@ -34,7 +34,7 @@ import com.htmlhifive.sync.resource.separated.SeparatedCommonDataSyncResource;
 /**
  * アプリケーション内に存在するリソースを管理するサービスオブジェクト.<br>
  * リソースをクラス内に保持し、必要に応じて呼び出すことができます.
- * 
+ *
  * @author kishigam
  */
 @Service
@@ -108,14 +108,21 @@ public class SyncResourceManager {
 	}
 
 	/**
-	 * データモデルから対応するリソースを返します.
-	 * 
+	 * データモデル名から対応するリソースを返します.<br>
+	 * リソースが存在しない場合、nullを返します.
+	 *
 	 * @param dataModelName データモデル名
 	 * @return リソースクラス
 	 */
 	public SyncResource<?> locateSyncResource(String dataModelName) {
 
-		SyncResource<?> sr = context.getBean(resourceMap.get(dataModelName));
+		Class<? extends SyncResource<?>> resourceClass = resourceMap.get(dataModelName);
+
+		if (resourceClass == null) {
+			return null;
+		}
+
+		SyncResource<?> sr = context.getBean(resourceClass);
 
 		// LockManagerのセット
 		try {
@@ -130,7 +137,7 @@ public class SyncResourceManager {
 
 	/**
 	 * このクラスが管理するリソースに対応する全てのデータモデル名を返します.<br>
-	 * 
+	 *
 	 * @return データモデル名のセット
 	 */
 	public Set<String> getAllDataModelNames() {
