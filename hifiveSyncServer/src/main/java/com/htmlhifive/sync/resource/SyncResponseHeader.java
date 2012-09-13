@@ -75,6 +75,16 @@ public class SyncResponseHeader {
 	private boolean conflicted;
 
 	/**
+	 * リソースID文字列を指定してレスポンスヘッダオブジェクトを生成します.
+	 *
+	 * @param resourceIdStr このレスポンスが対象とするリソースのID文字列
+	 */
+	public SyncResponseHeader(String resourceIdStr) {
+
+		this.resourceIdStr = resourceIdStr;
+	}
+
+	/**
 	 * @see Object#equals(Object)
 	 */
 	@Override
@@ -141,13 +151,6 @@ public class SyncResponseHeader {
 	 */
 	public String getResourceIdStr() {
 		return resourceIdStr;
-	}
-
-	/**
-	 * @param resourceIdStr セットする resourceIdStr
-	 */
-	public void setResourceIdStr(String resourceIdStr) {
-		this.resourceIdStr = resourceIdStr;
 	}
 
 	/**

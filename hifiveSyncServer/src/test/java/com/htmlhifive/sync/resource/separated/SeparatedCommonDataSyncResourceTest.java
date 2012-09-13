@@ -274,8 +274,7 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final SeparatedCommonDataSyncResource<?, ?> target = new TargetSubClass(resourceIdStr, expectedElement);
 
-		final SyncResponseHeader expectedResponseHeader = new SyncResponseHeader();
-		expectedResponseHeader.setResourceIdStr(resourceIdStr);
+		final SyncResponseHeader expectedResponseHeader = new SyncResponseHeader(resourceIdStr);
 		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedResponseHeader, expectedElement);
 
 		new Expectations() {
@@ -371,11 +370,8 @@ public class SeparatedCommonDataSyncResourceTest {
 		final SeparatedCommonDataSyncResource<?, ?> target = new TargetSubClass(new String[] { resourceIdStr1,
 				resourceIdStr2 }, new Object[] { expectedElement1, expectedElement2 });
 
-		final SyncResponseHeader expectedResponseHeader1 = new SyncResponseHeader();
-		expectedResponseHeader1.setResourceIdStr(resourceIdStr1);
-
-		final SyncResponseHeader expectedResponseHeader2 = new SyncResponseHeader();
-		expectedResponseHeader2.setResourceIdStr(resourceIdStr2);
+		final SyncResponseHeader expectedResponseHeader1 = new SyncResponseHeader(resourceIdStr1);
+		final SyncResponseHeader expectedResponseHeader2 = new SyncResponseHeader(resourceIdStr2);
 
 		@SuppressWarnings("serial")
 		final Map<String, SyncResponseHeader> expectedResponseHeaderMap = new HashMap<String, SyncResponseHeader>() {
@@ -450,11 +446,9 @@ public class SeparatedCommonDataSyncResourceTest {
 		final SeparatedCommonDataSyncResource<?, ?> target = new TargetSubClass(new String[] { resourceIdStr1,
 				resourceIdStr2 }, new Object[] { expectedElement1, null });
 
-		final SyncResponseHeader expectedResponseHeader1 = new SyncResponseHeader();
-		expectedResponseHeader1.setResourceIdStr(resourceIdStr1);
+		final SyncResponseHeader expectedResponseHeader1 = new SyncResponseHeader(resourceIdStr1);
 
-		final SyncResponseHeader expectedResponseHeader2 = new SyncResponseHeader();
-		expectedResponseHeader2.setResourceIdStr(resourceIdStr2);
+		final SyncResponseHeader expectedResponseHeader2 = new SyncResponseHeader(resourceIdStr2);
 
 		@SuppressWarnings("serial")
 		final Map<String, SyncResponseHeader> expectedResponseHeaderMap = new HashMap<String, SyncResponseHeader>() {
@@ -514,11 +508,9 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClass(resourceIdStr, elementBeforeUpdate);
 
-		final SyncResponseHeader expectedResponseHeaderBeforeUpdate = new SyncResponseHeader();
-		expectedResponseHeaderBeforeUpdate.setResourceIdStr(resourceIdStr);
+		final SyncResponseHeader expectedResponseHeaderBeforeUpdate = new SyncResponseHeader(resourceIdStr);
 
-		final SyncResponseHeader expectedResponseHeaderAfterUpdate = new SyncResponseHeader();
-		expectedResponseHeaderAfterUpdate.setResourceIdStr(resourceIdStr);
+		final SyncResponseHeader expectedResponseHeaderAfterUpdate = new SyncResponseHeader(resourceIdStr);
 
 		final Object updateElement = new Object();
 		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedResponseHeaderAfterUpdate, updateElement);
@@ -617,8 +609,7 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClass(resourceIdStr, elementBeforeUpdate);
 
-		final SyncResponseHeader expectedResponseHeaderBeforeUpdate = new SyncResponseHeader();
-		expectedResponseHeaderBeforeUpdate.setResourceIdStr(resourceIdStr);
+		final SyncResponseHeader expectedResponseHeaderBeforeUpdate = new SyncResponseHeader(resourceIdStr);
 
 		final Object updateElement = new Object();
 		final SyncResponse<?> expectedConflictResponse = new SyncResponse<>(expectedResponseHeaderBeforeUpdate,
@@ -666,11 +657,9 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClass(resourceIdStr, elementBeforeUpdate);
 
-		final SyncResponseHeader expectedResponseHeaderBeforeDelete = new SyncResponseHeader();
-		expectedResponseHeaderBeforeDelete.setResourceIdStr(resourceIdStr);
+		final SyncResponseHeader expectedResponseHeaderBeforeDelete = new SyncResponseHeader(resourceIdStr);
 
-		final SyncResponseHeader expectedResponseHeaderAfterDelete = new SyncResponseHeader();
-		expectedResponseHeaderAfterDelete.setResourceIdStr(resourceIdStr);
+		final SyncResponseHeader expectedResponseHeaderAfterDelete = new SyncResponseHeader(resourceIdStr);
 
 		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedResponseHeaderAfterDelete, null);
 
@@ -764,8 +753,7 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClass(resourceIdStr, elementBeforeUpdate);
 
-		final SyncResponseHeader expectedResponseHeaderBeforeUpdate = new SyncResponseHeader();
-		expectedResponseHeaderBeforeUpdate.setResourceIdStr(resourceIdStr);
+		final SyncResponseHeader expectedResponseHeaderBeforeUpdate = new SyncResponseHeader(resourceIdStr);
 
 		final SyncResponse<?> expectedConflictResponse = new SyncResponse<>(expectedResponseHeaderBeforeUpdate,
 				elementBeforeUpdate);
@@ -812,8 +800,7 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final String expectedResourceIdStr = target.generateNewResourceIdStr(createElementId);
 
-		final SyncResponseHeader expectedResponseHeader = new SyncResponseHeader();
-		expectedResponseHeader.setResourceIdStr(expectedResourceIdStr);
+		final SyncResponseHeader expectedResponseHeader = new SyncResponseHeader(expectedResourceIdStr);
 
 		final Object createElement = new Object();
 		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedResponseHeader, createElement);
@@ -874,11 +861,7 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final String expectedResourceIdStr = target.generateNewResourceIdStr(createElementId);
 
-		final SyncResponseHeader expectedResponseHeader = new SyncResponseHeader();
-		expectedResponseHeader.setResourceIdStr(expectedResourceIdStr);
-
-		final SyncResponseHeader expectedExistingResponseHeader = new SyncResponseHeader();
-		expectedExistingResponseHeader.setResourceIdStr(expectedResourceIdStr);
+		final SyncResponseHeader expectedExistingResponseHeader = new SyncResponseHeader(expectedResourceIdStr);
 
 		final SyncResponse<?> expectedDuplicatedResponse = new SyncResponse<>(expectedExistingResponseHeader,
 				existingElement);
@@ -890,7 +873,7 @@ public class SeparatedCommonDataSyncResourceTest {
 				setField(target, "syncProvider", syncProvider);
 
 				syncProvider.getCommonData(requestHeader);
-				result = expectedResponseHeader;
+				result = expectedExistingResponseHeader;
 
 				result = true;
 			}

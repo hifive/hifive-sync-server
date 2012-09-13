@@ -38,235 +38,223 @@ import com.htmlhifive.sync.resource.SyncResponseHeader;
 @Table(name = "COMMON_DATA")
 public class CommonDataBean {
 
-    /**
-     * このエンティティのID(同期データID).
-     */
-    @Id
-    private String syncDataId;
+	/**
+	 * このエンティティのID(同期データID).
+	 */
+	@Id
+	private String syncDataId;
 
-    /**
-     * クライアント(ストレージ)のID.<br>
-     */
-    private String storageId;;
+	/**
+	 * クライアント(ストレージ)のID.<br>
+	 */
+	private String storageId;;
 
-    /**
-     * リソースのデータモデル名.<br>
-     */
-    private String dataModelName;
+	/**
+	 * リソースのデータモデル名.<br>
+	 */
+	private String dataModelName;
 
-    /**
-     * リソースエレメントを識別するためのID.<br>
-     */
-    private String resourceIdStr;
+	/**
+	 * リソースエレメントを識別するためのID.<br>
+	 */
+	private String resourceIdStr;
 
-    /**
-     * リソースエレメントの登録形態.<br>
-     */
-    private SyncMethod syncMethod;
+	/**
+	 * リソースエレメントの登録形態.<br>
+	 */
+	private SyncMethod syncMethod;
 
-    /**
-     * リソースエレメントの最終更新時刻(ミリ秒)
-     */
-    private long lastModified;
+	/**
+	 * リソースエレメントの最終更新時刻(ミリ秒)
+	 */
+	private long lastModified;
 
-    /**
-     * 悲観ロック時のロックキー.
-     */
-    private String lockKey;
+	/**
+	 * 悲観ロック時のロックキー.
+	 */
+	private String lockKey;
 
-    /**
-     * プライベートデフォルトコンストラクタ.
-     */
-    @SuppressWarnings("unused")
-    private CommonDataBean() {
-    }
+	/**
+	 * プライベートデフォルトコンストラクタ.
+	 */
+	@SuppressWarnings("unused")
+	private CommonDataBean() {
+	}
 
-    /**
-     * 同期データIDを指定して共通データエンティティを生成します.
-     *
-     * @param syncDataId
-     *            同期データID
-     * @param requestHeader
-     *            リソースへのリクエストヘッダ
-     * @param targetResourceIdStr
-     *            リソースID文字列
-     */
-    public CommonDataBean(String syncDataId, SyncRequestHeader requestHeader, String resourceIdStr) {
+	/**
+	 * 同期データIDを指定して共通データエンティティを生成します.
+	 *
+	 * @param syncDataId 同期データID
+	 * @param requestHeader リソースへのリクエストヘッダ
+	 * @param targetResourceIdStr リソースID文字列
+	 */
+	public CommonDataBean(String syncDataId, SyncRequestHeader requestHeader, String resourceIdStr) {
 
-        this.syncDataId = syncDataId;
-        this.dataModelName = requestHeader.getDataModelName();
-        this.storageId = requestHeader.getStorageId();
-        this.syncMethod = requestHeader.getSyncMethod();
-        this.lastModified = requestHeader.getRequestTime();
-        this.resourceIdStr = resourceIdStr;
-    }
+		this.syncDataId = syncDataId;
+		this.dataModelName = requestHeader.getDataModelName();
+		this.storageId = requestHeader.getStorageId();
+		this.syncMethod = requestHeader.getSyncMethod();
+		this.lastModified = requestHeader.getRequestTime();
+		this.resourceIdStr = resourceIdStr;
+	}
 
-    /**
-     * @see Object#equals(Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
+	/**
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
 
-        if (this == obj)
-            return true;
-        if (!(obj instanceof CommonDataBean))
-            return false;
+		if (this == obj)
+			return true;
+		if (!(obj instanceof CommonDataBean))
+			return false;
 
-        return EqualsBuilder.reflectionEquals(this, ((CommonDataBean)obj), "syncDataId");
-    }
+		return EqualsBuilder.reflectionEquals(this, ((CommonDataBean) obj), "syncDataId");
+	}
 
-    /**
-     * @see Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
 
-        return HashCodeBuilder.reflectionHashCode(this, "syncDataId");
-    }
+		return HashCodeBuilder.reflectionHashCode(this, "syncDataId");
+	}
 
-    /**
-     * @see Object#toString()
-     */
-    @Override
-    public String toString() {
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
 
-        return ToStringBuilder.reflectionToString(this);
-    }
+		return ToStringBuilder.reflectionToString(this);
+	}
 
-    /**
-     * リソースエレメントが更新された場合など、その登録形態と更新時刻を更新します.
-     *
-     * @param requestHeader
-     *            同期リクエストのヘッダ
-     */
-    public void modifiy(SyncRequestHeader requestHeader) {
+	/**
+	 * リソースエレメントが更新された場合など、その登録形態と更新時刻を更新します.
+	 *
+	 * @param requestHeader 同期リクエストのヘッダ
+	 */
+	public void modifiy(SyncRequestHeader requestHeader) {
 
-        this.syncMethod = requestHeader.getSyncMethod();
-        this.lastModified = requestHeader.getRequestTime();
-    }
+		this.syncMethod = requestHeader.getSyncMethod();
+		this.lastModified = requestHeader.getRequestTime();
+	}
 
-    /**
-     * この共通データの情報を同期レスポンスヘッダのオブジェクトで返します.<>
-     *
-     * @return 同期レスポンスのヘッダ
-     */
-    public SyncResponseHeader createResponseHeader() {
+	/**
+	 * この共通データの情報を同期レスポンスヘッダのオブジェクトで返します.<>
+	 *
+	 * @return 同期レスポンスのヘッダ
+	 */
+	public SyncResponseHeader createResponseHeader() {
 
-        SyncResponseHeader responseHeader = new SyncResponseHeader();
+		SyncResponseHeader responseHeader = new SyncResponseHeader(this.resourceIdStr);
 
-        responseHeader.setDataModelName(this.dataModelName);
-        responseHeader.setSyncDataId(this.syncDataId);
-        responseHeader.setSyncMethod(this.syncMethod);
-        responseHeader.setLastModified(this.lastModified);
-        responseHeader.setStorageId(this.storageId);
-        responseHeader.setResourceIdStr(this.resourceIdStr);
+		responseHeader.setDataModelName(this.dataModelName);
+		responseHeader.setSyncDataId(this.syncDataId);
+		responseHeader.setSyncMethod(this.syncMethod);
+		responseHeader.setLastModified(this.lastModified);
+		responseHeader.setStorageId(this.storageId);
 
-        return responseHeader;
-    }
+		return responseHeader;
+	}
 
-    /**
-     * @return syncDataId
-     */
-    public String getSyncDataId() {
-        return syncDataId;
-    }
+	/**
+	 * @return syncDataId
+	 */
+	public String getSyncDataId() {
+		return syncDataId;
+	}
 
-    /**
-     * @param syncDataId
-     *            セットする syncDataId
-     */
-    public void setSyncDataId(String syncDataId) {
-        this.syncDataId = syncDataId;
-    }
+	/**
+	 * @param syncDataId セットする syncDataId
+	 */
+	public void setSyncDataId(String syncDataId) {
+		this.syncDataId = syncDataId;
+	}
 
-    /**
-     * @return storageId
-     */
-    public String getStorageId() {
-        return storageId;
-    }
+	/**
+	 * @return storageId
+	 */
+	public String getStorageId() {
+		return storageId;
+	}
 
-    /**
-     * @param storageId
-     *            セットする storageId
-     */
-    public void setStorageId(String storageId) {
-        this.storageId = storageId;
-    }
+	/**
+	 * @param storageId セットする storageId
+	 */
+	public void setStorageId(String storageId) {
+		this.storageId = storageId;
+	}
 
-    /**
-     * @return dataModelName
-     */
-    public String getDataModelName() {
-        return dataModelName;
-    }
+	/**
+	 * @return dataModelName
+	 */
+	public String getDataModelName() {
+		return dataModelName;
+	}
 
-    /**
-     * @param dataModelName
-     *            セットする dataModelName
-     */
-    public void setDataModelName(String dataModelName) {
-        this.dataModelName = dataModelName;
-    }
+	/**
+	 * @param dataModelName セットする dataModelName
+	 */
+	public void setDataModelName(String dataModelName) {
+		this.dataModelName = dataModelName;
+	}
 
-    /**
-     * @return resourceIdStr
-     */
-    public String getResourceIdStr() {
-        return resourceIdStr;
-    }
+	/**
+	 * @return resourceIdStr
+	 */
+	public String getResourceIdStr() {
+		return resourceIdStr;
+	}
 
-    /**
-     * @param resourceIdStr
-     *            セットする resourceIdStr
-     */
-    public void setResourceIdStr(String resourceIdStr) {
-        this.resourceIdStr = resourceIdStr;
-    }
+	/**
+	 * @param resourceIdStr セットする resourceIdStr
+	 */
+	public void setResourceIdStr(String resourceIdStr) {
+		this.resourceIdStr = resourceIdStr;
+	}
 
-    /**
-     * @return syncMethod
-     */
-    public SyncMethod getSyncMethod() {
-        return syncMethod;
-    }
+	/**
+	 * @return syncMethod
+	 */
+	public SyncMethod getSyncMethod() {
+		return syncMethod;
+	}
 
-    /**
-     * @param syncMethod
-     *            セットする syncMethod
-     */
-    public void setSyncMethod(SyncMethod syncMethod) {
-        this.syncMethod = syncMethod;
-    }
+	/**
+	 * @param syncMethod セットする syncMethod
+	 */
+	public void setSyncMethod(SyncMethod syncMethod) {
+		this.syncMethod = syncMethod;
+	}
 
-    /**
-     * @return lastModified
-     */
-    public long getLastModified() {
-        return lastModified;
-    }
+	/**
+	 * @return lastModified
+	 */
+	public long getLastModified() {
+		return lastModified;
+	}
 
-    /**
-     * @param lastModified
-     *            セットする lastModified
-     */
-    public void setLastModified(long lastModified) {
-        this.lastModified = lastModified;
-    }
+	/**
+	 * @param lastModified セットする lastModified
+	 */
+	public void setLastModified(long lastModified) {
+		this.lastModified = lastModified;
+	}
 
-    /**
-     * @return lockKey
-     */
-    public String getLockKey() {
-        return lockKey;
-    }
+	/**
+	 * @return lockKey
+	 */
+	public String getLockKey() {
+		return lockKey;
+	}
 
-    /**
-     * @param lockKey
-     *            セットする lockKey
-     */
-    public void setLockKey(String lockKey) {
-        this.lockKey = lockKey;
-    }
+	/**
+	 * @param lockKey セットする lockKey
+	 */
+	public void setLockKey(String lockKey) {
+		this.lockKey = lockKey;
+	}
 
 }
