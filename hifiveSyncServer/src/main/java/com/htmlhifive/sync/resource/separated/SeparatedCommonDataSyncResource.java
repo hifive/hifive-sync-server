@@ -273,27 +273,6 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 	}
 
 	/**
-	 * @return syncProvider
-	 */
-	public SyncProvider getSyncProvider() {
-		return syncProvider;
-	}
-
-	/**
-	 * @param syncProvider セットする syncProvider
-	 */
-	public void setSyncProvider(SyncProvider syncProvider) {
-		this.syncProvider = syncProvider;
-	}
-
-	/**
-	 * @return lockManager
-	 */
-	public LockManager getLockManager() {
-		return lockManager;
-	}
-
-	/**
 	 * @param lockManager セットする lockManager
 	 */
 	@Override
