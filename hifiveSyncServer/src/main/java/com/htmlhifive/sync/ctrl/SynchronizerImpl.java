@@ -42,140 +42,120 @@ import com.htmlhifive.sync.resource.SyncResponse;
  * @author kishigam
  */
 @Component
-@Transactional(propagation = Propagation.MANDATORY, rollbackFor = ConflictException.class)
+@Transactional(propagation = Propagation.MANDATORY)
 public class SynchronizerImpl implements Synchronizer {
 
-    @Resource
-    private SyncResourceManager resourceManager;
+	@Resource
+	private SyncResourceManager resourceManager;
 
-    /**
-     * 下り更新を実行します.<br>
-     * 前回同期時刻以降、messageで指定したリソースにおける更新データをGETします.
-     *
-     * @param storageId
-     *            クライアントのストレージID
-     * @param requestMessages
-     *            下り更新のリクエストメッセージのリスト
-     * @return 下り更新結果オブジェクト
-     */
-    @Override
-    public SyncDownloadResult syncDownload(
-            final String storageId,
-            final List<DownloadRequestMessage> requestMessages) {
+	/**
+	 * 下り更新を実行します.<br>
+	 * 前回同期時刻以降、messageで指定したリソースにおける更新データをGETします.
+	 *
+	 * @param storageId クライアントのストレージID
+	 * @param requestMessages 下り更新のリクエストメッセージのリスト
+	 * @return 下り更新結果オブジェクト
+	 */
+	@Override
+	public SyncDownloadResult syncDownload(final String storageId, final List<DownloadRequestMessage> requestMessages) {
 
-        // 同期結果オブジェクトを生成、同期実行時刻(＝リクエスト時刻)が設定される
-        SyncDownloadResult downloadResult = new SyncDownloadResult(storageId);
+		// 同期結果オブジェクトを生成、同期実行時刻(＝リクエスト時刻)が設定される
+		SyncDownloadResult downloadResult = new SyncDownloadResult(storageId);
 
-        // リクエストに含まれるMessageごとに処理
-        for (DownloadRequestMessage message : requestMessages) {
+		// リクエストに含まれるMessageごとに処理
+		for (DownloadRequestMessage message : requestMessages) {
 
-            // 同期リクエストヘッダ作成
-            SyncRequestHeader requestHeader =
-                    message.createHeader(storageId, downloadResult.getCurrentSyncTime());
+			// 同期リクエストヘッダ作成
+			SyncRequestHeader requestHeader = message.createHeader(storageId, downloadResult.getCurrentSyncTime());
 
-            // synchronizerへリクエスト発行
-            SyncResource<?> resource =
-                    resourceManager.locateSyncResource(requestHeader.getDataModelName());
+			// synchronizerへリクエスト発行
+			SyncResource<?> resource = resourceManager.locateSyncResource(requestHeader.getDataModelName());
 
-            Set<? extends SyncResponse<?>> responseSet = resource.getModifiedSince(requestHeader);
+			Set<? extends SyncResponse<?>> responseSet = resource.getModifiedSince(requestHeader);
 
-            // 結果は他のリクエストのものとマージされる
-            downloadResult.addAllResultData(responseSet);
-        }
+			// 結果は他のリクエストのものとマージされる
+			downloadResult.addAllResultData(responseSet);
+		}
 
-        // OK
-        downloadResult.setResultType(SyncResultType.OK);
-        return downloadResult;
-    }
+		// OK
+		downloadResult.setResultType(SyncResultType.OK);
+		return downloadResult;
+	}
 
-    /**
-     * 上り更新を実行します.<br>
-     * 対象のリソースを判断し、リソースエレメントの更新内容に応じてリクエストを発行します.
-     *
-     * @param storageId
-     *            クライアントのストレージID
-     * @param requestMessages
-     *            上り更新のリクエストメッセージのリスト
-     * @return 上り更新結果オブジェクト
-     */
-    @Override
-    public SyncUploadResult syncUpload(
-            String storageId,
-            List<? extends UploadRequestMessage<?>> requestMessages) {
+	/**
+	 * 上り更新を実行します.<br>
+	 * 対象のリソースを判断し、リソースエレメントの更新内容に応じてリクエストを発行します.
+	 *
+	 * @param storageId クライアントのストレージID
+	 * @param requestMessages 上り更新のリクエストメッセージのリスト
+	 * @return 上り更新結果オブジェクト
+	 */
+	@Override
+	public SyncUploadResult syncUpload(String storageId, List<? extends UploadRequestMessage<?>> requestMessages) {
 
-        SyncUploadResult result = new SyncUploadResult(storageId);
-        result.setResultType(SyncResultType.OK);
+		SyncUploadResult result = new SyncUploadResult(storageId);
+		result.setResultType(SyncResultType.OK);
 
-        for (UploadRequestMessage<?> requestMessage : requestMessages) {
+		for (UploadRequestMessage<?> requestMessage : requestMessages) {
 
-            // ヘッダの生成
-            SyncRequestHeader requestHeader =
-                    requestMessage.createtHeader(storageId, result.getCurrentSyncTime());
+			// ヘッダの生成
+			SyncRequestHeader requestHeader = requestMessage.createtHeader(storageId, result.getCurrentSyncTime());
 
-            try {
-                SyncResource<?> resource =
-                        resourceManager.locateSyncResource(requestHeader.getDataModelName());
-                SyncResponse<?> response =
-                        doSyncUpload(resource, requestHeader, requestMessage.getElement());
+			try {
+				SyncResource<?> resource = resourceManager.locateSyncResource(requestHeader.getDataModelName());
+				SyncResponse<?> response = doSyncUpload(resource, requestHeader, requestMessage.getElement());
 
-                // 一度CONFLICTEDになったらOKになることはなく、OKの結果データは不要
-                // 他のCONFLICTED更新を検知するためメッセージの処理は継続
-                if (result.getResultType() == SyncResultType.OK) {
-                    result.addResultData(response);
-                }
+				// 一度CONFLICTEDになったらOKになることはなく、OKの結果データは不要
+				// 他のCONFLICTED更新を検知するためメッセージの処理は継続
+				if (result.getResultType() == SyncResultType.OK) {
+					result.addResultData(response);
+				}
 
-            } catch (ConflictException e) {
+			} catch (ConflictException e) {
 
-                // クラスのTransactionalアノテーションの設定により、RollbackOnlyとなる
+				// クラスのTransactionalアノテーションの設定により、RollbackOnlyとなる
 
-                // 最初のCONFLICTED(UPDATED)のときにOKデータを除去する
-                if (result.getResultType() == SyncResultType.OK) {
-                    result.clearResultSet();
-                }
+				// 最初のCONFLICTED(UPDATED)のときにOKデータを除去する
+				if (result.getResultType() == SyncResultType.OK) {
+					result.clearResultSet();
+				}
 
-                result.addResultData(e.getConflictedResponse());
+				result.addResultData(e.getConflictedResponse());
 
-                // CREATEのキー重複が発生した場合は以降のメッセージ処理は行わず、中断
-                if (e.getCause() instanceof DuplicateElementException) {
-                    result.setResultType(SyncResultType.DUPLICATEDID);
-                    break;
-                }
-                result.setResultType(SyncResultType.UPDATED);
-            }
-        }
-        return result;
-    }
+				// CREATEのキー重複が発生した場合は以降のメッセージ処理は行わず、中断
+				if (e.getCause() instanceof DuplicateElementException) {
+					result.setResultType(SyncResultType.DUPLICATEDID);
+					break;
+				}
+				result.setResultType(SyncResultType.UPDATED);
+			}
+		}
+		return result;
+	}
 
-    /**
-     * リソースに対してアクションに応じたリクエストメソッドを呼び出すヘルパー.<br>
-     * エレメント型を固定することで、JSONからの型変換を行ったエレメントをリソースに渡すことができます.
-     *
-     * @param resource
-     *            リソース
-     * @param requestHeader
-     *            上り更新リクエストヘッダ
-     * @param elementObj
-     *            エレメント(DELETEのとき等、存在しない場合null)
-     * @return 同期レスポンスオブジェクト
-     */
-    private <E> SyncResponse<E> doSyncUpload(
-            SyncResource<E> resource,
-            SyncRequestHeader requestHeader,
-            Object elementObj) {
+	/**
+	 * リソースに対してアクションに応じたリクエストメソッドを呼び出すヘルパー.<br>
+	 * エレメント型を固定することで、JSONからの型変換を行ったエレメントをリソースに渡すことができます.
+	 *
+	 * @param resource リソース
+	 * @param requestHeader 上り更新リクエストヘッダ
+	 * @param elementObj エレメント(DELETEのとき等、存在しない場合null)
+	 * @return 同期レスポンスオブジェクト
+	 */
+	private <E> SyncResponse<E> doSyncUpload(SyncResource<E> resource, SyncRequestHeader requestHeader,
+			Object elementObj) {
 
-        switch (requestHeader.getSyncMethod()) {
-        case POST:
-            return resource.post(
-                    requestHeader,
-                    JsonDataConvertor.convertJSONToElement(elementObj, resource.getElementType()));
-        case PUT:
-            return resource.put(
-                    requestHeader,
-                    JsonDataConvertor.convertJSONToElement(elementObj, resource.getElementType()));
-        case DELETE:
-            return resource.delete(requestHeader);
-        default:
-            throw new RuntimeException("undefined action has called.");
-        }
-    }
+		switch (requestHeader.getSyncMethod()) {
+			case POST:
+				return resource.post(requestHeader,
+						JsonDataConvertor.convertJSONToElement(elementObj, resource.getElementType()));
+			case PUT:
+				return resource.put(requestHeader,
+						JsonDataConvertor.convertJSONToElement(elementObj, resource.getElementType()));
+			case DELETE:
+				return resource.delete(requestHeader);
+			default:
+				throw new RuntimeException("undefined action has called.");
+		}
+	}
 }
