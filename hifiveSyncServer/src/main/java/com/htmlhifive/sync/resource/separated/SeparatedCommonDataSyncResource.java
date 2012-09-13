@@ -121,20 +121,18 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 		SyncResponseHeader responseHeaderBeforUpdate = syncProvider.getCommonData(requestHeader);
 
 		SyncResponseHeader responseHeaderAfterUpdate = null;
-		try {
-			if (!lockManager.canUpdate(requestHeader, responseHeaderBeforUpdate)) {
 
-				// TODO:楽観ロック解決戦略の考慮→Managerへ
-				throw new ConflictException("resource element has updated.", new SyncResponse<>(
-						responseHeaderBeforUpdate, getImpl(responseHeaderBeforUpdate.getResourceIdStr())));
-			}
+		if (!lockManager.canUpdate(requestHeader, responseHeaderBeforUpdate)) {
 
-			putImpl(responseHeaderBeforUpdate.getResourceIdStr(), element);
-			responseHeaderAfterUpdate = syncProvider.saveUpdatedCommonData(requestHeader);
-
-		} finally {
-			lockManager.release(requestHeader, responseHeaderAfterUpdate);
+			// TODO:楽観ロック解決戦略の考慮→Managerへ
+			throw new ConflictException("resource element has updated.", new SyncResponse<>(responseHeaderBeforUpdate,
+					getImpl(responseHeaderBeforUpdate.getResourceIdStr())));
 		}
+
+		putImpl(responseHeaderBeforUpdate.getResourceIdStr(), element);
+		responseHeaderAfterUpdate = syncProvider.saveUpdatedCommonData(requestHeader);
+
+		lockManager.release(requestHeader, responseHeaderAfterUpdate);
 
 		return new SyncResponse<>(responseHeaderAfterUpdate, element);
 	}
@@ -153,19 +151,18 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 		SyncResponseHeader responseHeaderBeforUpdate = syncProvider.getCommonData(requestHeader);
 
 		SyncResponseHeader responseHeaderAfterUpdate = null;
-		try {
-			if (!lockManager.canUpdate(requestHeader, responseHeaderBeforUpdate)) {
-				// TODO:楽観ロック解決戦略の考慮→Managerへ
-				throw new ConflictException("resource element has updated.", new SyncResponse<>(
-						responseHeaderBeforUpdate, getImpl(responseHeaderBeforUpdate.getResourceIdStr())));
-			}
 
-			deleteImpl(responseHeaderBeforUpdate.getResourceIdStr());
-			responseHeaderAfterUpdate = syncProvider.saveUpdatedCommonData(requestHeader);
-
-		} finally {
-			lockManager.release(requestHeader, responseHeaderAfterUpdate);
+		if (!lockManager.canUpdate(requestHeader, responseHeaderBeforUpdate)) {
+			// TODO:楽観ロック解決戦略の考慮→Managerへ
+			throw new ConflictException("resource element has updated.", new SyncResponse<>(responseHeaderBeforUpdate,
+					getImpl(responseHeaderBeforUpdate.getResourceIdStr())));
 		}
+
+		deleteImpl(responseHeaderBeforUpdate.getResourceIdStr());
+		responseHeaderAfterUpdate = syncProvider.saveUpdatedCommonData(requestHeader);
+
+		lockManager.release(requestHeader, responseHeaderAfterUpdate);
+
 		return new SyncResponse<>(responseHeaderAfterUpdate, null);
 	}
 
