@@ -48,6 +48,13 @@ public class PersonResourceElement {
 	private String organization;
 
 	/**
+	 * デフォルトコンストラクタ.<br>
+	 * アプリケーションからの使用は想定されないため、privateとする.
+	 */
+	private PersonResourceElement() {
+	}
+
+	/**
 	 * IDを指定してエレメントを生成します.
 	 *
 	 * @param id エレメントデータを一意に識別するID
@@ -100,6 +107,15 @@ public class PersonResourceElement {
 	 */
 	public String getId() {
 		return id;
+	}
+
+	/**
+	 * アプリケーションからの使用は想定されないため、privateとする.
+	 *
+	 * @param id セットする id
+	 */
+	private void setId(String id) {
+		this.id = id;
 	}
 
 	/**
