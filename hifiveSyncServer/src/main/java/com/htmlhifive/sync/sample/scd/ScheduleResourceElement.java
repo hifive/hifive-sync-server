@@ -78,6 +78,7 @@ public class ScheduleResourceElement {
 	 * デフォルトコンストラクタ.<br>
 	 * アプリケーションからの使用は想定されないため、privateとする.
 	 */
+	@SuppressWarnings("unused")
 	private ScheduleResourceElement() {
 	}
 
@@ -142,6 +143,7 @@ public class ScheduleResourceElement {
 	 *
 	 * @param scheduleId セットする scheduleId
 	 */
+	@SuppressWarnings("unused")
 	private void setScheduleId(String scheduleId) {
 		this.scheduleId = scheduleId;
 	}

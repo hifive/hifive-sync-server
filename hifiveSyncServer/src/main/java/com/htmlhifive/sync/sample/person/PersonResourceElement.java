@@ -51,6 +51,7 @@ public class PersonResourceElement {
 	 * デフォルトコンストラクタ.<br>
 	 * アプリケーションからの使用は想定されないため、privateとする.
 	 */
+	@SuppressWarnings("unused")
 	private PersonResourceElement() {
 	}
 
@@ -114,6 +115,7 @@ public class PersonResourceElement {
 	 *
 	 * @param id セットする id
 	 */
+	@SuppressWarnings("unused")
 	private void setId(String id) {
 		this.id = id;
 	}
