@@ -30,217 +30,207 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public class SyncResponseHeader {
 
-    /**
-     * リクエスト発行元クライアントのストレージID.
-     */
-    private String storageId;
+	/**
+	 * リクエスト発行元クライアントのストレージID.
+	 */
+	private String storageId;
 
-    /**
-     * リクエストの同期メソッド.
-     */
-    private SyncMethod syncMethod;
+	/**
+	 * リクエストの同期メソッド.
+	 */
+	private SyncMethod syncMethod;
 
-    /**
-     * サーバ側でリソースエレメントごとに管理するリソースID文字列.<br>
-     *
-     */
-    private String resourceIdStr;
+	/**
+	 * サーバ側でリソースエレメントごとに管理するリソースID文字列.<br>
+	 */
+	private String resourceIdStr;
 
-    /**
-     * データモデル名.<br>
-     */
-    private String dataModelName;
+	/**
+	 * データモデル名.<br>
+	 */
+	private String dataModelName;
 
-    /**
-     * クエリMap. <br>
-     * 上り更新リクエストに対するレスポンスの場合のみ設定します.
-     */
-    private Map<String, String> queryMap;
+	/**
+	 * クエリMap. <br>
+	 * 上り更新リクエストに対するレスポンスの場合のみ設定します.
+	 */
+	private Map<String, String[]> queryMap;
 
-    /**
-     * 同期データID.<br>
-     */
-    private String syncDataId;
+	/**
+	 * 同期データID.<br>
+	 */
+	private String syncDataId;
 
-    /**
-     * 最終更新時刻.<br>
-     */
-    private long lastModified;
+	/**
+	 * 最終更新時刻.<br>
+	 */
+	private long lastModified;
 
-    /**
-     * クライアントで設定されたストレージローカルID.<br>
-     * 新規登録リクエストに対するレスポンスの場合のみ設定します.
-     */
-    private String storageLocalId;
+	/**
+	 * クライアントで設定されたストレージローカルID.<br>
+	 * 新規登録リクエストに対するレスポンスの場合のみ設定します.
+	 */
+	private String storageLocalId;
 
-    private boolean conflicted;
+	private boolean conflicted;
 
-    /**
-     * @see Object#equals(Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
+	/**
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
 
-        if (this == obj)
-            return true;
-        if (!(obj instanceof SyncResponseHeader))
-            return false;
+		if (this == obj)
+			return true;
+		if (!(obj instanceof SyncResponseHeader))
+			return false;
 
-        SyncResponseHeader header = (SyncResponseHeader)obj;
+		SyncResponseHeader header = (SyncResponseHeader) obj;
 
-        return EqualsBuilder.reflectionEquals(this, header);
-    }
+		return EqualsBuilder.reflectionEquals(this, header);
+	}
 
-    /**
-     * @see Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
 
-        return HashCodeBuilder.reflectionHashCode(this);
-    }
+		return HashCodeBuilder.reflectionHashCode(this);
+	}
 
-    /**
-     * @see Object#toString()
-     */
-    @Override
-    public String toString() {
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
 
-        return ToStringBuilder.reflectionToString(this);
-    }
+		return ToStringBuilder.reflectionToString(this);
+	}
 
-    /**
-     * @return storageId
-     */
-    public String getStorageId() {
-        return storageId;
-    }
+	/**
+	 * @return storageId
+	 */
+	public String getStorageId() {
+		return storageId;
+	}
 
-    /**
-     * @param storageId
-     *            セットする storageId
-     */
-    public void setStorageId(String storageId) {
-        this.storageId = storageId;
-    }
+	/**
+	 * @param storageId セットする storageId
+	 */
+	public void setStorageId(String storageId) {
+		this.storageId = storageId;
+	}
 
-    /**
-     * @return syncMethod
-     */
-    public SyncMethod getSyncMethod() {
-        return syncMethod;
-    }
+	/**
+	 * @return syncMethod
+	 */
+	public SyncMethod getSyncMethod() {
+		return syncMethod;
+	}
 
-    /**
-     * @param syncMethod
-     *            セットする syncMethod
-     */
-    public void setSyncMethod(SyncMethod syncMethod) {
-        this.syncMethod = syncMethod;
-    }
+	/**
+	 * @param syncMethod セットする syncMethod
+	 */
+	public void setSyncMethod(SyncMethod syncMethod) {
+		this.syncMethod = syncMethod;
+	}
 
-    /**
-     * @return resourceIdStr
-     */
-    public String getResourceIdStr() {
-        return resourceIdStr;
-    }
+	/**
+	 * @return resourceIdStr
+	 */
+	public String getResourceIdStr() {
+		return resourceIdStr;
+	}
 
-    /**
-     * @param resourceIdStr
-     *            セットする resourceIdStr
-     */
-    public void setResourceIdStr(String resourceIdStr) {
-        this.resourceIdStr = resourceIdStr;
-    }
+	/**
+	 * @param resourceIdStr セットする resourceIdStr
+	 */
+	public void setResourceIdStr(String resourceIdStr) {
+		this.resourceIdStr = resourceIdStr;
+	}
 
-    /**
-     * @return dataModelName
-     */
-    public String getDataModelName() {
-        return dataModelName;
-    }
+	/**
+	 * @return dataModelName
+	 */
+	public String getDataModelName() {
+		return dataModelName;
+	}
 
-    /**
-     * @param dataModelName
-     *            セットする dataModelName
-     */
-    public void setDataModelName(String dataModelName) {
-        this.dataModelName = dataModelName;
-    }
+	/**
+	 * @param dataModelName セットする dataModelName
+	 */
+	public void setDataModelName(String dataModelName) {
+		this.dataModelName = dataModelName;
+	}
 
-    /**
-     * @return queryMap
-     */
-    public Map<String, String> getQueryMap() {
-        return queryMap;
-    }
+	/**
+	 * @return queryMap
+	 */
+	public Map<String, String[]> getQueryMap() {
+		return queryMap;
+	}
 
-    /**
-     * @param queryMap
-     *            セットする queryMap
-     */
-    public void setQueryMap(Map<String, String> queryMap) {
-        this.queryMap = queryMap;
-    }
+	/**
+	 * @param queryMap セットする queryMap
+	 */
+	public void setQueryMap(Map<String, String[]> queryMap) {
+		this.queryMap = queryMap;
+	}
 
-    /**
-     * @return syncDataId
-     */
-    public String getSyncDataId() {
-        return syncDataId;
-    }
+	/**
+	 * @return syncDataId
+	 */
+	public String getSyncDataId() {
+		return syncDataId;
+	}
 
-    /**
-     * @param syncDataId
-     *            セットする syncDataId
-     */
-    public void setSyncDataId(String syncDataId) {
-        this.syncDataId = syncDataId;
-    }
+	/**
+	 * @param syncDataId セットする syncDataId
+	 */
+	public void setSyncDataId(String syncDataId) {
+		this.syncDataId = syncDataId;
+	}
 
-    /**
-     * @return lastModified
-     */
-    public long getLastModified() {
-        return lastModified;
-    }
+	/**
+	 * @return lastModified
+	 */
+	public long getLastModified() {
+		return lastModified;
+	}
 
-    /**
-     * @param lastModified
-     *            セットする lastModified
-     */
-    public void setLastModified(long lastModified) {
-        this.lastModified = lastModified;
-    }
+	/**
+	 * @param lastModified セットする lastModified
+	 */
+	public void setLastModified(long lastModified) {
+		this.lastModified = lastModified;
+	}
 
-    /**
-     * @return storageLocalId
-     */
-    public String getStorageLocalId() {
-        return storageLocalId;
-    }
+	/**
+	 * @return storageLocalId
+	 */
+	public String getStorageLocalId() {
+		return storageLocalId;
+	}
 
-    /**
-     * @param storageLocalId
-     *            セットする storageLocalId
-     */
-    public void setStorageLocalId(String storageLocalId) {
-        this.storageLocalId = storageLocalId;
-    }
+	/**
+	 * @param storageLocalId セットする storageLocalId
+	 */
+	public void setStorageLocalId(String storageLocalId) {
+		this.storageLocalId = storageLocalId;
+	}
 
-    /**
-     * @return conflicted
-     */
-    public boolean isConflicted() {
-        return conflicted;
-    }
+	/**
+	 * @return conflicted
+	 */
+	public boolean isConflicted() {
+		return conflicted;
+	}
 
-    /**
-     * @param conflicted
-     *            セットする conflicted
-     */
-    public void setConflicted(boolean conflicted) {
-        this.conflicted = conflicted;
-    }
+	/**
+	 * @param conflicted セットする conflicted
+	 */
+	public void setConflicted(boolean conflicted) {
+		this.conflicted = conflicted;
+	}
 }

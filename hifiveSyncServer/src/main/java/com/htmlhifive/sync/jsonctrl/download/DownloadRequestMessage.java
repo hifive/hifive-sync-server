@@ -33,130 +33,113 @@ import com.htmlhifive.sync.resource.SyncRequestHeader;
  */
 public class DownloadRequestMessage {
 
-    /**
-     * データモデル名.
-     */
-    private String dataModelName;
+	/**
+	 * データモデル名.
+	 */
+	private String dataModelName;
 
-    /**
-     * クエリ文字列.
-     */
-    private String query = "";
+	/**
+	 * クエリ文字列.
+	 */
+	private Map<String, String[]> query = new HashMap<>();
 
-    /**
-     * 前回同期時刻.
-     */
-    private long lastSyncTime = 0L;
+	/**
+	 * 前回同期時刻.
+	 */
+	private long lastSyncTime = 0L;
 
-    /**
-     * @see Object#equals(Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
+	/**
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
 
-        if (this == obj)
-            return true;
+		if (this == obj)
+			return true;
 
-        if (!(obj instanceof DownloadRequestMessage))
-            return false;
+		if (!(obj instanceof DownloadRequestMessage))
+			return false;
 
-        DownloadRequestMessage msg = (DownloadRequestMessage)obj;
+		DownloadRequestMessage msg = (DownloadRequestMessage) obj;
 
-        return EqualsBuilder.reflectionEquals(this, msg);
-    }
+		return EqualsBuilder.reflectionEquals(this, msg);
+	}
 
-    /**
-     * @see Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
 
-        return HashCodeBuilder.reflectionHashCode(this);
-    }
+		return HashCodeBuilder.reflectionHashCode(this);
+	}
 
-    /**
-     * @see Object#toString()
-     */
-    @Override
-    public String toString() {
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
 
-        return ToStringBuilder.reflectionToString(this);
-    }
+		return ToStringBuilder.reflectionToString(this);
+	}
 
-    /**
-     * このメッセージの内容をもとにリソースへのGETりクエストのためのリクエストヘッダを生成します.<br>
-     *
-     * @param storageId
-     *            クライアントのストレージID
-     * @param requestTime
-     *            同期実行時刻
-     * @return 同期リクエストヘッダ
-     */
-    public SyncRequestHeader createHeader(String storageId, long requestTime) {
+	/**
+	 * このメッセージの内容をもとにリソースへのGETりクエストのためのリクエストヘッダを生成します.<br>
+	 *
+	 * @param storageId クライアントのストレージID
+	 * @param requestTime 同期実行時刻
+	 * @return 同期リクエストヘッダ
+	 */
+	public SyncRequestHeader createHeader(String storageId, long requestTime) {
 
-        SyncRequestHeader requestHeader =
-                new SyncRequestHeader(SyncMethod.GET, storageId, requestTime);
-        requestHeader.setDataModelName(dataModelName);
-        // クエリ文字列をMapに変換
-        requestHeader.setQueryMap(generateQueryMap());
-        requestHeader.setLastSyncTime(lastSyncTime);
+		SyncRequestHeader requestHeader = new SyncRequestHeader(SyncMethod.GET, storageId, requestTime);
+		requestHeader.setDataModelName(dataModelName);
+		// クエリ文字列をMapに変換
+		requestHeader.setQueryMap(query);
+		requestHeader.setLastSyncTime(lastSyncTime);
 
-        return requestHeader;
-    }
+		return requestHeader;
+	}
 
-    /**
-     * クエリ文字列からMapを生成します.
-     *
-     * @return クエリMap
-     */
-    public Map<String, String> generateQueryMap() {
+	/**
+	 * @return dataModelName
+	 */
+	public String getDataModelName() {
+		return dataModelName;
+	}
 
-        // TODO: Mapへの変換仕様決定
-        return new HashMap<>();
-    }
+	/**
+	 * @param dataModelName セットする dataModelName
+	 */
+	public void setDataModelName(String dataModelName) {
+		this.dataModelName = dataModelName;
+	}
 
-    /**
-     * @return dataModelName
-     */
-    public String getDataModelName() {
-        return dataModelName;
-    }
+	/**
+	 * @return query
+	 */
+	public Map<String, String[]> getQuery() {
+		return query;
+	}
 
-    /**
-     * @param dataModelName
-     *            セットする dataModelName
-     */
-    public void setDataModelName(String dataModelName) {
-        this.dataModelName = dataModelName;
-    }
+	/**
+	 * @param query セットする query
+	 */
+	public void setQuery(Map<String, String[]> query) {
+		this.query = query;
+	}
 
-    /**
-     * @return query
-     */
-    public String getQuery() {
-        return query;
-    }
+	/**
+	 * @return lastSyncTime
+	 */
+	public long getLastSyncTime() {
+		return lastSyncTime;
+	}
 
-    /**
-     * @param query
-     *            セットする query
-     */
-    public void setQuery(String query) {
-        this.query = query;
-    }
-
-    /**
-     * @return lastSyncTime
-     */
-    public long getLastSyncTime() {
-        return lastSyncTime;
-    }
-
-    /**
-     * @param lastSyncTime
-     *            セットする lastSyncTime
-     */
-    public void setLastSyncTime(long lastSyncTime) {
-        this.lastSyncTime = lastSyncTime;
-    }
+	/**
+	 * @param lastSyncTime セットする lastSyncTime
+	 */
+	public void setLastSyncTime(long lastSyncTime) {
+		this.lastSyncTime = lastSyncTime;
+	}
 }
