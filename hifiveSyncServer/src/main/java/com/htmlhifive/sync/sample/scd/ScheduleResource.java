@@ -74,8 +74,7 @@ public class ScheduleResource extends SeparatedCommonDataSyncResource<String, Sc
 
 		ScheduleBean bean = findBean(resourceIdStr);
 
-		ScheduleResourceElement element = new ScheduleResourceElement();
-		element.setScheduleId(bean.getScheduleId());
+		ScheduleResourceElement element = new ScheduleResourceElement(bean.getScheduleId());
 		element.setUserIds(bean.getUserIds());
 		element.setTitle(bean.getTitle());
 		element.setCategory(bean.getCategory());
