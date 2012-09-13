@@ -27,122 +27,120 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public class PersonResourceElement {
 
-    /**
-     * ID.
-     */
-    private String id;
+	/**
+	 * ID.
+	 */
+	private String id;
 
-    /**
-     * このエレメントが示す人の名前.
-     */
-    private String name;
+	/**
+	 * このエレメントが示す人の名前.
+	 */
+	private String name;
 
-    /**
-     * このエレメントが示す人の年齢.
-     */
-    private int age;
+	/**
+	 * このエレメントが示す人の年齢.
+	 */
+	private int age;
 
-    /**
-     * このエレメントが示す人の所属組織.
-     */
-    private String organization;
+	/**
+	 * このエレメントが示す人の所属組織.
+	 */
+	private String organization;
 
-    /**
-     * IDが等しいエンティティを同一とします.
-     *
-     * @see Object#equals(Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
+	/**
+	 * IDを指定してエレメントを生成します.
+	 *
+	 * @param id エレメントデータを一意に識別するID
+	 */
+	public PersonResourceElement(String id) {
+		this.id = id;
+	}
 
-        if (obj == this) {
-            return true;
-        }
+	/**
+	 * IDが等しいエンティティを同一とします.
+	 *
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
 
-        if (!(obj instanceof PersonResourceElement)) {
-            return false;
-        }
+		if (obj == this) {
+			return true;
+		}
 
-        PersonResourceElement element = (PersonResourceElement)obj;
+		if (!(obj instanceof PersonResourceElement)) {
+			return false;
+		}
 
-        return new EqualsBuilder().append(this.id, element.id).isEquals();
-    }
+		PersonResourceElement element = (PersonResourceElement) obj;
 
-    /**
-     * @see Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
+		return new EqualsBuilder().append(this.id, element.id).isEquals();
+	}
 
-        return new HashCodeBuilder(17, 37).append(this.id).hashCode();
-    }
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
 
-    /**
-     * @see Object#toString()
-     */
-    @Override
-    public String toString() {
+		return new HashCodeBuilder(17, 37).append(this.id).hashCode();
+	}
 
-        return ToStringBuilder.reflectionToString(this);
-    }
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
 
-    /**
-     * @return id
-     */
-    public String getId() {
-        return id;
-    }
+		return ToStringBuilder.reflectionToString(this);
+	}
 
-    /**
-     * @param id
-     *            セットする id
-     */
-    public void setId(String id) {
-        this.id = id;
-    }
+	/**
+	 * @return id
+	 */
+	public String getId() {
+		return id;
+	}
 
-    /**
-     * @return name
-     */
-    public String getName() {
-        return name;
-    }
+	/**
+	 * @return name
+	 */
+	public String getName() {
+		return name;
+	}
 
-    /**
-     * @param name
-     *            セットする name
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
+	/**
+	 * @param name セットする name
+	 */
+	public void setName(String name) {
+		this.name = name;
+	}
 
-    /**
-     * @return age
-     */
-    public int getAge() {
-        return age;
-    }
+	/**
+	 * @return age
+	 */
+	public int getAge() {
+		return age;
+	}
 
-    /**
-     * @param age
-     *            セットする age
-     */
-    public void setAge(int age) {
-        this.age = age;
-    }
+	/**
+	 * @param age セットする age
+	 */
+	public void setAge(int age) {
+		this.age = age;
+	}
 
-    /**
-     * @return organization
-     */
-    public String getOrganization() {
-        return organization;
-    }
+	/**
+	 * @return organization
+	 */
+	public String getOrganization() {
+		return organization;
+	}
 
-    /**
-     * @param organization
-     *            セットする organization
-     */
-    public void setOrganization(String organization) {
-        this.organization = organization;
-    }
+	/**
+	 * @param organization セットする organization
+	 */
+	public void setOrganization(String organization) {
+		this.organization = organization;
+	}
 }

@@ -63,8 +63,7 @@ public class PersonResource extends SeparatedCommonDataSyncResource<String, Pers
 
 		PersonBean gotBean = findBean(resourceIdStr);
 
-		PersonResourceElement element = new PersonResourceElement();
-		element.setId(gotBean.getId());
+		PersonResourceElement element = new PersonResourceElement(gotBean.getId());
 		element.setName(gotBean.getName());
 		element.setAge(gotBean.getAge());
 		element.setOrganization(gotBean.getOrganization());
