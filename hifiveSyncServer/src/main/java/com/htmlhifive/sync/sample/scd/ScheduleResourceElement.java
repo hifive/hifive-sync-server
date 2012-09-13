@@ -75,6 +75,13 @@ public class ScheduleResourceElement {
 	private String place;
 
 	/**
+	 * デフォルトコンストラクタ.<br>
+	 * アプリケーションからの使用は想定されないため、privateとする.
+	 */
+	private ScheduleResourceElement() {
+	}
+
+	/**
 	 * IDを指定して予定リソースのエレメントを生成します.
 	 *
 	 * @param scheduleId 予定を一意に識別するID
@@ -128,6 +135,15 @@ public class ScheduleResourceElement {
 	 */
 	public String getScheduleId() {
 		return scheduleId;
+	}
+
+	/**
+	 * アプリケーションからの使用は想定されないため、privateとする.
+	 *
+	 * @param scheduleId セットする scheduleId
+	 */
+	private void setScheduleId(String scheduleId) {
+		this.scheduleId = scheduleId;
 	}
 
 	/**
