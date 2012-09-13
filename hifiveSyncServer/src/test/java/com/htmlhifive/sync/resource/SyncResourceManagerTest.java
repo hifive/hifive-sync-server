@@ -156,7 +156,6 @@ public class SyncResourceManagerTest {
 	 * {@link SyncResourceManager#SyncResourceManager()}用テストメソッド.<br>
 	 * リソースの作成、修正に伴い結果が変わる.
 	 */
-	@SuppressWarnings("unchecked")
 	@Test
 	public void testInstantiation() {
 
@@ -183,14 +182,19 @@ public class SyncResourceManagerTest {
 
 		assertThat(target, notNullValue());
 		assertThat(target.getAllDataModelNames(), is(expectedResourceMap));
-		assertThat(
-				(Class<OptimisticLockManager>) target.locateSyncResource("person").getClass()
-						.getAnnotation(SyncResourceService.class).lockManager(),
-				is(equalTo(OptimisticLockManager.class)));
-		assertThat(
-				(Class<OptimisticLockManager>) target.locateSyncResource("schedule").getClass()
-						.getAnnotation(SyncResourceService.class).lockManager(),
-				is(equalTo(OptimisticLockManager.class)));
+		assertEqualsHelper(target.locateSyncResource("person").getClass().getAnnotation(SyncResourceService.class)
+				.lockManager(), OptimisticLockManager.class);
+		assertEqualsHelper(target.locateSyncResource("schedule").getClass().getAnnotation(SyncResourceService.class)
+				.lockManager(), OptimisticLockManager.class);
 	}
 
+	/**
+	 * キャプチャヘルパー
+	 *
+	 * @param a
+	 * @param b
+	 */
+	private <E> void assertEqualsHelper(E a, E b) {
+		assertThat(a, is(equalTo(b)));
+	}
 }
