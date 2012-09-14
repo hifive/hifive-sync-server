@@ -20,68 +20,67 @@ import java.util.Map;
 
 /**
  * リソースを同期するための共通データを扱うサービスインターフェース.<br>
- * {@link SyncRequestHeader 同期リクエストヘッダ}、{@link SyncResponseHeader 同期レスポンスヘッダ}
- * でデータを受渡します.<br>
+ * {@link SyncRequestHeader 同期リクエストヘッダ}、{@link SyncResponseHeader 同期レスポンスヘッダ} でデータを受渡します.<br>
  * 共通データの永続化はサブクラスが担います.
  *
  * @author kishigam
  */
 public interface SyncProvider {
 
-    /**
-     * リソースに対応する共通データを返します.<br>
-     *
-     * @param requestHeader
-     *            リソースへのリクエストヘッダ
-     * @return リソースからのレスポンスヘッダ
-     */
-    SyncResponseHeader getCommonData(SyncRequestHeader requestHeader);
+	/**
+	 * リソースに対応する共通データを返します.<br>
+	 *
+	 * @param requestHeader リソースへのリクエストヘッダ
+	 * @return リソースからのレスポンスヘッダ
+	 */
+	SyncResponseHeader getCommonData(SyncRequestHeader requestHeader);
 
-    /**
-     * 指定された時刻以降に更新された全てのリソースに対応する共通データを返します. ロックは考慮しません.
-     *
-     * @param requestHeader
-     *            リソースへのリクエストヘッダ
-     *
-     * @return リソースID文字列をKey、リソースからのレスポンスヘッダをValueとするMap
-     */
-    Map<String, SyncResponseHeader> getCommonDataModifiedSince(SyncRequestHeader requestHeader);
+	/**
+	 * リソースに対応する共通データを返します.<br>
+	 *
+	 * @param dataModelName データモデル名
+	 * @param resourceIdStr リソースID文字列
+	 * @return リソースからのレスポンスヘッダ
+	 */
+	SyncResponseHeader getCommonData(String dataModelName, String resourceIdStr);
 
-    /**
-     * リソースに対応する共通データに対し、ロックを設定します.<br>
-     *
-     * @param responseHeader
-     *            リソースからのレスポンスヘッダ
-     */
-    boolean getLock(SyncRequestHeader requestHeader);
+	/**
+	 * 指定された時刻以降に更新された全てのリソースに対応する共通データを返します. ロックは考慮しません.
+	 *
+	 * @param requestHeader リソースへのリクエストヘッダ
+	 * @return リソースID文字列をKey、リソースからのレスポンスヘッダをValueとするMap
+	 */
+	Map<String, SyncResponseHeader> getCommonDataModifiedSince(SyncRequestHeader requestHeader);
 
-    /**
-     * リソースに対応する共通データに対し、ロックを解除して更新します.
-     *
-     * @param responseHeader
-     *            リソースからのレスポンスヘッダ
-     */
-    void releaseLock(SyncResponseHeader responseHeader);
+	/**
+	 * リソースに対応する共通データに対し、ロックを設定します.<br>
+	 *
+	 * @param responseHeader リソースからのレスポンスヘッダ
+	 */
+	boolean getLock(SyncRequestHeader requestHeader);
 
-    /**
-     * 新規リソースに対応する共通データを生成し、保存します.
-     *
-     * @param requestHeader
-     *            リソースへのリクエストヘッダ
-     * @param targetResourceIdStr
-     *            リソースエレメントに固有のID文字列
-     * @return リソースからのレスポンスヘッダ
-     */
-    SyncResponseHeader
-            saveNewCommonData(SyncRequestHeader requestHeader, String targetResourceIdStr);
+	/**
+	 * リソースに対応する共通データに対し、ロックを解除して更新します.
+	 *
+	 * @param responseHeader リソースからのレスポンスヘッダ
+	 */
+	void releaseLock(SyncResponseHeader responseHeader);
 
-    /**
-     * リソースに対応する共通データを更新し、保存します.<br>
-     * ロックは開放されます.
-     *
-     * @param requestHeader
-     *            リソースへのリクエストヘッダ
-     * @return リソースからのレスポンスヘッダ
-     */
-    SyncResponseHeader saveUpdatedCommonData(SyncRequestHeader requestHeader);
+	/**
+	 * 新規リソースに対応する共通データを生成し、保存します.
+	 *
+	 * @param requestHeader リソースへのリクエストヘッダ
+	 * @param targetResourceIdStr リソースエレメントに固有のID文字列
+	 * @return リソースからのレスポンスヘッダ
+	 */
+	SyncResponseHeader saveNewCommonData(SyncRequestHeader requestHeader, String targetResourceIdStr);
+
+	/**
+	 * リソースに対応する共通データを更新し、保存します.<br>
+	 * ロックは開放されます.
+	 *
+	 * @param requestHeader リソースへのリクエストヘッダ
+	 * @return リソースからのレスポンスヘッダ
+	 */
+	SyncResponseHeader saveUpdatedCommonData(SyncRequestHeader requestHeader);
 }

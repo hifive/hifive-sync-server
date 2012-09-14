@@ -18,100 +18,115 @@ package com.htmlhifive.sync.exception;
 
 /**
  * リソースの生成時、すでに対象リソースエレメントが存在する場合にスローされる例外.<br>
- * サーバ側で管理しているリソースエレメントを保持しており、クライアントに返す情報の生成に使用することができます.
+ * サーバ側で管理しているリソースエレメントとそのリソースID文字列を保持しており、 クライアントに返す情報の生成に使用することができます.
  *
  * @author kishigam
  */
 public class DuplicateElementException extends RuntimeException {
 
-    /**
-     * シリアルバージョンUID.
-     */
-    private static final long serialVersionUID = -1708837543557342515L;
+	/**
+	 * シリアルバージョンUID.
+	 */
+	private static final long serialVersionUID = -1708837543557342515L;
 
-    /**
-     * 競合対象のサーバ側リソースエレメント.
-     */
-    private Object duplicateElement;
+	/**
+	 * 競合対象のサーバ側リソースID文字列.
+	 */
+	private String duplicateResourceIdStr;
 
-    /**
-     * 競合対象のサーバ側リソースエレメントを指定して、例外オブジェクトを生成します.
-     *
-     * @param duplicateElement
-     *            リソースエレメント
-     * @see RuntimeException
-     */
-    public DuplicateElementException(Object duplicateElement) {
+	/**
+	 * 競合対象のサーバ側リソースエレメント.
+	 */
+	private Object duplicateElement;
 
-        super();
-        this.duplicateElement = duplicateElement;
-    }
+	/**
+	 * 競合対象のサーバ側リソースの情報を指定して、例外オブジェクトを生成します.
+	 *
+	 * @param duplicateResourceIdStr リソースID文字列
+	 * @param duplicateElement リソースエレメント
+	 * @see RuntimeException
+	 */
+	public DuplicateElementException(String duplicateResourceIdStr, Object duplicateElement) {
 
-    /**
-     * 競合対象のサーバ側リソースエレメントを指定して、例外オブジェクトを生成します.
-     *
-     * @param message
-     * @param cause
-     * @param enableSuppression
-     * @param writableStackTrace
-     * @param duplicateElement
-     *            リソースエレメント
-     * @see RuntimeException
-     */
-    public DuplicateElementException(
-            String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace,
-            Object duplicateElement) {
-        super(message, cause, enableSuppression, writableStackTrace);
-        this.duplicateElement = duplicateElement;
-    }
+		super();
+		this.duplicateResourceIdStr = duplicateResourceIdStr;
+		this.duplicateElement = duplicateElement;
+	}
 
-    /**
-     * 競合対象のサーバ側リソースエレメントを指定して、例外オブジェクトを生成します.
-     *
-     * @param message
-     * @param cause
-     * @param duplicateElement
-     *            リソースエレメント
-     * @see RuntimeException
-     */
-    public DuplicateElementException(String message, Throwable cause, Object duplicateElement) {
-        super(message, cause);
-        this.duplicateElement = duplicateElement;
-    }
+	/**
+	 * 競合対象のサーバ側リソースの情報を指定して、例外オブジェクトを生成します.
+	 *
+	 * @param message
+	 * @param cause
+	 * @param enableSuppression
+	 * @param writableStackTrace
+	 * @param duplicateElement リソースエレメント
+	 * @see RuntimeException
+	 */
+	public DuplicateElementException(String message, Throwable cause, boolean enableSuppression,
+			boolean writableStackTrace, String duplicateResourceIdStr, Object duplicateElement) {
+		super(message, cause, enableSuppression, writableStackTrace);
+		this.duplicateResourceIdStr = duplicateResourceIdStr;
+		this.duplicateElement = duplicateElement;
+	}
 
-    /**
-     * 競合対象のサーバ側リソースエレメントを指定して、例外オブジェクトを生成します.
-     *
-     * @param message
-     * @param duplicateElement
-     *            リソースエレメント
-     * @see RuntimeException
-     */
-    public DuplicateElementException(String message, Object duplicateElement) {
-        super(message);
-        this.duplicateElement = duplicateElement;
-    }
+	/**
+	 * 競合対象のサーバ側リソースの情報を指定して、例外オブジェクトを生成します.
+	 *
+	 * @param message
+	 * @param cause
+	 * @param duplicateElement リソースエレメント
+	 * @see RuntimeException
+	 */
+	public DuplicateElementException(String message, Throwable cause, String duplicateResourceIdStr,
+			Object duplicateElement) {
+		super(message, cause);
+		this.duplicateResourceIdStr = duplicateResourceIdStr;
+		this.duplicateElement = duplicateElement;
+	}
 
-    /**
-     * 競合対象のサーバ側リソースエレメントを指定して、例外オブジェクトを生成します.
-     *
-     * @param cause
-     * @param duplicateElement
-     *            リソースエレメント
-     * @see RuntimeException
-     */
-    public DuplicateElementException(Throwable cause, Object duplicateElement) {
-        super(cause);
-        this.duplicateElement = duplicateElement;
-    }
+	/**
+	 * 競合対象のサーバ側リソースの情報を指定して、例外オブジェクトを生成します.
+	 *
+	 * @param message
+	 * @param duplicateElement リソースエレメント
+	 * @see RuntimeException
+	 */
+	public DuplicateElementException(String message, String duplicateResourceIdStr, Object duplicateElement) {
+		super(message);
+		this.duplicateResourceIdStr = duplicateResourceIdStr;
+		this.duplicateElement = duplicateElement;
+	}
 
-    /**
-     * この例外が保持する、競合対象のサーバ側リソースエレメントの内容を含む同期レスポンスオブジェクトを返します.
-     *
-     * @return リソースエレメント
-     */
-    @SuppressWarnings("unchecked")
-    public <E> E getDuplicateElement() {
-        return (E)duplicateElement;
-    }
+	/**
+	 * 競合対象のサーバ側リソースの情報を指定して、例外オブジェクトを生成します.
+	 *
+	 * @param cause
+	 * @param duplicateElement リソースエレメント
+	 * @see RuntimeException
+	 */
+	public DuplicateElementException(Throwable cause, String duplicateResourceIdStr, Object duplicateElement) {
+		super(cause);
+		this.duplicateResourceIdStr = duplicateResourceIdStr;
+		this.duplicateElement = duplicateElement;
+	}
+
+	/**
+	 * この例外が保持する、競合対象のサーバ側リソースエレメントを返します.
+	 *
+	 * @return リソースエレメント
+	 */
+	@SuppressWarnings("unchecked")
+	public <E> E getDuplicateElement() {
+		return (E) duplicateElement;
+	}
+
+	/**
+	 * この例外が保持する、競合対象のサーバ側リソースID文字列を返します.
+	 *
+	 * @return リソースID文字列
+	 */
+	public String getDuplicateResourceIdStr() {
+		return duplicateResourceIdStr;
+	}
 }

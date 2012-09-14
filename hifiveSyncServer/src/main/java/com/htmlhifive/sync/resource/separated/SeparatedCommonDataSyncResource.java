@@ -182,7 +182,9 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 		try {
 			newTargetResourceIdStr = postImpl(newElement);
 		} catch (DuplicateElementException e) {
-			SyncResponseHeader responseHeaderBeforeCreate = syncProvider.getCommonData(requestHeader);
+
+			SyncResponseHeader responseHeaderBeforeCreate = syncProvider.getCommonData(
+					requestHeader.getDataModelName(), e.getDuplicateResourceIdStr());
 
 			throw new ConflictException("duplicate key on target resource.", e, new SyncResponse<>(
 					responseHeaderBeforeCreate, e.getDuplicateElement()));

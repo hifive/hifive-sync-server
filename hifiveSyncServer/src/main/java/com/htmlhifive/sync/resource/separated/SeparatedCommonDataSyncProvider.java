@@ -71,6 +71,23 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	}
 
 	/**
+	 * リソースに対応する共通データを返します.<br>
+	 *
+	 * @param dataModelName データモデル名
+	 * @param resourceIdStr リソースID文字列
+	 * @return リソースからのレスポンスヘッダ
+	 */
+	@Override
+	public SyncResponseHeader getCommonData(String dataModelName, String resourceIdStr) {
+
+		CommonDataBean common = repository.findByResourceIdStr(dataModelName, resourceIdStr);
+
+		SyncResponseHeader responseHeader = common.createResponseHeader();
+
+		return responseHeader;
+	}
+
+	/**
 	 * 指定された時刻以降に更新された全てのリソースに対応する共通データを返します. ロックは考慮しません.
 	 *
 	 * @param requestHeader リソースへのリクエストヘッダ
