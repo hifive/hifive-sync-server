@@ -22,7 +22,7 @@ package com.htmlhifive.sync.exception;
  *
  * @author kishigam
  */
-public class DuplicateElementException extends RuntimeException {
+public class DuplicateElementException extends Exception {
 
 	/**
 	 * シリアルバージョンUID.

@@ -171,7 +171,7 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 	 * @throws ConflictException キー重複衝突が発生
 	 */
 	@Override
-	public SyncResponse<E> post(SyncRequestHeader requestHeader, E newElement) {
+	public SyncResponse<E> post(SyncRequestHeader requestHeader, E newElement) throws ConflictException {
 
 		String newTargetResourceIdStr = null;
 
@@ -233,8 +233,9 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 	 *
 	 * @param newElement 生成内容を含むリソースelement
 	 * @return 採番されたリソースID
+	 * @throws DuplicateElementException 追加しようとしたデータが既に存在する場合
 	 */
-	protected abstract String postImpl(E newElement);
+	protected abstract String postImpl(E newElement) throws DuplicateElementException;
 
 	/**
 	 * リソースID文字列からリソースのIDオブジェクトを導出し、返します. <br>
