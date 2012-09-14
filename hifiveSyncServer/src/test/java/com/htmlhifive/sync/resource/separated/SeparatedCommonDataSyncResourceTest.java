@@ -237,8 +237,9 @@ public class SeparatedCommonDataSyncResourceTest {
 		}
 
 		@Override
-		protected String postImpl(Object newElement) {
-			throw new DuplicateElementException(getImpl(generateNewResourceIdStr(this.elementId)));
+		protected String postImpl(Object newElement) throws DuplicateElementException {
+			String resourceIdStr = generateNewResourceIdStr(this.elementId);
+			throw new DuplicateElementException(resourceIdStr, getImpl(resourceIdStr));
 		}
 
 		@Override
@@ -500,7 +501,7 @@ public class SeparatedCommonDataSyncResourceTest {
 	 * @param requestHeader 引数のモック
 	 */
 	@Test
-	public void testPutSyncRequestHeaderObject(@Mocked final SyncRequestHeader requestHeader) {
+	public void testPutSyncRequestHeaderObject(@Mocked final SyncRequestHeader requestHeader) throws Exception {
 
 		// Arrange：正常系
 		final String resourceIdStr = "test1";
@@ -550,7 +551,7 @@ public class SeparatedCommonDataSyncResourceTest {
 	 * @param requestHeader 引数のモック
 	 */
 	@Test(expected = NullPointerException.class)
-	public void testCannotPutBecauseOfNullHeader() {
+	public void testCannotPutBecauseOfNullHeader() throws Exception {
 
 		// Arrange：異常系
 		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClass();
@@ -568,7 +569,7 @@ public class SeparatedCommonDataSyncResourceTest {
 	 * @param requestHeader 引数のモック
 	 */
 	@Test(expected = NotFoundException.class)
-	public void testCannotPutBecauseOfNotFoundException(@Mocked final SyncRequestHeader requestHeader) {
+	public void testCannotPutBecauseOfNotFoundException(@Mocked final SyncRequestHeader requestHeader) throws Exception {
 
 		// Arrange：異常系
 		final String resourceIdStr = "test1";
@@ -649,7 +650,7 @@ public class SeparatedCommonDataSyncResourceTest {
 	 * @param requestHeader 引数のモック
 	 */
 	@Test
-	public void testDeleteSyncRequestHeader(@Mocked final SyncRequestHeader requestHeader) {
+	public void testDeleteSyncRequestHeader(@Mocked final SyncRequestHeader requestHeader) throws Exception {
 
 		// Arrange：正常系
 		final String resourceIdStr = "test1";
@@ -698,7 +699,7 @@ public class SeparatedCommonDataSyncResourceTest {
 	 * @param requestHeader 引数のモック
 	 */
 	@Test(expected = NullPointerException.class)
-	public void testCannotDeleteBecauseOfNullHeader() {
+	public void testCannotDeleteBecauseOfNullHeader() throws Exception {
 
 		// Arrange：異常系
 		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClass();
@@ -714,7 +715,8 @@ public class SeparatedCommonDataSyncResourceTest {
 	 * @param requestHeader 引数のモック
 	 */
 	@Test(expected = NotFoundException.class)
-	public void testCannotDeleteBecauseOfNotFoundException(@Mocked final SyncRequestHeader requestHeader) {
+	public void testCannotDeleteBecauseOfNotFoundException(@Mocked final SyncRequestHeader requestHeader)
+			throws Exception {
 
 		// Arrange：異常系
 		final String resourceIdStr = "test1";
@@ -792,7 +794,7 @@ public class SeparatedCommonDataSyncResourceTest {
 	 * @param requestHeader 引数のモック
 	 */
 	@Test
-	public void testPostSyncRequestHeaderObject(@Mocked final SyncRequestHeader requestHeader) {
+	public void testPostSyncRequestHeaderObject(@Mocked final SyncRequestHeader requestHeader) throws Exception {
 
 		// Arrange：正常系
 		final String createElementId = "test";
@@ -832,7 +834,7 @@ public class SeparatedCommonDataSyncResourceTest {
 	 * @param requestHeader 引数のモック
 	 */
 	@Test(expected = NullPointerException.class)
-	public void testCannotPostBecauseOfNullHeader() {
+	public void testCannotPostBecauseOfNullHeader() throws Exception {
 
 		// Arrange：異常系
 		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClassForPOST();
@@ -854,7 +856,7 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		// Arrange：例外系
 		final String createElementId = "test";
-		final Object existingElement = new Object();
+		final Object existingElement = new String("existingElement");
 
 		final SeparatedCommonDataSyncResource<String, Object> target = new TargetSubClassForDuplicatePOST(
 				createElementId, existingElement);
@@ -872,7 +874,10 @@ public class SeparatedCommonDataSyncResourceTest {
 
 				setField(target, "syncProvider", syncProvider);
 
-				syncProvider.getCommonData(requestHeader);
+				requestHeader.getDataModelName();
+				result = any;
+
+				syncProvider.getCommonData((String) any, expectedResourceIdStr);
 				result = expectedExistingResponseHeader;
 
 				result = true;
@@ -881,7 +886,7 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		// Act
 		try {
-			final Object createElement = new Object();
+			final Object createElement = new String("createElement");
 			target.post(requestHeader, createElement);
 
 			fail();
@@ -933,7 +938,7 @@ public class SeparatedCommonDataSyncResourceTest {
 	 * @param b
 	 */
 	private <E> void assertEqualsHelper(E a, E b) {
-		assertThat(a, is(b));
+		assertThat(a, is(equalTo(b)));
 	}
 
 	/**
@@ -945,7 +950,7 @@ public class SeparatedCommonDataSyncResourceTest {
 	 * @return
 	 */
 	private <I, E> SyncResponse<E> putHelper(SeparatedCommonDataSyncResource<I, E> target,
-			SyncRequestHeader requestHeader, E element) {
+			SyncRequestHeader requestHeader, E element) throws ConflictException {
 
 		return target.put(requestHeader, element);
 	}
@@ -959,7 +964,7 @@ public class SeparatedCommonDataSyncResourceTest {
 	 * @return
 	 */
 	private <I, E> SyncResponse<E> postHelper(SeparatedCommonDataSyncResource<I, E> target,
-			SyncRequestHeader requestHeader, E element) {
+			SyncRequestHeader requestHeader, E element) throws ConflictException {
 
 		return target.post(requestHeader, element);
 	}

@@ -135,11 +135,12 @@ public class PersonResource extends SeparatedCommonDataSyncResource<String, Pers
 	 * @return 採番されたリソースID文字列
 	 */
 	@Override
-	protected String postImpl(PersonResourceElement newElement) {
+	protected String postImpl(PersonResourceElement newElement) throws DuplicateElementException {
 
 		if (repository.exists(newElement.getId())) {
 
-			throw new DuplicateElementException(getImpl(generateNewResourceIdStr(newElement.getId())));
+			String resourceIdStr = generateNewResourceIdStr(newElement.getId());
+			throw new DuplicateElementException(resourceIdStr, getImpl(resourceIdStr));
 		}
 
 		PersonBean newEntity = new PersonBean(newElement.getId());
