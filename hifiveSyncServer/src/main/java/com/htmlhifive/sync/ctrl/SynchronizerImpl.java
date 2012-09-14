@@ -157,7 +157,7 @@ public class SynchronizerImpl implements Synchronizer {
 			case DELETE:
 				return resource.delete(requestHeader);
 			default:
-				throw new RuntimeException("undefined action has called.");
+				throw new BadRequestException("undefined action has called.");
 		}
 
 	}
