@@ -30,126 +30,121 @@ import com.htmlhifive.sync.resource.SyncResponse;
  */
 public abstract class AbstractSyncResult {
 
-    /**
-     * クライアントのストレージID
-     */
-    private String storageId;
-    /**
-     * 同期結果タイプ.
-     */
-    private SyncResultType resultType;
-    /**
-     * 同期実行時刻.<br>
-     */
-    private long currentSyncTime;
-    /**
-     * 同期結果のSet.
-     */
-    private Set<SyncResponse<?>> resultDataSet = new HashSet<>();
+	/**
+	 * クライアントのストレージID
+	 */
+	private String storageId;
+	/**
+	 * 同期結果タイプ.
+	 */
+	private SyncResultType resultType;
+	/**
+	 * 同期実行時刻.<br>
+	 */
+	private long currentSyncTime;
+	/**
+	 * 同期結果のSet.
+	 */
+	private Set<SyncResponse<?>> resultDataSet = new HashSet<>();
 
-    /**
-     * ストレージIDを指定して同期結果オブジェクトを生成します.
-     *
-     * @param storageId
-     *            クライアントのストレージID
-     */
-    public AbstractSyncResult(String storageId) {
+	/**
+	 * ストレージIDを指定して同期結果オブジェクトを生成します. <br>
+	 * 同期時刻が設定されます.
+	 *
+	 * @param storageId クライアントのストレージID
+	 */
+	public AbstractSyncResult(String storageId) {
 
-        this.storageId = storageId;
-    }
+		this.storageId = storageId;
+		setGeneratedSyncTime();
+	}
 
-    /**
-     * 同期時刻を設定します.<br>
-     * 各サブクラスが表す同期リクエストの種類ごとに時刻設定ルールを適用することができます.
-     */
-    public abstract void setGeneratedSyncTime();
+	/**
+	 * 同期時刻を設定します.<br>
+	 * 各サブクラスが表す同期リクエストの種類ごとに時刻設定ルールを適用することができます.
+	 */
+	public abstract void setGeneratedSyncTime();
 
-    /**
-     * 指定された同期レスポンスオブジェクトを、このオブジェクトが保持しているセットに加えます.
-     *
-     * @param response
-     *            同期レスポンスオブジェクト
-     */
-    public void addResultData(SyncResponse<?> response) {
+	/**
+	 * 指定された同期レスポンスオブジェクトを、このオブジェクトが保持しているセットに加えます.
+	 *
+	 * @param response 同期レスポンスオブジェクト
+	 */
+	public void addResultData(SyncResponse<?> response) {
 
-        resultDataSet.add(response);
-    }
+		resultDataSet.add(response);
+	}
 
-    /**
-     * 指定された同期レスポンスオブジェクトのセットの内容を、このオブジェクトが保持しているセットに全て加えます.
-     *
-     * @param responseSet
-     *            同期レスポンスオブジェクトのSet
-     */
-    public void addAllResultData(Set<? extends SyncResponse<?>> responseSet) {
+	/**
+	 * 指定された同期レスポンスオブジェクトのセットの内容を、このオブジェクトが保持しているセットに全て加えます.
+	 *
+	 * @param responseSet 同期レスポンスオブジェクトのSet
+	 */
+	public void addAllResultData(Set<? extends SyncResponse<?>> responseSet) {
 
-        resultDataSet.addAll(responseSet);
-    }
+		resultDataSet.addAll(responseSet);
+	}
 
-    /**
-     * このオブジェクトが保持する同期結果のSetをクリアします.
-     */
-    public void clearResultSet() {
-        this.resultDataSet.clear();
-    }
+	/**
+	 * このオブジェクトが保持する同期結果のSetをクリアします.
+	 */
+	public void clearResultSet() {
+		this.resultDataSet.clear();
+	}
 
-    /**
-     * @return storageId
-     */
-    public String getStorageId() {
-        return storageId;
-    }
+	/**
+	 * @return storageId
+	 */
+	public String getStorageId() {
+		return storageId;
+	}
 
-    /**
-     * @param storageId
-     *            セットする storageId
-     */
-    public void setStorageId(String storageId) {
-        this.storageId = storageId;
-    }
+	/**
+	 * @param storageId セットする storageId
+	 */
+	public void setStorageId(String storageId) {
+		this.storageId = storageId;
+	}
 
-    /**
-     * @return resultType
-     */
-    public SyncResultType getResultType() {
-        return resultType;
-    }
+	/**
+	 * @return resultType
+	 */
+	public SyncResultType getResultType() {
+		return resultType;
+	}
 
-    /**
-     * @param resultType
-     *            セットする resultType
-     */
-    public void setResultType(SyncResultType resultType) {
-        this.resultType = resultType;
-    }
+	/**
+	 * @param resultType セットする resultType
+	 */
+	public void setResultType(SyncResultType resultType) {
+		this.resultType = resultType;
+	}
 
-    /**
-     * @return currentSyncTime
-     */
-    public long getCurrentSyncTime() {
-        return currentSyncTime;
-    }
+	/**
+	 * @return currentSyncTime
+	 */
+	public long getCurrentSyncTime() {
+		return currentSyncTime;
+	}
 
-    /**
-     * @param currentSyncTime
-     *            セットする currentSyncTime
-     */
-    public void setCurrentSyncTime(long currentSyncTime) {
-        this.currentSyncTime = currentSyncTime;
-    }
+	/**
+	 * @param currentSyncTime セットする currentSyncTime
+	 */
+	public void setCurrentSyncTime(long currentSyncTime) {
+		this.currentSyncTime = currentSyncTime;
+	}
 
-    /**
-     * @return resultDataSet
-     */
-    public Set<SyncResponse<?>> getResultDataSet() {
-        return Collections.unmodifiableSet(resultDataSet);
-    }
+	/**
+	 * @return resultDataSet
+	 */
+	public Set<SyncResponse<?>> getResultDataSet() {
+		return Collections.unmodifiableSet(resultDataSet);
+	}
 
-    /**
-     * @param resultDataSet
-     *            セットする resultDataSet
-     */
-    public void setResultDataSet(Set<SyncResponse<?>> resultDataSet) {
-        this.resultDataSet = resultDataSet;
-    }
+	/**
+	 * @param resultDataSet セットする resultDataSet
+	 */
+	public void setResultDataSet(Set<SyncResponse<?>> resultDataSet) {
+		this.resultDataSet = resultDataSet;
+	}
 }
