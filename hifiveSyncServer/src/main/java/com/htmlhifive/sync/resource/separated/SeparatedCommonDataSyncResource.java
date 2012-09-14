@@ -23,9 +23,6 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.exception.DuplicateElementException;
 import com.htmlhifive.sync.resource.LockManager;
@@ -44,7 +41,6 @@ import com.htmlhifive.sync.resource.SyncResponseHeader;
  * @param <I> このリソースのIDの型
  * @param <E> このリソースのエレメントの型
  */
-@Transactional(propagation = Propagation.MANDATORY, rollbackFor = ConflictException.class)
 public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResource<E> {
 
 	/**

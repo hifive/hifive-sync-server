@@ -22,9 +22,9 @@ import java.util.Set;
 import javax.annotation.Resource;
 
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
+import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.exception.DuplicateElementException;
 import com.htmlhifive.sync.jsonctrl.JsonDataConvertor;
@@ -42,7 +42,6 @@ import com.htmlhifive.sync.resource.SyncResponse;
  * @author kishigam
  */
 @Component
-@Transactional(propagation = Propagation.MANDATORY)
 public class SynchronizerImpl implements Synchronizer {
 
 	@Resource
@@ -113,7 +112,9 @@ public class SynchronizerImpl implements Synchronizer {
 
 			} catch (ConflictException e) {
 
-				// クラスのTransactionalアノテーションの設定により、RollbackOnlyとなる
+				// 全てのリクエスト処理結果をロールバックする
+				// (ここで例外を止めてしまうため、Transactionalアノテーションの"rollbackFor"が効かない？)
+				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
 
 				// 最初のCONFLICTED(UPDATED)のときにOKデータを除去する
 				if (result.getResultType() == SyncResultType.OK) {
@@ -130,6 +131,7 @@ public class SynchronizerImpl implements Synchronizer {
 				result.setResultType(SyncResultType.UPDATED);
 			}
 		}
+
 		return result;
 	}
 
@@ -143,7 +145,7 @@ public class SynchronizerImpl implements Synchronizer {
 	 * @return 同期レスポンスオブジェクト
 	 */
 	private <E> SyncResponse<E> doSyncUpload(SyncResource<E> resource, SyncRequestHeader requestHeader,
-			Object elementObj) {
+			Object elementObj) throws ConflictException {
 
 		switch (requestHeader.getSyncMethod()) {
 			case POST:
@@ -157,5 +159,6 @@ public class SynchronizerImpl implements Synchronizer {
 			default:
 				throw new RuntimeException("undefined action has called.");
 		}
+
 	}
 }
