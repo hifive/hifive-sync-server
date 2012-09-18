@@ -23,46 +23,31 @@ package com.htmlhifive.sync.resource;
  */
 public interface LockManager {
 
-    /**
-     * ロックを取得します.<br>
-     * 同期リクエストのヘッダオブジェクトと、同期対象をGETして得られたレスポンスヘッダオブジェクトの内容の比較によりロック取得の可否を判定します.
-     *
-     * @param requestHeader
-     *            同期リクエストヘッダ
-     * @param responseHeaderBeforUpdate
-     *            同期レスポンスヘッダ
-     *
-     * @return ロックを取得できた場合true.
-     */
-    public boolean lock(
-            SyncRequestHeader requestHeader,
-            SyncResponseHeader responseHeaderBeforUpdate);
+	/**
+	 * ロックを取得します.<br>
+	 * 同期リクエストのヘッダオブジェクトと、同期対象をGETして得られたレスポンスヘッダオブジェクトの内容の比較によりロック取得の可否を判定します.
+	 *
+	 * @param requestHeader 同期リクエストヘッダ
+	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 * @return ロックを取得できた場合true.
+	 */
+	public boolean lock(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate);
 
-    /**
-     * ロック取得状況に応じて、リソースの更新が実行できるか判定します.<br>
-     * 同期リクエストのヘッダオブジェクトと、同期対象をGETして得られたレスポンスヘッダオブジェクトの内容を判定に使用します.
-     *
-     * @param requestHeader
-     *            同期リクエストヘッダ
-     * @param responseHeaderBeforUpdate
-     *            同期レスポンスヘッダ
-     *
-     * @return update(/delete)できる場合true.
-     */
-    public boolean canUpdate(
-            SyncRequestHeader requestHeader,
-            SyncResponseHeader responseHeaderBeforUpdate);
+	/**
+	 * ロック取得状況に応じて、リソースの更新が実行できるか判定します.<br>
+	 * 同期リクエストのヘッダオブジェクトと、同期対象をGETして得られたレスポンスヘッダオブジェクトの内容を判定に使用します.
+	 *
+	 * @param requestHeader 同期リクエストヘッダ
+	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 * @return update(/delete)できる場合true.
+	 */
+	public boolean canUpdate(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate);
 
-    /**
-     * ロックを解除します.
-     *
-     * @param requestHeader
-     *            同期リクエストヘッダ
-     * @param responseHeaderBeforUpdate
-     *            同期レスポンスヘッダ
-     *
-     */
-    public void release(
-            SyncRequestHeader requestHeader,
-            SyncResponseHeader responseHeaderBeforUpdate);
+	/**
+	 * ロックを解除します.
+	 *
+	 * @param requestHeader 同期リクエストヘッダ
+	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 */
+	public void release(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate);
 }

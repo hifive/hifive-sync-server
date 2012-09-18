@@ -16,42 +16,63 @@
  */
 package com.htmlhifive.sync.resource;
 
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htmlhifive.sync.exception.PessimisticLockException;
+
 /**
  * リソース対する悲観的ロック方式での制御ロジッククラス.<br>
- * TODO: ロックエラーの要件決め、実装
- *
- * @author kawaguch
+ * TODO:未実装
  */
+@Deprecated
+@Service
 @Transactional(propagation = Propagation.MANDATORY)
 public class PessimisticLockManager implements LockManager {
 
-    // @Resource
-    // private SyncProvider commonDataService;
+	// @Resource
+	// private SyncProvider commonDataService;
 
-    @Override
-    public boolean lock(
-            SyncRequestHeader requestHeader,
-            SyncResponseHeader responseHeaderBeforUpdate) {
+	/**
+	 * ロックを取得します.<br>
+	 * 仮実装として、PessimisticLockExceptionをスローします.
+	 *
+	 * @param requestHeader 同期リクエストヘッダ
+	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 * @return
+	 */
+	@Override
+	public boolean lock(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate)
+			throws PessimisticLockException {
 
-        return false;
-    }
+		throw new PessimisticLockException();
+	}
 
-    @Override
-    public boolean canUpdate(
-            SyncRequestHeader requestHeader,
-            SyncResponseHeader responseHeaderBeforUpdate) {
+	/**
+	 * ロック取得状況に応じて、リソースの更新が実行できるか判定します.<br>
+	 * 仮実装として、PessimisticLockExceptionをスローします.
+	 *
+	 * @param requestHeader 同期リクエストヘッダ
+	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 * @return
+	 */
+	@Override
+	public boolean canUpdate(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate)
+			throws PessimisticLockException {
 
-        return false;
-    }
+		throw new PessimisticLockException();
+	}
 
-    @Override
-    public void release(
-            SyncRequestHeader requestHeader,
-            SyncResponseHeader responseHeaderBeforUpdate) {
+	/**
+	 * ロックを解除します.<br>
+	 * 仮実装として、空実装とします.
+	 *
+	 * @param requestHeader 同期リクエストヘッダ
+	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 */
+	@Override
+	public void release(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate) {
 
-    }
-
+	}
 }

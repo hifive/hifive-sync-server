@@ -16,6 +16,7 @@
  */
 package com.htmlhifive.sync.resource;
 
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,67 +26,49 @@ import org.springframework.transaction.annotation.Transactional;
  *
  * @author kawaguch
  */
+@Service
 @Transactional(propagation = Propagation.MANDATORY)
 public class OptimisticLockManager implements LockManager {
 
-    /**
-     * ロックエラー発生時の更新戦略、競合判定クラス.
-     */
-    // private OptimisticLockUpdateStrategy updateStrategy;
+	/**
+	 * ロックを取得します.<br>
+	 * 楽観的ロック方式では常にtrueを返し、更新の実行自体は可能です.
+	 *
+	 * @param requestHeader 同期リクエストヘッダ
+	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 * @return true.
+	 */
+	@Override
+	public boolean lock(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate) {
 
-    /**
-     * ロックを取得します.<br>
-     * 楽観的ロック方式では常にtrueを返し、更新の実行自体は可能です.
-     *
-     * @param requestHeader
-     *            同期リクエストヘッダ
-     * @param responseHeaderBeforUpdate
-     *            同期レスポンスヘッダ
-     *
-     * @return true.
-     */
-    @Override
-    public boolean lock(
-            SyncRequestHeader requestHeader,
-            SyncResponseHeader responseHeaderBeforUpdate) {
+		return true;
+	}
 
-        return true;
-    }
+	/**
+	 * ロック取得状況に応じて、リソースの更新が実行できるか判定します.<br>
+	 * 楽観的ロック方式では、更新の実行に際して最終更新日付を比較し、すでにサーバ側の更新が発生していた場合にロックエラーとなります.<br>
+	 * ロックエラー発生時、リソースで採用されている更新戦略に従い、競合判定および更新を実施します.
+	 *
+	 * @param requestHeader 同期リクエストヘッダ
+	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 * @return update(/delete)できる場合true.
+	 */
+	@Override
+	public boolean canUpdate(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate) {
 
-    /**
-     * ロック取得状況に応じて、リソースの更新が実行できるか判定します.<br>
-     * 楽観的ロック方式では、更新の実行に際して最終更新日付を比較し、すでにサーバ側の更新が発生していた場合にロックエラーとなります.<br>
-     * ロックエラー発生時、リソースで採用されている更新戦略に従い、競合判定および更新を実施します.
-     *
-     * @param requestHeader
-     *            同期リクエストヘッダ
-     * @param responseHeaderBeforUpdate
-     *            同期レスポンスヘッダ
-     *
-     * @return update(/delete)できる場合true.
-     */
-    @Override
-    public boolean canUpdate(
-            SyncRequestHeader requestHeader,
-            SyncResponseHeader responseHeaderBeforUpdate) {
+		return requestHeader.getLastModified() >= responseHeaderBeforUpdate.getLastModified();
+	}
 
-        return requestHeader.getLastModified() >= responseHeaderBeforUpdate.getLastModified();
-    }
+	/**
+	 * ロックを解除します.<br>
+	 * 楽観的ロック方式ではロックを取得しないため、処理を実行しません.
+	 *
+	 * @param requestHeader 同期リクエストヘッダ
+	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 */
+	@Override
+	public void release(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate) {
 
-    /**
-     * ロックを解除します.<br>
-     * 楽観的ロック方式ではロックを取得しないため、処理を実行しません.
-     *
-     * @param requestHeader
-     *            同期リクエストヘッダ
-     * @param responseHeaderBeforUpdate
-     *            同期レスポンスヘッダ
-     */
-    @Override
-    public void release(
-            SyncRequestHeader requestHeader,
-            SyncResponseHeader responseHeaderBeforUpdate) {
-
-        // ロジックなし
-    }
+		// ロジックなし
+	}
 }

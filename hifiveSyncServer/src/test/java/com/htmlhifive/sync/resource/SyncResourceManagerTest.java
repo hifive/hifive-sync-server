@@ -3,7 +3,6 @@
  */
 package com.htmlhifive.sync.resource;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -23,7 +22,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 
 import com.htmlhifive.sync.sample.person.PersonResource;
-import com.htmlhifive.sync.sample.scd.ScheduleResource;
 
 /**
  * <H3>SyncResourceManagerのテストクラス.</H3>
@@ -55,21 +53,46 @@ public class SyncResourceManagerTest {
 
 		// Arrange：正常系
 		final String dataModelName = "person";
-		final Class<PersonResource> expectedClass = PersonResource.class;
-		final PersonResource expected = new PersonResource();
+		final Class<PersonResource> expectedResourceClass = PersonResource.class;
+
+		final Class<? extends LockManager> expectedLockManagerClass = OptimisticLockManager.class;
+		final LockManager expectedLockManager = new OptimisticLockManager();
+
+		final Class<? extends OptimisticLockUpdateStrategy> expectedUpdateStrategyClass = ClientResolvingStrategy.class;
+		final OptimisticLockUpdateStrategy expectedUpdateStrategy = new ClientResolvingStrategy();
+
+		final PersonResource expectedResource = new PersonResource();
+		expectedResource.setLockManager(expectedLockManager);
+		expectedResource.setUpdateStrategy(expectedUpdateStrategy);
 
 		new Expectations() {
 			Map<String, Class<? extends SyncResource<?>>> resourceMap;
+			Map<String, Class<? extends LockManager>> lockManagerMap;
+			Map<String, Class<? extends OptimisticLockUpdateStrategy>> updateStrategyMap;
 			ApplicationContext context;
 			{
 				setField(target, "resourceMap", resourceMap);
+				setField(target, "lockManagerMap", lockManagerMap);
+				setField(target, "updateStrategyMap", updateStrategyMap);
 				setField(target, context);
 
 				resourceMap.get(dataModelName);
-				result = expectedClass;
+				result = expectedResourceClass;
 
-				context.getBean(expectedClass);
-				result = expected;
+				context.getBean(expectedResourceClass);
+				result = expectedResource;
+
+				lockManagerMap.get(dataModelName);
+				result = expectedLockManagerClass;
+
+				context.getBean(expectedLockManagerClass);
+				result = expectedLockManager;
+
+				updateStrategyMap.get(dataModelName);
+				result = expectedUpdateStrategyClass;
+
+				context.getBean(expectedUpdateStrategyClass);
+				result = expectedUpdateStrategy;
 			}
 		};
 
@@ -77,7 +100,7 @@ public class SyncResourceManagerTest {
 		SyncResource<?> actual = target.locateSyncResource(dataModelName);
 
 		// Assert：結果が正しいこと
-		assertThat((PersonResource) actual, is(expected));
+		assertThat((PersonResource) actual, is(expectedResource));
 	}
 
 	/**
@@ -167,34 +190,7 @@ public class SyncResourceManagerTest {
 			}
 		};
 
-		new Expectations() {
-			ApplicationContext context;
-			{
-				setField(target, context);
-
-				context.getBean(PersonResource.class);
-				result = new PersonResource();
-
-				context.getBean(ScheduleResource.class);
-				result = new ScheduleResource();
-			}
-		};
-
 		assertThat(target, notNullValue());
 		assertThat(target.getAllDataModelNames(), is(expectedResourceMap));
-		assertEqualsHelper(target.locateSyncResource("person").getClass().getAnnotation(SyncResourceService.class)
-				.lockManager(), OptimisticLockManager.class);
-		assertEqualsHelper(target.locateSyncResource("schedule").getClass().getAnnotation(SyncResourceService.class)
-				.lockManager(), OptimisticLockManager.class);
-	}
-
-	/**
-	 * キャプチャヘルパー
-	 *
-	 * @param a
-	 * @param b
-	 */
-	private <E> void assertEqualsHelper(E a, E b) {
-		assertThat(a, is(equalTo(b)));
 	}
 }

@@ -29,6 +29,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htmlhifive.sync.exception.NotFoundException;
+import com.htmlhifive.sync.resource.ClientResolvingStrategy;
+import com.htmlhifive.sync.resource.OptimisticLockManager;
 import com.htmlhifive.sync.resource.SyncResourceService;
 import com.htmlhifive.sync.resource.separated.SeparatedCommonDataSyncResource;
 import com.htmlhifive.sync.sample.person.PersonBean;
@@ -40,7 +42,7 @@ import com.htmlhifive.sync.sample.person.PersonRepository;
  *
  * @author kishigam
  */
-@SyncResourceService(syncDataModel = "schedule")
+@SyncResourceService(syncDataModel = "schedule", lockManager = OptimisticLockManager.class, updateStrategy = ClientResolvingStrategy.class)
 @Transactional(propagation = Propagation.MANDATORY)
 public class ScheduleResource extends SeparatedCommonDataSyncResource<String, ScheduleResourceElement> {
 

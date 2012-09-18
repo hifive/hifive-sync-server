@@ -16,11 +16,26 @@
  */
 package com.htmlhifive.sync.resource;
 
+import com.htmlhifive.sync.exception.ConflictException;
+
 /**
  * 楽観的ロック方式におけるロックエラー発生時の更新戦略、競合判定ロジックのインターフェース.<br>
- * TODO:メソッド、実装クラスのラインナップの決定
  *
  * @author kishigam
  */
 public interface OptimisticLockUpdateStrategy {
+
+	/**
+	 * 引数の情報をもとに更新可否を判断します.<br>
+	 * 更新可能な場合、更新に使用するエレメントを返し、そうでない場合、サーバ側エレメントを含むConflictExceptionをスローします.
+	 *
+	 * @param requestHeader 同期リクエストヘッダ
+	 * @param clientElement リクエストされたエレメント、DELETEの場合null
+	 * @param responseHeader 同期レスポンスヘッダ(リクエスト処理前のサーバ側共通データ)
+	 * @param serverElement リクエスト処理前のサーバ側エレメント(DELETE済み場合null)
+	 * @return 更新に用いるエレメント
+	 * @throws ConflictException 競合が解決できず、更新不可の場合
+	 */
+	<E> E resolveConflict(SyncRequestHeader requestHeader, E clientElement, SyncResponseHeader responseHeader,
+			E serverElement) throws ConflictException;
 }

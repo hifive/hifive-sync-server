@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htmlhifive.sync.exception.DuplicateElementException;
 import com.htmlhifive.sync.exception.NotFoundException;
+import com.htmlhifive.sync.resource.ClientResolvingStrategy;
 import com.htmlhifive.sync.resource.OptimisticLockManager;
 import com.htmlhifive.sync.resource.SyncResourceService;
 import com.htmlhifive.sync.resource.separated.SeparatedCommonDataSyncResource;
@@ -35,7 +36,7 @@ import com.htmlhifive.sync.resource.separated.SeparatedCommonDataSyncResource;
  * personデータモデルの情報を同期リソースとして公開するためのリソースクラス.<br>
  * 同期データを専用サービスで管理する抽象リソースクラスをこのリソース用に実装します.
  */
-@SyncResourceService(syncDataModel = "person", lockManager = OptimisticLockManager.class)
+@SyncResourceService(syncDataModel = "person", lockManager = OptimisticLockManager.class, updateStrategy = ClientResolvingStrategy.class)
 @Transactional(propagation = Propagation.MANDATORY)
 public class PersonResource extends SeparatedCommonDataSyncResource<String, PersonResourceElement> {
 

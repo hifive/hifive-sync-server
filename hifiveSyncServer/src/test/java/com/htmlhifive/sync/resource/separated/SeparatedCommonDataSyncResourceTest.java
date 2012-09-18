@@ -24,6 +24,8 @@ import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.exception.DuplicateElementException;
 import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.resource.LockManager;
+import com.htmlhifive.sync.resource.OptimisticLockUpdateStrategy;
+import com.htmlhifive.sync.resource.SyncMethod;
 import com.htmlhifive.sync.resource.SyncProvider;
 import com.htmlhifive.sync.resource.SyncRequestHeader;
 import com.htmlhifive.sync.resource.SyncResourceService;
@@ -519,10 +521,12 @@ public class SeparatedCommonDataSyncResourceTest {
 		new Expectations() {
 			SyncProvider syncProvider;
 			LockManager lockManager;
+			OptimisticLockUpdateStrategy updateStrategy;
 			{
 
 				setField(target, "syncProvider", syncProvider);
 				setField(target, "lockManager", lockManager);
+				setField(target, "updateStrategy", updateStrategy);
 
 				syncProvider.getCommonData(requestHeader);
 				result = expectedResponseHeaderBeforeUpdate;
@@ -594,15 +598,15 @@ public class SeparatedCommonDataSyncResourceTest {
 		putHelper(target, requestHeader, updateElement);
 	}
 
-	//	 TODO:悲観的ロック対応、楽観的ロックの更新戦略適用
+	//	 TODO:悲観的ロック対応
 	/**
 	 * {@link SeparatedCommonDataSyncResource#get(SyncRequestHeader)}用テストメソッド.<br>
-	 * lockManagerでロックエラーとなった場合、ConflictExceptionがスローされる.
+	 * lockManagerでロックエラーとなり、更新戦略がClientResolvingのためConflictExceptionがスローされる.
 	 *
 	 * @param requestHeader 引数のモック
 	 */
 	@Test
-	public void testCannotPutBecauseOfConflict(@Mocked final SyncRequestHeader requestHeader) {
+	public void testCannotPutBecauseOfConflict(@Mocked final SyncRequestHeader requestHeader) throws Exception {
 
 		// Arrange：例外系
 		final String resourceIdStr = "test1";
@@ -619,16 +623,22 @@ public class SeparatedCommonDataSyncResourceTest {
 		new Expectations() {
 			SyncProvider syncProvider;
 			LockManager lockManager;
+			OptimisticLockUpdateStrategy updateStrategy;
 			{
 
 				setField(target, "syncProvider", syncProvider);
 				setField(target, "lockManager", lockManager);
+				setField(target, "updateStrategy", updateStrategy);
 
 				syncProvider.getCommonData(requestHeader);
 				result = expectedResponseHeaderBeforeUpdate;
 
 				lockManager.canUpdate(requestHeader, expectedResponseHeaderBeforeUpdate);
 				result = false;
+
+				updateStrategy.resolveConflict(requestHeader, updateElement, expectedResponseHeaderBeforeUpdate,
+						elementBeforeUpdate);
+				result = new ConflictException(expectedConflictResponse);
 			}
 		};
 
@@ -739,7 +749,7 @@ public class SeparatedCommonDataSyncResourceTest {
 		target.delete(requestHeader);
 	}
 
-	//	 TODO:悲観的ロック対応、楽観的ロックの更新戦略適用
+	//	 TODO:悲観的ロック対応
 	/**
 	 * {@link SeparatedCommonDataSyncResource#delete(SyncRequestHeader)}用テストメソッド.<br>
 	 * lockManagerでロックエラーとなった場合、ConflictExceptionがスローされる.
@@ -747,7 +757,7 @@ public class SeparatedCommonDataSyncResourceTest {
 	 * @param requestHeader 引数のモック
 	 */
 	@Test
-	public void testCannotDeleteBecauseOfConflict(@Mocked final SyncRequestHeader requestHeader) {
+	public void testCannotDeleteBecauseOfConflict(@Mocked final SyncRequestHeader requestHeader) throws Exception {
 
 		// Arrange：例外系
 		final String resourceIdStr = "test1";
@@ -763,16 +773,22 @@ public class SeparatedCommonDataSyncResourceTest {
 		new Expectations() {
 			SyncProvider syncProvider;
 			LockManager lockManager;
+			OptimisticLockUpdateStrategy updateStrategy;
 			{
 
 				setField(target, "syncProvider", syncProvider);
 				setField(target, "lockManager", lockManager);
+				setField(target, "updateStrategy", updateStrategy);
 
 				syncProvider.getCommonData(requestHeader);
 				result = expectedResponseHeaderBeforeUpdate;
 
 				lockManager.canUpdate(requestHeader, expectedResponseHeaderBeforeUpdate);
 				result = false;
+
+				updateStrategy.resolveConflict(requestHeader, null, expectedResponseHeaderBeforeUpdate,
+						elementBeforeUpdate);
+				result = new ConflictException(expectedConflictResponse);
 			}
 		};
 
@@ -786,6 +802,66 @@ public class SeparatedCommonDataSyncResourceTest {
 			// Assert：結果が正しいこと
 			assertEqualsHelper(actual.getConflictedResponse(), expectedConflictResponse);
 		}
+	}
+
+	//	 TODO:悲観的ロック対応
+	/**
+	 * {@link SeparatedCommonDataSyncResource#delete(SyncRequestHeader)}用テストメソッド.<br>
+	 * lockManagerでロックエラーとなり、更新戦略に従って更新すべきエレメントが決定した場合、put処理が行われる.
+	 *
+	 * @param requestHeader 引数のモック
+	 */
+	@Test
+	public void testChangingDeleteToPutBecauseOfConflictResolved(@Mocked final SyncRequestHeader requestHeader)
+			throws Exception {
+
+		// Arrange：例外系
+		final String resourceIdStr = "test1";
+		final Object elementBeforeUpdate = new Object();
+
+		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClass(resourceIdStr, elementBeforeUpdate);
+
+		final SyncResponseHeader expectedResponseHeaderBeforeUpdate = new SyncResponseHeader(resourceIdStr);
+
+		final Object putElement = new Object();
+		final SyncResponseHeader expectedResponseHeaderAfterUpdate = new SyncResponseHeader(resourceIdStr);
+		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedResponseHeaderAfterUpdate, putElement);
+
+		new Expectations() {
+			SyncProvider syncProvider;
+			LockManager lockManager;
+			OptimisticLockUpdateStrategy updateStrategy;
+			{
+
+				setField(target, "syncProvider", syncProvider);
+				setField(target, "lockManager", lockManager);
+				setField(target, "updateStrategy", updateStrategy);
+
+				syncProvider.getCommonData(requestHeader);
+				result = expectedResponseHeaderBeforeUpdate;
+
+				lockManager.canUpdate(requestHeader, expectedResponseHeaderBeforeUpdate);
+				result = false;
+
+				updateStrategy.resolveConflict(requestHeader, null, expectedResponseHeaderBeforeUpdate,
+						elementBeforeUpdate);
+				result = putElement;
+
+				// リクエストヘッダが書き換えられる
+				requestHeader.setSyncMethod(SyncMethod.PUT);
+
+				syncProvider.saveUpdatedCommonData(requestHeader);
+				result = expectedResponseHeaderAfterUpdate;
+
+				lockManager.release(requestHeader, expectedResponseHeaderAfterUpdate);
+			}
+		};
+
+		// Act
+		SyncResponse<?> actual = target.delete(requestHeader);
+
+		// Assert：結果が正しいこと
+		assertEqualsHelper(actual, expectedResponse);
 	}
 
 	/**

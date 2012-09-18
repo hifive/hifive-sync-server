@@ -57,6 +57,12 @@ public class SyncResourceManager {
 	private Map<String, Class<? extends LockManager>> lockManagerMap;
 
 	/**
+	 * リソースごとの(楽観的ロックエラー時の)更新戦略オブジェクトを保持するMap.<br>
+	 * ロックマネージャに悲観的ロックが設定されている場合、このフィールドの値は不定です.
+	 */
+	private Map<String, Class<? extends OptimisticLockUpdateStrategy>> updateStrategyMap;
+
+	/**
 	 * クラスパス上のリソース検索し、Mapに保持してこのクラスのインスタンスを生成します.<br>
 	 * {@link SyncResource} インターフェースを実装し、{@link SyncResourceService} アノテーションを付与したクラスをリソースとします.
 	 */
@@ -65,12 +71,12 @@ public class SyncResourceManager {
 
 		this.resourceMap = new HashMap<>();
 		this.lockManagerMap = new HashMap<>();
+		this.updateStrategyMap = new HashMap<>();
 
 		try {
 			ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
 			scanner.addIncludeFilter(new AnnotationTypeFilter(SyncResourceService.class));
 
-			// TODO ターゲットパッケージの指定方法検討
 			Set<BeanDefinition> beans = scanner.findCandidateComponents("");
 
 			for (BeanDefinition def : beans) {
@@ -98,8 +104,12 @@ public class SyncResourceManager {
 				resourceMap.put(dataModelName, resourceClass);
 
 				// ロックマネージャを特定する
-				//				resourceDef = resourceClass.getAnnotation(SyncResourceService.class);
 				lockManagerMap.put(dataModelName, resourceDef.lockManager());
+
+				// 更新戦略オブジェクトを特定する
+				// ロックマネージャが悲観的ロックであってもデフォルトの更新戦略オブジェクトを保持するが、使用されることはない
+				updateStrategyMap.put(dataModelName, resourceDef.updateStrategy());
+
 			}
 
 		} catch (ClassNotFoundException e) {
@@ -124,13 +134,9 @@ public class SyncResourceManager {
 
 		SyncResource<?> sr = context.getBean(resourceClass);
 
-		// LockManagerのセット
-		try {
-			sr.setLockManager(lockManagerMap.get(dataModelName).newInstance());
-		} catch (InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
-			throw new RuntimeException(e);
-		}
+		// LockManager,UpdateStrategyのセット
+		sr.setLockManager(context.getBean(lockManagerMap.get(dataModelName)));
+		sr.setUpdateStrategy(context.getBean(updateStrategyMap.get(dataModelName)));
 
 		return sr;
 	}

@@ -33,17 +33,24 @@ import org.springframework.stereotype.Service;
 @Service
 public @interface SyncResourceService {
 
-    /**
-     * リソースが扱うデータモデル名.<br>
-     *
-     * @return データモデル名
-     */
-    String syncDataModel();
+	/**
+	 * リソースが扱うデータモデル名.<br>
+	 *
+	 * @return データモデル名
+	 */
+	String syncDataModel();
 
-    /**
-     * リソースが使用するLockManagerのクラスオブジェクト.<br>
-     *
-     * @return LockManagerのクラス名
-     */
-    Class<? extends LockManager> lockManager() default OptimisticLockManager.class;
+	/**
+	 * リソースが使用するLockManagerのクラスオブジェクト.<br>
+	 *
+	 * @return LockManagerのクラス名
+	 */
+	Class<? extends LockManager> lockManager() default OptimisticLockManager.class;
+
+	/**
+	 * リソースが使用する(楽観的ロックにおける)更新戦略のクラスオブジェクト.<br>
+	 *
+	 * @return LockManagerのクラス名
+	 */
+	Class<? extends OptimisticLockUpdateStrategy> updateStrategy() default ClientResolvingStrategy.class;
 }

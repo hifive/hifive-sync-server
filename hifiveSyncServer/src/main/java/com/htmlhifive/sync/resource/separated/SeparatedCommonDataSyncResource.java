@@ -26,6 +26,8 @@ import javax.annotation.Resource;
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.exception.DuplicateElementException;
 import com.htmlhifive.sync.resource.LockManager;
+import com.htmlhifive.sync.resource.OptimisticLockUpdateStrategy;
+import com.htmlhifive.sync.resource.SyncMethod;
 import com.htmlhifive.sync.resource.SyncProvider;
 import com.htmlhifive.sync.resource.SyncRequestHeader;
 import com.htmlhifive.sync.resource.SyncResource;
@@ -54,6 +56,11 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 	 * リソースが生成される際に{@link SyncResourceManager } からセットされる.
 	 */
 	private LockManager lockManager;
+
+	/**
+	 * ロックエラー発生時の競合解決を行う更新戦略オブジェクト.
+	 */
+	private OptimisticLockUpdateStrategy updateStrategy;
 
 	/**
 	 * リクエストヘッダが指定する単一のリソースエレメントを取得します.<br>
@@ -116,21 +123,26 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 
 		SyncResponseHeader responseHeaderBeforUpdate = syncProvider.getCommonData(requestHeader);
 
-		SyncResponseHeader responseHeaderAfterUpdate = null;
-
+		// ロックエラー判定
+		E putElement = element;
 		if (!lockManager.canUpdate(requestHeader, responseHeaderBeforUpdate)) {
 
-			// TODO:楽観ロック解決戦略の考慮→Managerへ
-			throw new ConflictException("resource element has updated.", new SyncResponse<>(responseHeaderBeforUpdate,
-					getImpl(responseHeaderBeforUpdate.getResourceIdStr())));
+			// サーバで保持しているエレメントを取得
+			E serverElement = responseHeaderBeforUpdate.getSyncMethod() == SyncMethod.DELETE ? null
+					: getImpl(responseHeaderBeforUpdate.getResourceIdStr());
+
+			// 楽観ロックエラー時の競合解決、更新エレメントを決定
+			putElement = updateStrategy.resolveConflict(requestHeader, element, responseHeaderBeforUpdate,
+					serverElement);
 		}
 
-		putImpl(responseHeaderBeforUpdate.getResourceIdStr(), element);
-		responseHeaderAfterUpdate = syncProvider.saveUpdatedCommonData(requestHeader);
+		putImpl(responseHeaderBeforUpdate.getResourceIdStr(), putElement);
+
+		SyncResponseHeader responseHeaderAfterUpdate = syncProvider.saveUpdatedCommonData(requestHeader);
 
 		lockManager.release(requestHeader, responseHeaderAfterUpdate);
 
-		return new SyncResponse<>(responseHeaderAfterUpdate, element);
+		return new SyncResponse<>(responseHeaderAfterUpdate, putElement);
 	}
 
 	/**
@@ -146,20 +158,33 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 
 		SyncResponseHeader responseHeaderBeforUpdate = syncProvider.getCommonData(requestHeader);
 
-		SyncResponseHeader responseHeaderAfterUpdate = null;
-
+		// ロックエラー判定
+		E putElement = null;
 		if (!lockManager.canUpdate(requestHeader, responseHeaderBeforUpdate)) {
-			// TODO:楽観ロック解決戦略の考慮→Managerへ
-			throw new ConflictException("resource element has updated.", new SyncResponse<>(responseHeaderBeforUpdate,
-					getImpl(responseHeaderBeforUpdate.getResourceIdStr())));
+
+			// サーバで保持しているエレメントを取得
+			E serverElement = responseHeaderBeforUpdate.getSyncMethod() == SyncMethod.DELETE ? null
+					: getImpl(responseHeaderBeforUpdate.getResourceIdStr());
+
+			// 楽観ロックエラー時の競合解決
+			putElement = updateStrategy.resolveConflict(requestHeader, null, responseHeaderBeforUpdate, serverElement);
 		}
 
-		deleteImpl(responseHeaderBeforUpdate.getResourceIdStr());
+		// 更新するエレメントがあればputを行う
+		SyncResponseHeader responseHeaderAfterUpdate;
+		if (putElement == null) {
+			deleteImpl(responseHeaderBeforUpdate.getResourceIdStr());
+		} else {
+			putImpl(responseHeaderBeforUpdate.getResourceIdStr(), putElement);
+
+			// リクエストヘッダの同期メソッドを書き換える
+			requestHeader.setSyncMethod(SyncMethod.PUT);
+		}
 		responseHeaderAfterUpdate = syncProvider.saveUpdatedCommonData(requestHeader);
 
 		lockManager.release(requestHeader, responseHeaderAfterUpdate);
 
-		return new SyncResponse<>(responseHeaderAfterUpdate, null);
+		return new SyncResponse<>(responseHeaderAfterUpdate, putElement);
 	}
 
 	/**
@@ -272,10 +297,24 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 	}
 
 	/**
+	 * リソースのロックを管理するマネージャを設定します.<br>
+	 * 通常、アプリケーションから使用することはありません.
+	 *
 	 * @param lockManager セットする lockManager
 	 */
 	@Override
 	public void setLockManager(LockManager lockManager) {
 		this.lockManager = lockManager;
+	}
+
+	/**
+	 * リソースが楽観的ロックを使用している時にロックエラー発生時の更新方法を指定するストラテジーオブジェクトを設定します.<br>
+	 * 通常、アプリケーションから使用することはありません.
+	 *
+	 * @param updateStrategy セットする updateStrategy
+	 */
+	@Override
+	public void setUpdateStrategy(OptimisticLockUpdateStrategy updateStrategy) {
+		this.updateStrategy = updateStrategy;
 	}
 }
