@@ -72,8 +72,6 @@ public class SyncResponseHeader {
 	 */
 	private String storageLocalId;
 
-	private boolean conflicted;
-
 	/**
 	 * リソースID文字列を指定してレスポンスヘッダオブジェクトを生成します.
 	 *
@@ -221,19 +219,5 @@ public class SyncResponseHeader {
 	 */
 	public void setStorageLocalId(String storageLocalId) {
 		this.storageLocalId = storageLocalId;
-	}
-
-	/**
-	 * @return conflicted
-	 */
-	public boolean isConflicted() {
-		return conflicted;
-	}
-
-	/**
-	 * @param conflicted セットする conflicted
-	 */
-	public void setConflicted(boolean conflicted) {
-		this.conflicted = conflicted;
 	}
 }

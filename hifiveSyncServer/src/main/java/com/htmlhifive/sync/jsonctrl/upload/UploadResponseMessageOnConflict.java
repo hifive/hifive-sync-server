@@ -26,103 +26,89 @@ import com.htmlhifive.sync.resource.SyncResponse;
  */
 public class UploadResponseMessageOnConflict<E> extends UploadResponseMessage {
 
-    /**
-     * 競合が発生したことを示すフラグ.
-     */
-    private boolean conflicted = true;
+	/**
+	 * 競合が発生したことを示すフラグ.
+	 */
+	private final boolean conflicted = true;
 
-    /**
-     * データモデル名.
-     */
-    private String dataModelName;
+	/**
+	 * データモデル名.
+	 */
+	private String dataModelName;
 
-    /**
-     * 最終更新時刻.<br>
-     * 競合の原因となった更新が実行された時刻.
-     */
-    private long lastModified;
+	/**
+	 * 最終更新時刻.<br>
+	 * 競合の原因となった更新が実行された時刻.
+	 */
+	private long lastModified;
 
-    /**
-     * 競合原因となった更新によって登録されたリソースエレメント.
-     */
-    private E element;
+	/**
+	 * 競合原因となった更新によって登録されたリソースエレメント.
+	 */
+	private E element;
 
-    /**
-     * 上り更新の競合を表現する上り更新レスポンスメッセージを生成します.
-     *
-     * @param response
-     *            同期レスポンスオブジェクト
-     */
-    public UploadResponseMessageOnConflict(SyncResponse<E> response) {
+	/**
+	 * 上り更新の競合を表現する上り更新レスポンスメッセージを生成します.
+	 *
+	 * @param response 同期レスポンスオブジェクト
+	 */
+	public UploadResponseMessageOnConflict(SyncResponse<E> response) {
 
-        super(
-                response.getHeader().getSyncDataId(),
-                JsonDataConvertor.convertSyncMethodToAction(response.getHeader().getSyncMethod()));
+		super(response.getHeader().getSyncDataId(), JsonDataConvertor.convertSyncMethodToAction(response.getHeader()
+				.getSyncMethod()));
 
-        this.conflicted = response.getHeader().isConflicted();
-        this.dataModelName = response.getHeader().getDataModelName();
-        this.lastModified = response.getHeader().getLastModified();
+		this.dataModelName = response.getHeader().getDataModelName();
+		this.lastModified = response.getHeader().getLastModified();
 
-        this.element = response.getElement();
-    }
+		this.element = response.getElement();
+	}
 
-    /**
-     * @return conflicted
-     */
-    public boolean isConflicted() {
-        return conflicted;
-    }
+	/**
+	 * @return conflicted
+	 */
+	public boolean isConflicted() {
+		return conflicted;
+	}
 
-    /**
-     * @param conflicted
-     *            セットする conflicted
-     */
-    public void setConflicted(boolean conflicted) {
-        this.conflicted = conflicted;
-    }
+	/**
+	 * @return dataModelName
+	 */
+	public String getDataModelName() {
+		return dataModelName;
+	}
 
-    /**
-     * @return dataModelName
-     */
-    public String getDataModelName() {
-        return dataModelName;
-    }
+	/**
+	 * @param dataModelName セットする dataModelName
+	 */
+	public void setDataModelName(String dataModelName) {
+		this.dataModelName = dataModelName;
+	}
 
-    /**
-     * @param dataModelName
-     *            セットする dataModelName
-     */
-    public void setDataModelName(String dataModelName) {
-        this.dataModelName = dataModelName;
-    }
+	/**
+	 * @return lastModified
+	 */
+	public long getLastModified() {
+		return lastModified;
+	}
 
-    /**
-     * @return lastModified
-     */
-    public long getLastModified() {
-        return lastModified;
-    }
+	/**
+	 * @param lastModified セットする lastModified
+	 */
+	public void setLastModified(long lastModified) {
+		this.lastModified = lastModified;
+	}
 
-    /**
-     * @param lastModified
-     *            セットする lastModified
-     */
-    public void setLastModified(long lastModified) {
-        this.lastModified = lastModified;
-    }
+	/**
+	 * @return element
+	 */
+	public E getElement() {
+		return element;
+	}
 
-    /**
-     * @return element
-     */
-    public E getElement() {
-        return element;
-    }
-
-    /**
-     * @param element
-     *            セットする element
-     */
-    public void setElement(E element) {
-        this.element = element;
-    }
+	/**
+	 * @param element セットする element
+	 */
+	public void setElement(E element) {
+		this.element = element;
+	}
 }
