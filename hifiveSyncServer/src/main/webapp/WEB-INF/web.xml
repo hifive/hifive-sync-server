@@ -18,16 +18,16 @@
 		<filter-class>org.springframework.web.filter.HiddenHttpMethodFilter</filter-class>
 	</filter>
 
-	<filter-mapping>
-		<filter-name>httpMethodFilter</filter-name>
-		<url-pattern>/*</url-pattern>
-	</filter-mapping>
-
 	<!-- Enables Spring Security -->
 	<filter>
 		<filter-name>springSecurityFilterChain</filter-name>
 		<filter-class>org.springframework.web.filter.DelegatingFilterProxy</filter-class>
 	</filter>
+
+	<filter-mapping>
+		<filter-name>httpMethodFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
 
 	<filter-mapping>
 		<filter-name>springSecurityFilterChain</filter-name>
@@ -65,6 +65,6 @@
 	</servlet-mapping>
 
 	<welcome-file-list>
-		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>index.html</welcome-file>
 	</welcome-file-list>
 </web-app>
