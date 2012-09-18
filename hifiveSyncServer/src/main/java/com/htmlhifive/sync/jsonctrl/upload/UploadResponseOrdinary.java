@@ -16,7 +16,12 @@
  */
 package com.htmlhifive.sync.jsonctrl.upload;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.htmlhifive.sync.ctrl.SyncUploadResult;
+import com.htmlhifive.sync.resource.SyncMethod;
+import com.htmlhifive.sync.resource.SyncResponse;
 
 /**
  * 上り更新リクエストに対する同期成功時のレスポンスデータクラス.
@@ -25,14 +30,23 @@ import com.htmlhifive.sync.ctrl.SyncUploadResult;
  */
 public class UploadResponseOrdinary extends UploadResponse {
 
-    /**
-     * 上り更新結果オブジェクトからレスポンスデータを生成します.
-     *
-     * @param uploadResult
-     *            上り更新結果オブジェクト
-     */
-    public UploadResponseOrdinary(SyncUploadResult uploadResult) {
+	/**
+	 * 上り更新結果オブジェクトからレスポンスデータを生成します.
+	 *
+	 * @param uploadResult 上り更新結果オブジェクト
+	 */
+	public UploadResponseOrdinary(SyncUploadResult uploadResult) {
 
-        super(uploadResult.getResultDataSet());
-    }
+		List<UploadResponseMessage> dataList = new ArrayList<>();
+
+		for (SyncResponse<?> response : uploadResult.getResultDataSet()) {
+
+			UploadResponseMessage message = response.getHeader().getSyncMethod() == SyncMethod.POST ? new UploadResponseMessageForNewData(
+					response) : new UploadResponseMessageOrdinary(response);
+
+			dataList.add(message);
+		}
+
+		setDataList(dataList);
+	}
 }

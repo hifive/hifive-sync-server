@@ -16,8 +16,12 @@
  */
 package com.htmlhifive.sync.jsonctrl.upload;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.htmlhifive.sync.ctrl.SyncResultType;
 import com.htmlhifive.sync.ctrl.SyncUploadResult;
+import com.htmlhifive.sync.resource.SyncResponse;
 
 /**
  * 上り更新リクエストに対する競合発生時のレスポンスデータクラス.
@@ -26,35 +30,42 @@ import com.htmlhifive.sync.ctrl.SyncUploadResult;
  */
 public class UploadResponseOnConflict extends UploadResponse {
 
-    /**
-     * 競合タイプ.
-     */
-    private SyncResultType conflictType;
+	/**
+	 * 競合タイプ.
+	 */
+	private SyncResultType conflictType;
 
-    /**
-     * 上り更新結果オブジェクトからレスポンスデータを生成します.
-     *
-     * @param uploadResult
-     *            上り更新結果オブジェクト
-     */
-    public UploadResponseOnConflict(SyncUploadResult uploadResult) {
+	/**
+	 * 上り更新結果オブジェクトからレスポンスデータを生成します.
+	 *
+	 * @param uploadResult 上り更新結果オブジェクト
+	 */
+	public UploadResponseOnConflict(SyncUploadResult uploadResult) {
 
-        super(uploadResult.getResultDataSet());
-        this.conflictType = uploadResult.getResultType();
-    }
+		List<UploadResponseMessage> dataList = new ArrayList<>();
 
-    /**
-     * @return conflictType
-     */
-    public SyncResultType getConflictType() {
-        return conflictType;
-    }
+		for (SyncResponse<?> response : uploadResult.getResultDataSet()) {
 
-    /**
-     * @param conflictType
-     *            セットする conflictType
-     */
-    public void setConflictType(SyncResultType conflictType) {
-        this.conflictType = conflictType;
-    }
+			UploadResponseMessage message = new UploadResponseMessageOnConflict<>(response);
+
+			dataList.add(message);
+		}
+
+		setDataList(dataList);
+		this.conflictType = uploadResult.getResultType();
+	}
+
+	/**
+	 * @return conflictType
+	 */
+	public SyncResultType getConflictType() {
+		return conflictType;
+	}
+
+	/**
+	 * @param conflictType セットする conflictType
+	 */
+	public void setConflictType(SyncResultType conflictType) {
+		this.conflictType = conflictType;
+	}
 }

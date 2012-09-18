@@ -16,13 +16,9 @@
  */
 package com.htmlhifive.sync.jsonctrl.upload;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import com.htmlhifive.sync.jsonctrl.ResponseBody;
-import com.htmlhifive.sync.resource.SyncMethod;
-import com.htmlhifive.sync.resource.SyncResponse;
 
 /**
  * クライアントからの上り更新リクエストに対するレスポンスデータの抽象クラス.
@@ -31,44 +27,22 @@ import com.htmlhifive.sync.resource.SyncResponse;
  */
 public abstract class UploadResponse implements ResponseBody {
 
-    /**
-     * 上り更新レスポンスの本体となるメッセージオブジェクトのリスト.
-     */
-    private List<UploadResponseMessage> dataList;
+	/**
+	 * 上り更新レスポンスの本体となるメッセージオブジェクトのリスト.
+	 */
+	private List<UploadResponseMessage> dataList;
 
-    /**
-     * 上り更新レスポンスを生成します.
-     *
-     * @param datalList
-     *            同期レスポンスオブジェクトのリスト
-     */
-    public UploadResponse(Set<SyncResponse<?>> responseSet) {
+	/**
+	 * @return dataList
+	 */
+	public List<UploadResponseMessage> getDataList() {
+		return dataList;
+	}
 
-        dataList = new ArrayList<>();
-
-        for (SyncResponse<?> response : responseSet) {
-
-            UploadResponseMessage message =
-                    response.getHeader().getSyncMethod() == SyncMethod.POST
-                            ? new UploadResponseMessageForNewData(response)
-                            : new UploadResponseMessageOrdinary(response);
-
-            dataList.add(message);
-        }
-    }
-
-    /**
-     * @return dataList
-     */
-    public List<UploadResponseMessage> getDataList() {
-        return dataList;
-    }
-
-    /**
-     * @param dataList
-     *            セットする dataList
-     */
-    public void setDataList(List<UploadResponseMessage> dataList) {
-        this.dataList = dataList;
-    }
+	/**
+	 * @param dataList セットする dataList
+	 */
+	protected void setDataList(List<UploadResponseMessage> dataList) {
+		this.dataList = dataList;
+	}
 }
