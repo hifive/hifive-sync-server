@@ -17,7 +17,7 @@
 package com.htmlhifive.sync.ctrl;
 
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.htmlhifive.sync.resource.SyncResponse;
@@ -34,18 +34,22 @@ public abstract class AbstractSyncResult {
 	 * クライアントのストレージID
 	 */
 	private String storageId;
+
 	/**
 	 * 同期結果タイプ.
 	 */
 	private SyncResultType resultType;
+
 	/**
 	 * 同期実行時刻.<br>
 	 */
 	private long currentSyncTime;
+
 	/**
-	 * 同期結果のSet.
+	 * 同期結果のSet.<br>
+	 * 順序を維持するためLinkedHashSetクラスを使用する.
 	 */
-	private Set<SyncResponse<?>> resultDataSet = new HashSet<>();
+	private Set<SyncResponse<?>> resultDataSet = new LinkedHashSet<>();
 
 	/**
 	 * ストレージIDを指定して同期結果オブジェクトを生成します. <br>
