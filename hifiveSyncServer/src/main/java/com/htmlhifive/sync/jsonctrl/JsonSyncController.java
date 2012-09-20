@@ -75,22 +75,15 @@ public class JsonSyncController {
 			"Accept=application/json", "Content-Type=application/json" })
 	public ResponseEntity<DownloadResponseOnInit> syncInit(final @RequestBody DownloadRequest request) {
 
-		try {
-			// ストレージIdを新規採番
-			String newStorageId = generateNewStorageId();
+		// ストレージIdを新規採番
+		String newStorageId = generateNewStorageId();
 
-			AbstractSyncResult downloadResult = synchronizer.syncDownload(newStorageId, request.getResources());
+		AbstractSyncResult downloadResult = synchronizer.syncDownload(newStorageId, request.getResources());
 
-			// レスポンスデータ(初回用)の生成
-			DownloadResponseOnInit responseBody = new DownloadResponseOnInit(downloadResult);
+		// レスポンスデータ(初回用)の生成
+		DownloadResponseOnInit responseBody = new DownloadResponseOnInit(downloadResult);
 
-			return createResponseEntity(responseBody, HttpStatus.OK);
-
-		} catch (Exception e) {
-			// TODO: スタックトレースのロギング
-			e.printStackTrace();
-			throw e;
-		}
+		return createResponseEntity(responseBody, HttpStatus.OK);
 	}
 
 	/**
@@ -106,19 +99,12 @@ public class JsonSyncController {
 	public ResponseEntity<DownloadResponseOrdinary> syncDownload(final @RequestParam("storageid") String storageId,
 			final @RequestBody DownloadRequest request) {
 
-		try {
+		SyncDownloadResult downloadResult = synchronizer.syncDownload(storageId, request.getResources());
 
-			SyncDownloadResult downloadResult = synchronizer.syncDownload(storageId, request.getResources());
+		// レスポンスデータの生成
+		DownloadResponseOrdinary responseBody = new DownloadResponseOrdinary(downloadResult);
 
-			// レスポンスデータの生成
-			DownloadResponseOrdinary responseBody = new DownloadResponseOrdinary(downloadResult);
-
-			return createResponseEntity(responseBody, HttpStatus.OK);
-
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw e;
-		}
+		return createResponseEntity(responseBody, HttpStatus.OK);
 	}
 
 	/**
@@ -145,45 +131,36 @@ public class JsonSyncController {
 	public ResponseEntity<? extends UploadResponse> syncUpload(final @RequestParam("storageid") String storageId,
 			final @RequestBody UploadRequest request) {
 
-		try {
+		// 二重送信の場合は前回処理結果を戻す
+		// そうでない場合、上り更新処理を実行
+		SyncUploadResult uploadResult = statusService.isDuplicatedRequest(storageId, request.getDataList().hashCode()) ? reversionLastResult(storageId)
+				: synchronizer.syncUpload(storageId, request.getDataList());
 
-			// 二重送信の場合は前回処理結果を戻す
-			// そうでない場合、上り更新処理を実行
-			SyncUploadResult uploadResult = statusService.isDuplicatedRequest(storageId, request.getDataList()
-					.hashCode()) ? reversionLastResult(storageId) : synchronizer.syncUpload(storageId,
-					request.getDataList());
+		// 上り更新結果ごとにレスポンスデータを生成
 
-			// 上り更新結果ごとにレスポンスデータを生成
+		switch (uploadResult.getResultType()) {
+			case OK:
 
-			switch (uploadResult.getResultType()) {
-				case OK:
+				// 上り更新処理成功の場合、今回の処理結果をキャッシュ
+				statusService.applyUploadResult(storageId, request.getDataList().hashCode(),
+						uploadResult.getResultDataSet());
 
-					// 上り更新処理成功の場合、今回の処理結果をキャッシュ
-					statusService.applyUploadResult(storageId, request.getDataList().hashCode(),
-							uploadResult.getResultDataSet());
+				UploadResponseOrdinary responseBody = new UploadResponseOrdinary(uploadResult);
 
-					UploadResponseOrdinary responseBody = new UploadResponseOrdinary(uploadResult);
+				return createResponseEntity(responseBody, HttpStatus.OK);
 
-					return createResponseEntity(responseBody, HttpStatus.OK);
+			case UPDATED:
+			case DUPLICATEDID:
 
-				case UPDATED:
-				case DUPLICATEDID:
+				// 競合時はリソースの更新が行われず、次回の二重送信判定に意味がないためキャッシュを削除する
+				statusService.removeClientAccess(storageId);
 
-					// 競合時はリソースの更新が行われず、次回の二重送信判定に意味がないためキャッシュを削除する
-					statusService.removeClientAccess(storageId);
+				UploadResponseOnConflict responseBodyOnConflict = new UploadResponseOnConflict(uploadResult);
 
-					UploadResponseOnConflict responseBodyOnConflict = new UploadResponseOnConflict(uploadResult);
+				return createResponseEntity(responseBodyOnConflict, HttpStatus.CONFLICT);
 
-					return createResponseEntity(responseBodyOnConflict, HttpStatus.CONFLICT);
-
-				default:
-					throw new RuntimeException("illegal upload result");
-			}
-
-		} catch (Exception e) {
-
-			e.printStackTrace();
-			throw e;
+			default:
+				throw new RuntimeException("illegal upload result");
 		}
 	}
 
