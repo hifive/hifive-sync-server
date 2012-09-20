@@ -56,7 +56,8 @@ public class SynchronizerImpl implements Synchronizer {
 	 * @return 下り更新結果オブジェクト
 	 */
 	@Override
-	public SyncDownloadResult syncDownload(final String storageId, final List<DownloadRequestMessage> requestMessages) {
+	public SyncDownloadResult syncDownload(final String storageId,
+			final List<? extends DownloadRequestMessage> requestMessages) {
 
 		// 同期結果オブジェクトを生成、同期実行時刻(＝リクエスト時刻)が設定される
 		SyncDownloadResult downloadResult = new SyncDownloadResult(storageId);

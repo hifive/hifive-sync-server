@@ -28,31 +28,24 @@ import com.htmlhifive.sync.jsonctrl.upload.UploadRequestMessage;
  */
 public interface Synchronizer {
 
-    /**
-     * 下り更新を実行します.<br>
-     * 前回同期時刻以降、messageで指定したリソースにおける更新データをGETします.
-     *
-     * @param storageId
-     *            クライアントのストレージID
-     * @param requestMessages
-     *            下り更新のリクエストメッセージのリスト
-     * @return 下り更新結果オブジェクト
-     */
-    public SyncDownloadResult syncDownload(
-            final String storageId,
-            final List<DownloadRequestMessage> requestMessages);
+	/**
+	 * 下り更新を実行します.<br>
+	 * 前回同期時刻以降、messageで指定したリソースにおける更新データをGETします.
+	 *
+	 * @param storageId クライアントのストレージID
+	 * @param requestMessages 下り更新のリクエストメッセージのリスト
+	 * @return 下り更新結果オブジェクト
+	 */
+	public SyncDownloadResult syncDownload(final String storageId,
+			final List<? extends DownloadRequestMessage> requestMessages);
 
-    /**
-     * 上り更新を実行します.<br>
-     * 対象のリソースを判断し、リソースエレメントの更新内容に応じてリクエストを発行します.
-     *
-     * @param storageId
-     *            クライアントのストレージID
-     * @param requestMessages
-     *            上り更新のリクエストメッセージのリスト
-     * @return 上り更新結果オブジェクト
-     */
-    public SyncUploadResult syncUpload(
-            String storageId,
-            List<? extends UploadRequestMessage<?>> requestMessages);
+	/**
+	 * 上り更新を実行します.<br>
+	 * 対象のリソースを判断し、リソースエレメントの更新内容に応じてリクエストを発行します.
+	 *
+	 * @param storageId クライアントのストレージID
+	 * @param requestMessages 上り更新のリクエストメッセージのリスト
+	 * @return 上り更新結果オブジェクト
+	 */
+	public SyncUploadResult syncUpload(String storageId, List<? extends UploadRequestMessage<?>> requestMessages);
 }
