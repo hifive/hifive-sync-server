@@ -29,6 +29,7 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
+import com.htmlhifive.sync.exception.SyncException;
 import com.htmlhifive.sync.resource.separated.SeparatedCommonDataSyncResource;
 
 /**
@@ -111,7 +112,7 @@ public class SyncResourceManager {
 			}
 
 		} catch (ClassNotFoundException e) {
-			throw new RuntimeException("An Exception thrown by SyncResourceLocator", e);
+			throw new SyncException("An Exception thrown by SyncResourceLocator", e);
 		}
 	}
 

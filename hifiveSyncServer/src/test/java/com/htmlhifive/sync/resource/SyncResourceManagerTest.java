@@ -58,8 +58,8 @@ public class SyncResourceManagerTest {
 		final Class<? extends LockManager> expectedLockManagerClass = OptimisticLockManager.class;
 		final LockManager expectedLockManager = new OptimisticLockManager();
 
-		final Class<? extends OptimisticLockUpdateStrategy> expectedUpdateStrategyClass = ClientResolvingStrategy.class;
-		final OptimisticLockUpdateStrategy expectedUpdateStrategy = new ClientResolvingStrategy();
+		final Class<? extends UpdateStrategy> expectedUpdateStrategyClass = ClientResolvingStrategy.class;
+		final UpdateStrategy expectedUpdateStrategy = new ClientResolvingStrategy();
 
 		final PersonResource expectedResource = new PersonResource();
 		expectedResource.setLockManager(expectedLockManager);
@@ -68,7 +68,7 @@ public class SyncResourceManagerTest {
 		new Expectations() {
 			Map<String, Class<? extends SyncResource<?>>> resourceMap;
 			Map<String, Class<? extends LockManager>> lockManagerMap;
-			Map<String, Class<? extends OptimisticLockUpdateStrategy>> updateStrategyMap;
+			Map<String, Class<? extends UpdateStrategy>> updateStrategyMap;
 			ApplicationContext context;
 			{
 				setField(target, "resourceMap", resourceMap);

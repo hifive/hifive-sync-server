@@ -24,7 +24,7 @@ import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.exception.DuplicateElementException;
 import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.resource.LockManager;
-import com.htmlhifive.sync.resource.OptimisticLockUpdateStrategy;
+import com.htmlhifive.sync.resource.UpdateStrategy;
 import com.htmlhifive.sync.resource.SyncMethod;
 import com.htmlhifive.sync.resource.SyncProvider;
 import com.htmlhifive.sync.resource.SyncRequestHeader;
@@ -521,7 +521,7 @@ public class SeparatedCommonDataSyncResourceTest {
 		new Expectations() {
 			SyncProvider syncProvider;
 			LockManager lockManager;
-			OptimisticLockUpdateStrategy updateStrategy;
+			UpdateStrategy updateStrategy;
 			{
 
 				setField(target, "syncProvider", syncProvider);
@@ -623,7 +623,7 @@ public class SeparatedCommonDataSyncResourceTest {
 		new Expectations() {
 			SyncProvider syncProvider;
 			LockManager lockManager;
-			OptimisticLockUpdateStrategy updateStrategy;
+			UpdateStrategy updateStrategy;
 			{
 
 				setField(target, "syncProvider", syncProvider);
@@ -773,7 +773,7 @@ public class SeparatedCommonDataSyncResourceTest {
 		new Expectations() {
 			SyncProvider syncProvider;
 			LockManager lockManager;
-			OptimisticLockUpdateStrategy updateStrategy;
+			UpdateStrategy updateStrategy;
 			{
 
 				setField(target, "syncProvider", syncProvider);
@@ -830,7 +830,7 @@ public class SeparatedCommonDataSyncResourceTest {
 		new Expectations() {
 			SyncProvider syncProvider;
 			LockManager lockManager;
-			OptimisticLockUpdateStrategy updateStrategy;
+			UpdateStrategy updateStrategy;
 			{
 
 				setField(target, "syncProvider", syncProvider);
