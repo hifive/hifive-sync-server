@@ -16,57 +16,28 @@
  */
 package com.htmlhifive.sync.status;
 
-import java.util.Set;
-
-import com.htmlhifive.sync.resource.SyncResponse;
-
 /**
  * 同期ステータスを管理するサービスインターフェース.<br>
- * クライアントからの上り更新リクエストの二重送信を判別し、
- * 前回の上り更新リクエストに対するレスポンスをキャッシュし、二重送信を検知した場合にそれを返せるように保持します.
+ * 二重送信制御など、同期処理のステータスを管理するためのインターフェースを規定します.
  *
+ * @param <T>
  * @author kishigam
  */
-public interface SyncStatusService {
+public interface SyncStatusService<T> {
 
-    /**
-     * 指定されたクライアントごとのストレージID、そのクライアントからのリクエストデータから生成したハッシュコードを受け取り、
-     * このリクエストが既に送信されてきたものであるかどうかを判断します.
-     *
-     * @param storageId
-     *            クライアントのストレージID
-     * @param hashCode
-     *            リクエストデータのハッシュコード
-     * @return 二重送信である場合true
-     */
-    boolean isDuplicatedRequest(String storageId, int hashCode);
+	/**
+	 * ストレージIDで指定されたクライアントについて、保存している同期ステータスを取得します.
+	 *
+	 * @param storageId クライアントのストレージID
+	 * @return ステータスオブジェクト
+	 */
+	T currentStatus(String storageId);
 
-    /**
-     * 指定されたクライアントごとのストレージIDで管理されているキャッシュデータを同期レスポンスオブジェクトに復元し、返します.
-     *
-     * @param storageId
-     *            クライアントのストレージID
-     * @return 同期レスポンスオブジェクトのSet
-     */
-    Set<SyncResponse<?>> reversionResponseSet(String storageId);
-
-    /**
-     * 指定されたクライアントごとのストレージIDに対して、リクエストデータのハッシュコードにそれに対するレスポンスデータをキャッシュします.
-     *
-     * @param storageId
-     *            ストレージID
-     * @param hashCode
-     *            リクエストデータのハッシュコード
-     * @param uploadResultSet
-     *            同期レスポンスデータのセット
-     */
-    void applyUploadResult(String storageId, int hashCode, Set<SyncResponse<?>> uploadResultSet);
-
-    /**
-     * 指定されたクライアントごとのストレージIDに対して管理しているキャッシュデータを削除します.
-     *
-     * @param storageId
-     *            ストレージID
-     */
-    void removeClientAccess(String storageId);
+	/**
+	 * 指定された同期ステータスを保存します.<br>
+	 * まだストレージIDに対して保存している同期ステータスがない場合は、新規に保存します.
+	 *
+	 * @param status ステータスオブジェクト
+	 */
+	void updateStatus(T status);
 }

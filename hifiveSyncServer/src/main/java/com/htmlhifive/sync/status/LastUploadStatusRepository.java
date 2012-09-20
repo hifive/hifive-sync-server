@@ -19,11 +19,11 @@ package com.htmlhifive.sync.status;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
- * ClientLastAccessエンティティを永続化するためのリポジトリ. <br>
+ * LastUploadStatusエンティティを永続化するためのリポジトリ. <br>
  * SpringFrameworkの標準的なリポジトリメソッドを継承します.
  *
  * @author kishigam
  */
-public interface ClientLastAccessRepository extends JpaRepository<ClientLastAccessBean, String> {
+public interface LastUploadStatusRepository extends JpaRepository<LastUploadStatus, String> {
 
 }

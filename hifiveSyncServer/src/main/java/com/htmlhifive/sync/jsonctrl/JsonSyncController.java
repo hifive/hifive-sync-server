@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.htmlhifive.sync.exception.SyncException;
 import com.htmlhifive.sync.jsonctrl.download.DownloadRequest;
 import com.htmlhifive.sync.jsonctrl.download.DownloadResponseOnInit;
 import com.htmlhifive.sync.jsonctrl.download.DownloadResponseOrdinary;
@@ -39,9 +40,9 @@ import com.htmlhifive.sync.jsonctrl.upload.UploadResponseOnConflict;
 import com.htmlhifive.sync.jsonctrl.upload.UploadResponseOrdinary;
 import com.htmlhifive.sync.service.AbstractSyncResult;
 import com.htmlhifive.sync.service.SyncDownloadResult;
-import com.htmlhifive.sync.service.SyncResultType;
 import com.htmlhifive.sync.service.SyncUploadResult;
 import com.htmlhifive.sync.service.Synchronizer;
+import com.htmlhifive.sync.status.LastUploadStatus;
 import com.htmlhifive.sync.status.SyncStatusService;
 
 /**
@@ -62,7 +63,7 @@ public class JsonSyncController {
 	 * 二重送信発生時の処理を効率化するレスポンスキャッシュサービス.
 	 */
 	@Resource
-	private SyncStatusService statusService;
+	private SyncStatusService<LastUploadStatus> statusService;
 
 	/**
 	 * 初めて同期処理を行うクライアントからのリクエストを受け付け、下り更新処理のレスポンスを返します.<br>
@@ -131,19 +132,26 @@ public class JsonSyncController {
 	public ResponseEntity<? extends UploadResponse> syncUpload(final @RequestParam("storageid") String storageId,
 			final @RequestBody UploadRequest request) {
 
-		// 二重送信の場合は前回処理結果を戻す
-		// そうでない場合、上り更新処理を実行
-		SyncUploadResult uploadResult = statusService.isDuplicatedRequest(storageId, request.getDataList().hashCode()) ? reversionLastResult(storageId)
-				: synchronizer.syncUpload(storageId, request.getDataList());
+		// 結果オブジェクトを生成
+		SyncUploadResult result = new SyncUploadResult(storageId);
+
+		// 前回上り更新時刻の取得、今回の同期時刻より後になっていれば、今回の同期は二重送信などで処理済と判断する
+		LastUploadStatus currentStatus = statusService.currentStatus(storageId);
+		if (currentStatus.isPassed(result.getCurrentSyncTime())) {
+			UploadResponseOrdinary responseBody = new UploadResponseOrdinary(result);
+			return createResponseEntity(responseBody, HttpStatus.OK);
+		}
+
+		// 上り更新実行
+		SyncUploadResult uploadResult = synchronizer.syncUpload(storageId, request.getDataList());
 
 		// 上り更新結果ごとにレスポンスデータを生成
-
 		switch (uploadResult.getResultType()) {
 			case OK:
 
-				// 上り更新処理成功の場合、今回の処理結果をキャッシュ
-				statusService.applyUploadResult(storageId, request.getDataList().hashCode(),
-						uploadResult.getResultDataSet());
+				// 上り更新処理成功の場合、今回の更新時刻を保存
+				currentStatus.setLastUploadTime(result.getCurrentSyncTime());
+				statusService.updateStatus(currentStatus);
 
 				UploadResponseOrdinary responseBody = new UploadResponseOrdinary(uploadResult);
 
@@ -152,32 +160,13 @@ public class JsonSyncController {
 			case UPDATED:
 			case DUPLICATEDID:
 
-				// 競合時はリソースの更新が行われず、次回の二重送信判定に意味がないためキャッシュを削除する
-				statusService.removeClientAccess(storageId);
-
 				UploadResponseOnConflict responseBodyOnConflict = new UploadResponseOnConflict(uploadResult);
 
 				return createResponseEntity(responseBodyOnConflict, HttpStatus.CONFLICT);
 
 			default:
-				throw new RuntimeException("illegal upload result");
+				throw new SyncException("illegal upload result");
 		}
-	}
-
-	/**
-	 * 前回上り更新成功時のレスポンスデータをキャッシュから取得します.<br>
-	 *
-	 * @param storageId クライアントのストレージID
-	 * @return キャッシュの上り更新結果オブジェクト
-	 */
-	private SyncUploadResult reversionLastResult(String storageId) {
-
-		SyncUploadResult result = new SyncUploadResult(storageId);
-		result.setResultDataSet(statusService.reversionResponseSet(storageId));
-
-		result.setResultType(SyncResultType.OK);
-
-		return result;
 	}
 
 	/*
