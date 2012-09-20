@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.ctrl;
+package com.htmlhifive.sync.service;
 
 import java.util.Date;
 
@@ -24,23 +24,22 @@ import java.util.Date;
  * @author kishigam
  */
 public class SyncUploadResult extends AbstractSyncResult {
-    /**
-     * ストレージIDを指定して同期結果オブジェクトを生成します.
-     *
-     * @param storageId
-     *            クライアントのストレージID
-     */
-    public SyncUploadResult(String storageId) {
-        super(storageId);
-    }
+	/**
+	 * ストレージIDを指定して同期結果オブジェクトを生成します.
+	 *
+	 * @param storageId クライアントのストレージID
+	 */
+	public SyncUploadResult(String storageId) {
+		super(storageId);
+	}
 
-    /**
-     * 上り更新リクエストに対してクライアントに返す実行時刻を導出し、設定します.<br>
-     * 上り更新においては、このメソッドが実行された時点のシステム時刻が設定されます.
-     */
-    @Override
-    public void setGeneratedSyncTime() {
+	/**
+	 * 上り更新リクエストに対してクライアントに返す実行時刻を導出し、設定します.<br>
+	 * 上り更新においては、このメソッドが実行された時点のシステム時刻が設定されます.
+	 */
+	@Override
+	public void setGeneratedSyncTime() {
 
-        setCurrentSyncTime(new Date().getTime());
-    }
+		setCurrentSyncTime(new Date().getTime());
+	}
 }

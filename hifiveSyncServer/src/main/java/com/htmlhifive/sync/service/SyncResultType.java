@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.ctrl;
+package com.htmlhifive.sync.service;
 
 /**
  * クライアントからの下り/上り更新リクエストの結果を示す列挙型.<br>
@@ -25,18 +25,18 @@ package com.htmlhifive.sync.ctrl;
  */
 public enum SyncResultType {
 
-    /**
-     * 同期が成功したことを表します.
-     */
-    OK,
+	/**
+	 * 同期が成功したことを表します.
+	 */
+	OK,
 
-    /**
-     * 一部のリソースエレメントに対して、 他のクライアントが更新を行っていたために上り更新が失敗したことを表します.
-     */
-    UPDATED,
+	/**
+	 * 一部のリソースエレメントに対して、 他のクライアントが更新を行っていたために上り更新が失敗したことを表します.
+	 */
+	UPDATED,
 
-    /**
-     * 他のクライアントが既に登録したリソースエレメントを二重に登録しようとしたため、下り更新が失敗したことを表します.
-     */
-    DUPLICATEDID,
+	/**
+	 * 他のクライアントが既に登録したリソースエレメントを二重に登録しようとしたため、下り更新が失敗したことを表します.
+	 */
+	DUPLICATEDID,
 }

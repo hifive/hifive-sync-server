@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.ctrl;
+package com.htmlhifive.sync.service;
 
 import java.util.List;
 import java.util.Set;

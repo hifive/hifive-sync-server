@@ -19,9 +19,9 @@ package com.htmlhifive.sync.jsonctrl.upload;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.htmlhifive.sync.ctrl.SyncResultType;
-import com.htmlhifive.sync.ctrl.SyncUploadResult;
 import com.htmlhifive.sync.resource.SyncResponse;
+import com.htmlhifive.sync.service.SyncResultType;
+import com.htmlhifive.sync.service.SyncUploadResult;
 
 /**
  * 上り更新リクエストに対する競合発生時のレスポンスデータクラス.
