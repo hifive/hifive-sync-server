@@ -19,11 +19,11 @@ package com.htmlhifive.sync.resource;
 import com.htmlhifive.sync.exception.ConflictException;
 
 /**
- * 楽観的ロック方式におけるロックエラー発生時の更新戦略、競合判定ロジックのインターフェース.<br>
+ * ロックエラー発生時の更新戦略、競合判定ロジックのインターフェース.<br>
  *
  * @author kishigam
  */
-public interface OptimisticLockUpdateStrategy {
+public interface UpdateStrategy {
 
 	/**
 	 * 引数の情報をもとに更新可否を判断します.<br>

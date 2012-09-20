@@ -43,14 +43,14 @@ public @interface SyncResourceService {
 	/**
 	 * リソースが使用するLockManagerのクラスオブジェクト.<br>
 	 *
-	 * @return LockManagerのクラス名
+	 * @return LockManagerのクラスオブジェクト
 	 */
 	Class<? extends LockManager> lockManager() default OptimisticLockManager.class;
 
 	/**
-	 * リソースが使用する(楽観的ロックにおける)更新戦略のクラスオブジェクト.<br>
+	 * リソースが使用する更新戦略のクラスオブジェクト.<br>
 	 *
-	 * @return LockManagerのクラス名
+	 * @return LockManagerのクラスオブジェクト
 	 */
-	Class<? extends OptimisticLockUpdateStrategy> updateStrategy() default ClientResolvingStrategy.class;
+	Class<? extends UpdateStrategy> updateStrategy() default ClientResolvingStrategy.class;
 }

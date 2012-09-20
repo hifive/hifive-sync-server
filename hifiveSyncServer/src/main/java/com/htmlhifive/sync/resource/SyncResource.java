@@ -92,10 +92,10 @@ public interface SyncResource<E> {
 	void setLockManager(LockManager lockManager);
 
 	/**
-	 * リソースが楽観的ロックを使用している時にロックエラー発生時の更新方法を指定するストラテジーオブジェクトを設定します.<br>
+	 * ロックエラー発生時の更新方法を指定するストラテジーオブジェクトを設定します.<br>
 	 * 通常、アプリケーションから使用することはありません.
 	 *
 	 * @param updateStrategy セットする updateStrategy
 	 */
-	void setUpdateStrategy(OptimisticLockUpdateStrategy updateStrategy);
+	void setUpdateStrategy(UpdateStrategy updateStrategy);
 }

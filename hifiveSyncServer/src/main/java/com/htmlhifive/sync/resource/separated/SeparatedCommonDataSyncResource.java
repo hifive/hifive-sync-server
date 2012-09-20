@@ -26,7 +26,7 @@ import javax.annotation.Resource;
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.exception.DuplicateElementException;
 import com.htmlhifive.sync.resource.LockManager;
-import com.htmlhifive.sync.resource.OptimisticLockUpdateStrategy;
+import com.htmlhifive.sync.resource.UpdateStrategy;
 import com.htmlhifive.sync.resource.SyncMethod;
 import com.htmlhifive.sync.resource.SyncProvider;
 import com.htmlhifive.sync.resource.SyncRequestHeader;
@@ -60,7 +60,7 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 	/**
 	 * ロックエラー発生時の競合解決を行う更新戦略オブジェクト.
 	 */
-	private OptimisticLockUpdateStrategy updateStrategy;
+	private UpdateStrategy updateStrategy;
 
 	/**
 	 * リクエストヘッダが指定する単一のリソースエレメントを取得します.<br>
@@ -314,7 +314,7 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 	 * @param updateStrategy セットする updateStrategy
 	 */
 	@Override
-	public void setUpdateStrategy(OptimisticLockUpdateStrategy updateStrategy) {
+	public void setUpdateStrategy(UpdateStrategy updateStrategy) {
 		this.updateStrategy = updateStrategy;
 	}
 }

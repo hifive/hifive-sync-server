@@ -57,10 +57,9 @@ public class SyncResourceManager {
 	private Map<String, Class<? extends LockManager>> lockManagerMap;
 
 	/**
-	 * リソースごとの(楽観的ロックエラー時の)更新戦略オブジェクトを保持するMap.<br>
-	 * ロックマネージャに悲観的ロックが設定されている場合、このフィールドの値は不定です.
+	 * リソースごとの更新戦略オブジェクトを保持するMap.<br>
 	 */
-	private Map<String, Class<? extends OptimisticLockUpdateStrategy>> updateStrategyMap;
+	private Map<String, Class<? extends UpdateStrategy>> updateStrategyMap;
 
 	/**
 	 * クラスパス上のリソース検索し、Mapに保持してこのクラスのインスタンスを生成します.<br>
@@ -107,7 +106,6 @@ public class SyncResourceManager {
 				lockManagerMap.put(dataModelName, resourceDef.lockManager());
 
 				// 更新戦略オブジェクトを特定する
-				// ロックマネージャが悲観的ロックであってもデフォルトの更新戦略オブジェクトを保持するが、使用されることはない
 				updateStrategyMap.put(dataModelName, resourceDef.updateStrategy());
 
 			}

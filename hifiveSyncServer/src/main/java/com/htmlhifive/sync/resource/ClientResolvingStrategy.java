@@ -5,13 +5,13 @@ import org.springframework.stereotype.Service;
 import com.htmlhifive.sync.exception.ConflictException;
 
 /**
- * 楽観的ロック方式におけるロックエラー発生時の更新戦略、競合判定ロジックの実装.<br>
+ * ロックエラー発生時の更新戦略、競合判定ロジックの実装.<br>
  * 更新を行わずクライアントに解決を求めます.<br>
  *
  * @author kishigam
  */
 @Service
-public class ClientResolvingStrategy implements OptimisticLockUpdateStrategy {
+public class ClientResolvingStrategy implements UpdateStrategy {
 
 	/**
 	 * ConflictExceptionをスローし、クライアントにサーバ状態を返します.
