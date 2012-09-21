@@ -174,23 +174,4 @@ public class SyncResourceManagerTest {
 		// Assert：結果が正しいこと
 		assertThat(actual, is(expected));
 	}
-
-	/**
-	 * {@link SyncResourceManager#SyncResourceManager()}用テストメソッド.<br>
-	 * リソースの作成、修正に伴い結果が変わる.
-	 */
-	@Test
-	public void testInstantiation() {
-
-		Set<String> expectedResourceMap = new HashSet<String>() {
-			private static final long serialVersionUID = 1L;
-			{
-				add("person");
-				add("schedule");
-			}
-		};
-
-		assertThat(target, notNullValue());
-		assertThat(target.getAllDataModelNames(), is(expectedResourceMap));
-	}
 }

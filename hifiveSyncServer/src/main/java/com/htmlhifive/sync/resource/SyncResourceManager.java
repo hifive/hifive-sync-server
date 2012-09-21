@@ -63,54 +63,71 @@ public class SyncResourceManager {
 	private Map<String, Class<? extends UpdateStrategy>> updateStrategyMap;
 
 	/**
-	 * クラスパス上のリソース検索し、Mapに保持してこのクラスのインスタンスを生成します.<br>
-	 * {@link SyncResource} インターフェースを実装し、{@link SyncResourceService} アノテーションを付与したクラスをリソースとします.
+	 * インスタンスを生成し、Mapフィールドのセットアップを行います.
 	 */
-	@SuppressWarnings("unchecked")
 	public SyncResourceManager() {
 
 		this.resourceMap = new HashMap<>();
 		this.lockManagerMap = new HashMap<>();
 		this.updateStrategyMap = new HashMap<>();
 
-		try {
-			ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
-			scanner.addIncludeFilter(new AnnotationTypeFilter(SyncResourceService.class));
+		init();
+	}
 
-			Set<BeanDefinition> beans = scanner.findCandidateComponents("");
+	/**
+	 * クラスパス上のリソースを検索し、Mapに保持してこのクラスのインスタンスを生成します.<br>
+	 * {@link SyncResource} インターフェースを実装し、{@link SyncResourceService} アノテーションを付与したクラスをリソースとします.
+	 */
+	private void init() {
 
-			for (BeanDefinition def : beans) {
+		ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
+		scanner.addIncludeFilter(new AnnotationTypeFilter(SyncResourceService.class));
 
-				Class<? extends SeparatedCommonDataSyncResource<?, ?>> resourceClass;
+		Set<BeanDefinition> candidates = scanner.findCandidateComponents("");
+		for (BeanDefinition def : candidates) {
 
-				// null,interface,SeparatedSyncResourceのサブタイプ以外,abstractのクラスを除外
-				Class<?> found = Class.forName(def.getBeanClassName());
-				if (found == null || found.isInterface()
-						|| !SeparatedCommonDataSyncResource.class.isAssignableFrom(found)
-						|| Modifier.isAbstract(found.getModifiers())) {
-					continue;
-				} else {
-					resourceClass = (Class<? extends SeparatedCommonDataSyncResource<?, ?>>) found;
-				}
-
-				// リソースの情報をアノテーションから取得
-				SyncResourceService resourceDef = resourceClass.getAnnotation(SyncResourceService.class);
-
-				// データモデルを特定する
-				String dataModelName = resourceDef.syncDataModel();
-				if (dataModelName == null || dataModelName.isEmpty()) {
-					continue;
-				}
-				resourceMap.put(dataModelName, resourceClass);
-
-				// ロックマネージャを特定する
-				lockManagerMap.put(dataModelName, resourceDef.lockManager());
-
-				// 更新戦略オブジェクトを特定する
-				updateStrategyMap.put(dataModelName, resourceDef.updateStrategy());
-
+			Class<? extends SeparatedCommonDataSyncResource<?, ?>> resourceClass = selectResource(def);
+			if (resourceClass == null) {
+				continue;
 			}
 
+			// リソースの情報をアノテーションから取得
+			SyncResourceService resourceAnnotation = resourceClass.getAnnotation(SyncResourceService.class);
+
+			// データモデルを特定する
+			String dataModelName = resourceAnnotation.syncDataModel();
+			if (dataModelName == null || dataModelName.isEmpty()) {
+				continue;
+			}
+			resourceMap.put(dataModelName, resourceClass);
+
+			// ロックマネージャを特定する
+			lockManagerMap.put(dataModelName, resourceAnnotation.lockManager());
+
+			// 更新戦略オブジェクトを特定する
+			updateStrategyMap.put(dataModelName, resourceAnnotation.updateStrategy());
+
+		}
+	}
+
+	/**
+	 * BeanDefinitionオブジェクトからリソースのクラスオブジェクトを抽出して返します.<br>
+	 *
+	 * @param def リソース候補のクラスのBeanDefinition
+	 * @return クラスオブジェクト
+	 */
+	@SuppressWarnings("unchecked")
+	private Class<? extends SeparatedCommonDataSyncResource<?, ?>> selectResource(BeanDefinition def) {
+
+		try {
+			// null,interface,SeparatedSyncResourceのサブタイプ以外,abstractのクラスを除外
+			Class<?> found = Class.forName(def.getBeanClassName());
+			if (found == null || found.isInterface() || !SeparatedCommonDataSyncResource.class.isAssignableFrom(found)
+					|| Modifier.isAbstract(found.getModifiers())) {
+				return null;
+			} else {
+				return (Class<? extends SeparatedCommonDataSyncResource<?, ?>>) found;
+			}
 		} catch (ClassNotFoundException e) {
 			throw new SyncException("An Exception thrown by SyncResourceLocator", e);
 		}
