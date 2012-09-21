@@ -76,12 +76,6 @@ public class SyncRequestHeader {
 	private long lastModified;
 
 	/**
-	 * クライアントで設定されたストレージローカルID.<br>
-	 * 新規登録リクエストの場合のみ設定します.
-	 */
-	private String storageLocalId;
-
-	/**
 	 * @see Object#equals(Object)
 	 */
 	@Override
@@ -239,19 +233,5 @@ public class SyncRequestHeader {
 	 */
 	public void setLastModified(long lastModified) {
 		this.lastModified = lastModified;
-	}
-
-	/**
-	 * @return storageLocalId
-	 */
-	public String getStorageLocalId() {
-		return storageLocalId;
-	}
-
-	/**
-	 * @param storageLocalId セットする storageLocalId
-	 */
-	public void setStorageLocalId(String storageLocalId) {
-		this.storageLocalId = storageLocalId;
 	}
 }

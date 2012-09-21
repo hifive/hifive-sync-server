@@ -185,7 +185,7 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	 * @return 同期データID
 	 */
 	private String generateSyncDataId(SyncRequestHeader header) {
-		return header.getStorageId() + header.getStorageLocalId();
+		return header.getStorageId();
 	}
 
 	/**

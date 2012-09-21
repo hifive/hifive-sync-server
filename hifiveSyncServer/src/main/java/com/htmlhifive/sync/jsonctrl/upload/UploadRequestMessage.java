@@ -24,155 +24,123 @@ import com.htmlhifive.sync.resource.SyncRequestHeader;
  * JSON形式の上り更新リクエストで更新するリソースエレメントを表現するメッセージのデータクラス.
  *
  * @author kishigam
- *
- * @param <E>
- *            リソースエレメントの型
+ * @param <E> リソースエレメントの型
  */
 public class UploadRequestMessage<E> {
 
-    /**
-     * データモデル名
-     */
-    private String dataModelName;
+	/**
+	 * データモデル名
+	 */
+	private String dataModelName;
 
-    /**
-     * このデータが生成された契機となった同期アクション.
-     */
-    private SyncAction action;
+	/**
+	 * このデータが生成された契機となった同期アクション.
+	 */
+	private SyncAction action;
 
-    /**
-     * このデータが表現するリソースエレメントの本体.
-     */
-    private E element;
+	/**
+	 * このデータが表現するリソースエレメントの本体.
+	 */
+	private E element;
 
-    /**
-     * 同期データID.
-     */
-    private String syncDataId;
+	/**
+	 * 同期データID.
+	 */
+	private String syncDataId;
 
-    /**
-     * このデータの最終更新時刻
-     */
-    private long lastModified;
+	/**
+	 * このデータの最終更新時刻
+	 */
+	private long lastModified;
 
-    /**
-     * ストレージローカルID.<br>
-     * クライアントで採番されている新規登録データの仮ID.
-     */
-    private String storageLocalId;
+	/**
+	 * このメッセージの内容をもとにリソースへのリクエストのためのリクエストヘッダを生成します.<br>
+	 *
+	 * @param storageId クライアントのストレージID
+	 * @param requestTime 同期実行時刻
+	 * @return 同期リクエストヘッダ
+	 */
+	public SyncRequestHeader createtHeader(String storageId, long requestTime) {
 
-    /**
-     * このメッセージの内容をもとにリソースへのリクエストのためのリクエストヘッダを生成します.<br>
-     *
-     * @param storageId
-     *            クライアントのストレージID
-     * @param requestTime
-     *            同期実行時刻
-     * @return 同期リクエストヘッダ
-     */
-    public SyncRequestHeader createtHeader(String storageId, long requestTime) {
+		SyncRequestHeader header = new SyncRequestHeader(JsonDataConvertor.convertActionToSyncMethod(action),
+				storageId, requestTime);
 
-        SyncRequestHeader header =
-                new SyncRequestHeader(
-                        JsonDataConvertor.convertActionToSyncMethod(action), storageId, requestTime);
+		header.setStorageId(storageId);
+		header.setDataModelName(dataModelName);
+		header.setSyncDataId(syncDataId);
+		header.setLastModified(lastModified);
+		header.setRequestTime(requestTime);
 
-        header.setStorageId(storageId);
-        header.setDataModelName(dataModelName);
-        header.setSyncDataId(syncDataId);
-        header.setLastModified(lastModified);
-        header.setStorageLocalId(storageLocalId);
-        header.setRequestTime(requestTime);
+		return header;
+	}
 
-        return header;
-    }
+	/**
+	 * @return dataModelName
+	 */
+	public String getDataModelName() {
+		return dataModelName;
+	}
 
-    /**
-     * @return dataModelName
-     */
-    public String getDataModelName() {
-        return dataModelName;
-    }
+	/**
+	 * @param dataModelName セットする dataModelName
+	 */
+	public void setDataModelName(String dataModelName) {
+		this.dataModelName = dataModelName;
+	}
 
-    /**
-     * @param dataModelName
-     *            セットする dataModelName
-     */
-    public void setDataModelName(String dataModelName) {
-        this.dataModelName = dataModelName;
-    }
+	/**
+	 * @return action
+	 */
+	public SyncAction getAction() {
+		return action;
+	}
 
-    /**
-     * @return action
-     */
-    public SyncAction getAction() {
-        return action;
-    }
+	/**
+	 * @param action セットする action
+	 */
+	public void setAction(SyncAction action) {
+		this.action = action;
+	}
 
-    /**
-     * @param action
-     *            セットする action
-     */
-    public void setAction(SyncAction action) {
-        this.action = action;
-    }
+	/**
+	 * @return element
+	 */
+	public E getElement() {
+		return element;
+	}
 
-    /**
-     * @return element
-     */
-    public E getElement() {
-        return element;
-    }
+	/**
+	 * @param element セットする element
+	 */
+	public void setElement(E element) {
+		this.element = element;
+	}
 
-    /**
-     * @param element
-     *            セットする element
-     */
-    public void setElement(E element) {
-        this.element = element;
-    }
+	/**
+	 * @return syncDataId
+	 */
+	public String getSyncDataId() {
+		return syncDataId;
+	}
 
-    /**
-     * @return syncDataId
-     */
-    public String getSyncDataId() {
-        return syncDataId;
-    }
+	/**
+	 * @param syncDataId セットする syncDataId
+	 */
+	public void setSyncDataId(String syncDataId) {
+		this.syncDataId = syncDataId;
+	}
 
-    /**
-     * @param syncDataId
-     *            セットする syncDataId
-     */
-    public void setSyncDataId(String syncDataId) {
-        this.syncDataId = syncDataId;
-    }
+	/**
+	 * @return lastModified
+	 */
+	public long getLastModified() {
+		return lastModified;
+	}
 
-    /**
-     * @return lastModified
-     */
-    public long getLastModified() {
-        return lastModified;
-    }
-
-    /**
-     * @param lastModified
-     *            セットする lastModified
-     */
-    public void setLastModified(long lastModified) {
-        this.lastModified = lastModified;
-    }
-
-    /**
-     * @return storageLocalId
-     */
-    public String getStorageLocalId() {
-        return storageLocalId;
-    }
-
-    /**
-     * @param storageLocalId
-     *            セットする storageLocalId
-     */
-    public void setStorageLocalId(String storageLocalId) {
-        this.storageLocalId = storageLocalId;
-    }
+	/**
+	 * @param lastModified セットする lastModified
+	 */
+	public void setLastModified(long lastModified) {
+		this.lastModified = lastModified;
+	}
 }
