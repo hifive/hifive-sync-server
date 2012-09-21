@@ -27,26 +27,28 @@ import com.htmlhifive.sync.resource.SyncMethod;
 import com.htmlhifive.sync.resource.SyncRequestHeader;
 
 /**
- * JSON形式の下り更新リクエストで同期対象を表現するメッセージのデータクラス.
+ * JSON形式の下り更新リクエストで同期対象を表現するメッセージデータクラス.
  *
  * @author kishigam
  */
 public class DownloadRequestMessage {
 
 	/**
-	 * データモデル名.
+	 * リソース名.
 	 */
-	private String dataModelName;
+	private String resourceName;
 
 	/**
-	 * クエリ文字列.
+	 * リソースごとにダウンロード対象アイテムを絞り込むクエリ情報. <br>
+	 * 対称データとクエリ条件(配列形式)のMapで表現されます.
 	 */
 	private Map<String, String[]> query = new HashMap<>();
 
 	/**
-	 * 前回同期時刻.
+	 * 前回ダウンロード時刻.<br>
+	 * この時刻以降のデータを取得するリクエストとなる.
 	 */
-	private long lastSyncTime = 0L;
+	private long lastDownloadTime = 0L;
 
 	/**
 	 * @see Object#equals(Object)
@@ -93,26 +95,25 @@ public class DownloadRequestMessage {
 	public SyncRequestHeader createHeader(String storageId, long requestTime) {
 
 		SyncRequestHeader requestHeader = new SyncRequestHeader(SyncMethod.GET, storageId, requestTime);
-		requestHeader.setDataModelName(dataModelName);
-		// クエリ文字列をMapに変換
-		requestHeader.setQueryMap(query);
-		requestHeader.setLastSyncTime(lastSyncTime);
+		requestHeader.setResourceName(resourceName);
+		requestHeader.setQuery(query);
+		requestHeader.setLastSyncTime(lastDownloadTime);
 
 		return requestHeader;
 	}
 
 	/**
-	 * @return dataModelName
+	 * @return resourceName
 	 */
-	public String getDataModelName() {
-		return dataModelName;
+	public String getResourceName() {
+		return resourceName;
 	}
 
 	/**
-	 * @param dataModelName セットする dataModelName
+	 * @param resourceName セットする resourceName
 	 */
-	public void setDataModelName(String dataModelName) {
-		this.dataModelName = dataModelName;
+	public void setResourceName(String resourceName) {
+		this.resourceName = resourceName;
 	}
 
 	/**
@@ -130,16 +131,16 @@ public class DownloadRequestMessage {
 	}
 
 	/**
-	 * @return lastSyncTime
+	 * @return lastDownloadTime
 	 */
-	public long getLastSyncTime() {
-		return lastSyncTime;
+	public long getLastDownloadTime() {
+		return lastDownloadTime;
 	}
 
 	/**
-	 * @param lastSyncTime セットする lastSyncTime
+	 * @param lastDownloadTime セットする lastDownloadTime
 	 */
-	public void setLastSyncTime(long lastSyncTime) {
-		this.lastSyncTime = lastSyncTime;
+	public void setLastDownloadTime(long lastDownloadTime) {
+		this.lastDownloadTime = lastDownloadTime;
 	}
 }

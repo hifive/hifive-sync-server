@@ -17,88 +17,89 @@
 package com.htmlhifive.sync.jsonctrl.download;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.htmlhifive.sync.jsonctrl.ResponseBody;
 import com.htmlhifive.sync.resource.SyncResponse;
 
 /**
- * クライアントからの下り更新リクエストに対するレスポンスデータの抽象クラス.
+ * クライアントからの下り更新リクエストに対する結果データの抽象クラス.
  *
  * @author kishigam
  */
 public abstract class DownloadResponse implements ResponseBody {
 
-    /**
-     * リクエストに対する処理を実行した同期時刻.
-     */
-    private long syncTime;
+	/**
+	 * 下り更新処理を実行した時刻.
+	 */
+	private long lastDownloadTime;
 
-    /**
-     * 下り更新レスポンスの本体となるメッセージオブジェクトのリスト.
-     */
-    private List<DownloadResponseMessage<?>> dataList;
+	/**
+	 * 下り更新結果のリソースアイテムリスト(リソース名別ListのMap)
+	 */
+	private Map<String, List<? extends DownloadResponseMessage<?>>> resourceItems = new HashMap<>();
 
-    /**
-     * 下り更新レスポンスを生成します.
-     *
-     * @param syncTime
-     *            同期時刻
-     * @param datalList
-     *            同期レスポンスオブジェクトのリスト
-     */
-    public DownloadResponse(long syncTime, List<DownloadResponseMessage<?>> datalList) {
-        this.syncTime = syncTime;
-        this.dataList = datalList;
-    }
+	/**
+	 * 下り更新レスポンスを生成します.
+	 *
+	 * @param lastDownloadTime 同期時刻
+	 */
+	public DownloadResponse(long lastDownloadTime) {
+		this.lastDownloadTime = lastDownloadTime;
+	}
 
-    /**
-     * 同期処理レスポンスから、クライアントに返す下り更新レスポンスメッセージを生成します.<br>
-     *
-     * @param responseSet
-     *            同期処理のレスポンスオブジェクトのセット
-     * @return 下り更新レスポンスメッセージのリスト
-     */
-    protected static List<DownloadResponseMessage<?>> createResponseMessageList(
-            Set<SyncResponse<?>> responseSet) {
+	/**
+	 * 同期処理レスポンスから、クライアントに返す下り更新レスポンスメッセージを生成します.<br>
+	 *
+	 * @param responseSet 同期処理のレスポンスオブジェクトのセット
+	 * @return 下り更新レスポンスメッセージのリスト
+	 */
+	protected static List<DownloadResponseMessage<?>> createResponseMessageList(Set<SyncResponse<?>> responseSet) {
 
-        List<DownloadResponseMessage<?>> responseMessages = new ArrayList<>();
+		List<DownloadResponseMessage<?>> responseMessages = new ArrayList<>();
 
-        for (SyncResponse<?> response : responseSet) {
-            responseMessages.add(new DownloadResponseMessage<>(response));
-        }
+		for (SyncResponse<?> response : responseSet) {
+			responseMessages.add(new DownloadResponseMessage<>(response));
+		}
 
-        return responseMessages;
-    }
+		return responseMessages;
+	}
 
-    /**
-     * @return syncTime
-     */
-    public long getSyncTime() {
-        return syncTime;
-    }
+	/**
+	 * @return syncTime
+	 */
+	public long getSyncTime() {
+		return lastDownloadTime;
+	}
 
-    /**
-     * @param syncTime
-     *            セットする syncTime
-     */
-    public void setSyncTime(long syncTime) {
-        this.syncTime = syncTime;
-    }
+	/**
+	 * @param syncTime セットする syncTime
+	 */
+	public void setSyncTime(long syncTime) {
+		this.lastDownloadTime = syncTime;
+	}
 
-    /**
-     * @return dataList
-     */
-    public List<DownloadResponseMessage<?>> getDataList() {
-        return dataList;
-    }
+	/**
+	 * @return resourceItems
+	 */
+	public Map<String, List<? extends DownloadResponseMessage<?>>> getResourceItems() {
+		return resourceItems;
+	}
 
-    /**
-     * @param dataList
-     *            セットする dataList
-     */
-    public void setDataList(List<DownloadResponseMessage<?>> dataList) {
-        this.dataList = dataList;
-    }
+	/**
+	 * @param resourceItems セットする resourceItems
+	 */
+	public void setResourceItems(Map<String, List<? extends DownloadResponseMessage<?>>> resourceItems) {
+		this.resourceItems = resourceItems;
+	}
+
+	/**
+	 * @param resourceItems セットする resourceItems
+	 */
+	public void addResourceItems(String resourceName, List<? extends DownloadResponseMessage<?>> resourceItemList) {
+		this.resourceItems.put(resourceName, resourceItemList);
+	}
 }

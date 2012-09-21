@@ -175,7 +175,7 @@ public class SyncRequestHeader {
 	/**
 	 * @param dataModelName セットする dataModelName
 	 */
-	public void setDataModelName(String dataModelName) {
+	public void setResourceName(String dataModelName) {
 		this.dataModelName = dataModelName;
 	}
 
@@ -189,7 +189,7 @@ public class SyncRequestHeader {
 	/**
 	 * @param queryMap セットする queryMap
 	 */
-	public void setQueryMap(Map<String, String[]> queryMap) {
+	public void setQuery(Map<String, String[]> queryMap) {
 		this.queryMap = queryMap;
 	}
 

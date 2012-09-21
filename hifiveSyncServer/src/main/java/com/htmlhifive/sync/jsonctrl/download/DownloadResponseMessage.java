@@ -21,26 +21,21 @@ import com.htmlhifive.sync.jsonctrl.SyncAction;
 import com.htmlhifive.sync.resource.SyncResponse;
 
 /**
- * 下り更新レスポンスの本体となるメッセージのデータクラス.<br>
- * サーバ上の1つのリソースエレメントに関する共通情報、およびエレメント本体を保持します.
+ * 上り更新、および下り更新結果におけるリソースアイテム1件の情報を保持するデータ.<br>
+ * サーバ上の1つのリソースアイテムに関する共通情報、およびリソースアイテム本体を保持します.
  *
- * @param <E> リソースエレメントの型
+ * @param <E> リソースアイテムの型
  * @author kishigam
  */
 public class DownloadResponseMessage<E> {
 
 	/**
-	 * 同期データID.
+	 * リソースアイテムID.
 	 */
-	private String syncDataId;
+	private String resourceItemId;
 
 	/**
-	 * データモデル名
-	 */
-	private String dataModelName;
-
-	/**
-	 * このデータが生成された契機となった同期アクション.
+	 * リソースアイテムの最終更新アクション.
 	 */
 	private SyncAction action;
 
@@ -61,9 +56,8 @@ public class DownloadResponseMessage<E> {
 	 */
 	public DownloadResponseMessage(SyncResponse<E> response) {
 
-		dataModelName = response.getCommon().getDataModelName();
 		action = JsonDataConvertor.convertSyncMethodToAction(response.getCommon().getSyncMethod());
-		syncDataId = response.getCommon().getSyncDataId();
+		resourceItemId = response.getCommon().getSyncDataId();
 		lastModified = response.getCommon().getLastModified();
 		element = response.getElement();
 	}
@@ -72,28 +66,14 @@ public class DownloadResponseMessage<E> {
 	 * @return syncDataId
 	 */
 	public String getSyncDataId() {
-		return syncDataId;
+		return resourceItemId;
 	}
 
 	/**
 	 * @param syncDataId セットする syncDataId
 	 */
 	public void setSyncDataId(String syncDataId) {
-		this.syncDataId = syncDataId;
-	}
-
-	/**
-	 * @return dataModelName
-	 */
-	public String getDataModelName() {
-		return dataModelName;
-	}
-
-	/**
-	 * @param dataModelName セットする dataModelName
-	 */
-	public void setDataModelName(String dataModelName) {
-		this.dataModelName = dataModelName;
+		this.resourceItemId = syncDataId;
 	}
 
 	/**

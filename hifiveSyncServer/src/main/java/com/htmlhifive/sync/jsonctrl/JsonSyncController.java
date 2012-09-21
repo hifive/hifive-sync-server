@@ -82,7 +82,8 @@ public class JsonSyncController {
 		AbstractSyncResult downloadResult = synchronizer.syncDownload(newStorageId, request.getResources());
 
 		// レスポンスデータ(初回用)の生成
-		DownloadResponseOnInit responseBody = new DownloadResponseOnInit(downloadResult);
+		DownloadResponseOnInit responseBody = new DownloadResponseOnInit(downloadResult.getCurrentSyncTime(),
+				newStorageId);
 
 		return createResponseEntity(responseBody, HttpStatus.OK);
 	}
@@ -103,7 +104,7 @@ public class JsonSyncController {
 		SyncDownloadResult downloadResult = synchronizer.syncDownload(storageId, request.getResources());
 
 		// レスポンスデータの生成
-		DownloadResponseOrdinary responseBody = new DownloadResponseOrdinary(downloadResult);
+		DownloadResponseOrdinary responseBody = new DownloadResponseOrdinary(downloadResult.getCurrentSyncTime());
 
 		return createResponseEntity(responseBody, HttpStatus.OK);
 	}

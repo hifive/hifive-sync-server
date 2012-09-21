@@ -23,63 +23,62 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * JSON形式の下り更新リクエストデータを表現するデータクラス.
+ * JSON形式の下り更新リクエスト内容全体を表現するデータクラス.
  *
  * @author kishigam
  */
 public class DownloadRequest {
 
-    /**
-     * 同期対象を表すメッセージオブジェクトのリスト.
-     */
-    private List<DownloadRequestMessage> resources;
+	/**
+	 * 同期対象を表すメッセージオブジェクトのリスト.
+	 */
+	private List<DownloadRequestMessage> resources;
 
-    /**
-     * @see Object#equals(Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
+	/**
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
 
-        if (this == obj)
-            return true;
-        if (!(obj instanceof DownloadRequest))
-            return false;
+		if (this == obj)
+			return true;
+		if (!(obj instanceof DownloadRequest))
+			return false;
 
-        DownloadRequest request = (DownloadRequest)obj;
+		DownloadRequest request = (DownloadRequest) obj;
 
-        return new EqualsBuilder().append(this.resources, request.resources).isEquals();
-    }
+		return new EqualsBuilder().append(this.resources, request.resources).isEquals();
+	}
 
-    /**
-     * @see Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
 
-        return new HashCodeBuilder(17, 37).append(this.resources).hashCode();
-    }
+		return new HashCodeBuilder(17, 37).append(this.resources).hashCode();
+	}
 
-    /**
-     * @see Object#toString()
-     */
-    @Override
-    public String toString() {
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
 
-        return ToStringBuilder.reflectionToString(this);
-    }
+		return ToStringBuilder.reflectionToString(this);
+	}
 
-    /**
-     * @return resouces
-     */
-    public List<DownloadRequestMessage> getResources() {
-        return resources;
-    }
+	/**
+	 * @return resouces
+	 */
+	public List<DownloadRequestMessage> getResources() {
+		return resources;
+	}
 
-    /**
-     * @param resouces
-     *            セットする resouces
-     */
-    public void setResources(List<DownloadRequestMessage> resouces) {
-        this.resources = resouces;
-    }
+	/**
+	 * @param resouces セットする resouces
+	 */
+	public void setResources(List<DownloadRequestMessage> resouces) {
+		this.resources = resouces;
+	}
 }

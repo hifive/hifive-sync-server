@@ -66,7 +66,7 @@ public class UploadRequestMessage<E> {
 				storageId, requestTime);
 
 		header.setStorageId(storageId);
-		header.setDataModelName(dataModelName);
+		header.setResourceName(dataModelName);
 		header.setSyncDataId(syncDataId);
 		header.setLastModified(lastModified);
 		header.setRequestTime(requestTime);

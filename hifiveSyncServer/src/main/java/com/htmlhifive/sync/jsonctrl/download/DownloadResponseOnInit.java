@@ -16,8 +16,6 @@
  */
 package com.htmlhifive.sync.jsonctrl.download;
 
-import com.htmlhifive.sync.service.AbstractSyncResult;
-
 /**
  * 初めて同期を行うクライアントからの下り更新リクエストに対するレスポンスデータクラス.
  *
@@ -28,15 +26,16 @@ public class DownloadResponseOnInit extends DownloadResponse {
 	private String storageId;
 
 	/**
-	 * 下り更新結果オブジェクトの内容から、クライアントに返すレスポンスデータを生成します.<br>
+	 * 下り更新結果データを生成します.<br>
 	 * 新規に採番されたリクエスト発行元クライアントのストレージIDを含みます.
 	 *
-	 * @param downloadResult
+	 * @param lastDownloadTime 下り更新時刻
+	 * @param storageId ストレージID
 	 */
-	public DownloadResponseOnInit(AbstractSyncResult downloadResult) {
+	public DownloadResponseOnInit(long lastDownloadTime, String storageId) {
 
-		super(downloadResult.getCurrentSyncTime(), createResponseMessageList(downloadResult.getResultDataSet()));
-		this.storageId = downloadResult.getStorageId();
+		super(lastDownloadTime);
+		this.storageId = storageId;
 	}
 
 	/**
@@ -44,12 +43,5 @@ public class DownloadResponseOnInit extends DownloadResponse {
 	 */
 	public String getStorageId() {
 		return storageId;
-	}
-
-	/**
-	 * @param storageId セットする storageId
-	 */
-	public void setStorageId(String storageId) {
-		this.storageId = storageId;
 	}
 }
