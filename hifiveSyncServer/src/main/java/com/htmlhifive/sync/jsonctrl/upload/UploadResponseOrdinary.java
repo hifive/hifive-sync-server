@@ -19,7 +19,6 @@ package com.htmlhifive.sync.jsonctrl.upload;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.htmlhifive.sync.resource.SyncMethod;
 import com.htmlhifive.sync.resource.SyncResponse;
 import com.htmlhifive.sync.service.SyncUploadResult;
 
@@ -41,8 +40,7 @@ public class UploadResponseOrdinary extends UploadResponse {
 
 		for (SyncResponse<?> response : uploadResult.getResultDataSet()) {
 
-			UploadResponseMessage message = response.getCommon().getSyncMethod() == SyncMethod.POST ? new UploadResponseMessageForNewData(
-					response) : new UploadResponseMessageOrdinary(response);
+			UploadResponseMessage message = new UploadResponseMessageOrdinary(response);
 
 			dataList.add(message);
 		}
