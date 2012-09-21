@@ -36,7 +36,7 @@ import com.htmlhifive.sync.resource.SyncResponseHeader;
  */
 @Entity
 @Table(name = "COMMON_DATA")
-public class CommonDataBean {
+public class CommonData {
 
 	/**
 	 * このエンティティのID(同期データID).
@@ -78,7 +78,7 @@ public class CommonDataBean {
 	 * プライベートデフォルトコンストラクタ.
 	 */
 	@SuppressWarnings("unused")
-	private CommonDataBean() {
+	private CommonData() {
 	}
 
 	/**
@@ -88,7 +88,7 @@ public class CommonDataBean {
 	 * @param requestHeader リソースへのリクエストヘッダ
 	 * @param targetResourceIdStr リソースID文字列
 	 */
-	public CommonDataBean(String syncDataId, SyncRequestHeader requestHeader, String resourceIdStr) {
+	public CommonData(String syncDataId, SyncRequestHeader requestHeader, String resourceIdStr) {
 
 		this.syncDataId = syncDataId;
 		this.dataModelName = requestHeader.getDataModelName();
@@ -106,10 +106,10 @@ public class CommonDataBean {
 
 		if (this == obj)
 			return true;
-		if (!(obj instanceof CommonDataBean))
+		if (!(obj instanceof CommonData))
 			return false;
 
-		return EqualsBuilder.reflectionEquals(this, ((CommonDataBean) obj), "syncDataId");
+		return EqualsBuilder.reflectionEquals(this, ((CommonData) obj), "syncDataId");
 	}
 
 	/**

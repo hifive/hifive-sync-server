@@ -27,7 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htmlhifive.sync.commondata.CommonDataBean;
+import com.htmlhifive.sync.commondata.CommonData;
 import com.htmlhifive.sync.commondata.CommonDataRepository;
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.NotFoundException;
@@ -38,7 +38,7 @@ import com.htmlhifive.sync.resource.SyncResponseHeader;
 /**
  * 共通データを専用のデータエンティティ、リポジトリを使用して永続化する共通データ管理サービス実装.<br>
  * {@link SyncRequestHeader 同期リクエストヘッダ}、{@link SyncResponseHeader 同期レスポンスヘッダ} でデータを受渡します.<br>
- * {@link CommonDataBean 共通データエンティティ}を、専用のリポジトリを用いて永続化します.
+ * {@link CommonData 共通データエンティティ}を、専用のリポジトリを用いて永続化します.
  *
  * @author kishigam
  */
@@ -61,7 +61,7 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	@Override
 	public SyncResponseHeader getCommonData(SyncRequestHeader requestHeader) {
 
-		CommonDataBean common = findBean(requestHeader.getSyncDataId());
+		CommonData common = findBean(requestHeader.getSyncDataId());
 
 		SyncResponseHeader responseHeader = common.createResponseHeader();
 		// クエリ情報は共通データとして管理していないため、リクエストヘッダからコピーする
@@ -80,7 +80,7 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	@Override
 	public SyncResponseHeader getCommonData(String dataModelName, String resourceIdStr) {
 
-		CommonDataBean common = repository.findByResourceIdStr(dataModelName, resourceIdStr);
+		CommonData common = repository.findByResourceIdStr(dataModelName, resourceIdStr);
 
 		SyncResponseHeader responseHeader = common.createResponseHeader();
 
@@ -96,11 +96,11 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	@Override
 	public Map<String, SyncResponseHeader> getCommonDataModifiedSince(SyncRequestHeader requestHeader) {
 
-		List<CommonDataBean> commons = repository.findModified(requestHeader.getDataModelName(),
+		List<CommonData> commons = repository.findModified(requestHeader.getDataModelName(),
 				requestHeader.getLastSyncTime());
 
 		Map<String, SyncResponseHeader> resultMap = new HashMap<>();
-		for (CommonDataBean common : commons) {
+		for (CommonData common : commons) {
 
 			SyncResponseHeader responseHeader = common.createResponseHeader();
 			// クエリ情報は共通データとして管理していないため、リクエストヘッダからコピーする
@@ -120,7 +120,7 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	@Override
 	public boolean getLock(SyncRequestHeader requestHeader) {
 
-		CommonDataBean common = findBean(requestHeader.getSyncDataId());
+		CommonData common = findBean(requestHeader.getSyncDataId());
 		if (!common.getLockKey().equals(requestHeader.getStorageId())) {
 			return false;
 		}
@@ -138,7 +138,7 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	@Override
 	public void releaseLock(SyncResponseHeader responseHeader) {
 
-		CommonDataBean common = findBean(responseHeader.getSyncDataId());
+		CommonData common = findBean(responseHeader.getSyncDataId());
 		if (!common.getLockKey().equals(responseHeader.getStorageId())) {
 
 			throw new IllegalStateException("this data is locked by another.");
@@ -166,7 +166,7 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 			throw new BadRequestException("inconsistent data exist", cause);
 		}
 
-		CommonDataBean newCommon = new CommonDataBean(newSyncDataId, requestHeader, targetResourceIdStr);
+		CommonData newCommon = new CommonData(newSyncDataId, requestHeader, targetResourceIdStr);
 
 		repository.save(newCommon);
 
@@ -188,7 +188,7 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	@Override
 	public SyncResponseHeader saveUpdatedCommonData(SyncRequestHeader requestHeader) {
 
-		CommonDataBean updatingCommon = findBean(requestHeader.getSyncDataId());
+		CommonData updatingCommon = findBean(requestHeader.getSyncDataId());
 
 		updatingCommon.modifiy(requestHeader);
 
@@ -218,9 +218,9 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	 * @return 共通データエンティティ
 	 * @throws NotFoundException IDからエンティティが取得できなかったとき
 	 */
-	private CommonDataBean findBean(String syncDataId) {
+	private CommonData findBean(String syncDataId) {
 
-		CommonDataBean common = repository.findOne(syncDataId);
+		CommonData common = repository.findOne(syncDataId);
 
 		if (common == null) {
 			throw new NotFoundException("entity not found");
