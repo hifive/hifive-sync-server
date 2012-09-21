@@ -33,7 +33,6 @@ import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.resource.SyncProvider;
 import com.htmlhifive.sync.resource.SyncRequestHeader;
-import com.htmlhifive.sync.resource.SyncResponseHeader;
 
 /**
  * 共通データを専用のデータエンティティ、リポジトリを使用して永続化する共通データ管理サービス実装.<br>
@@ -59,15 +58,9 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	 * @return リソースからのレスポンスヘッダ
 	 */
 	@Override
-	public SyncResponseHeader getCommonData(SyncRequestHeader requestHeader) {
+	public CommonData getCommonData(SyncRequestHeader requestHeader) {
 
-		CommonData common = findBean(requestHeader.getSyncDataId());
-
-		SyncResponseHeader responseHeader = common.createResponseHeader();
-		// クエリ情報は共通データとして管理していないため、リクエストヘッダからコピーする
-		responseHeader.setQueryMap(requestHeader.getQueryMap());
-
-		return responseHeader;
+		return findBean(requestHeader.getSyncDataId());
 	}
 
 	/**
@@ -78,13 +71,9 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	 * @return リソースからのレスポンスヘッダ
 	 */
 	@Override
-	public SyncResponseHeader getCommonData(String dataModelName, String resourceIdStr) {
+	public CommonData getCommonData(String dataModelName, String resourceIdStr) {
 
-		CommonData common = repository.findByResourceIdStr(dataModelName, resourceIdStr);
-
-		SyncResponseHeader responseHeader = common.createResponseHeader();
-
-		return responseHeader;
+		return repository.findByResourceIdStr(dataModelName, resourceIdStr);
 	}
 
 	/**
@@ -94,19 +83,15 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	 * @return リソースID文字列をKey、リソースからのレスポンスヘッダをValueとするMap
 	 */
 	@Override
-	public Map<String, SyncResponseHeader> getCommonDataModifiedSince(SyncRequestHeader requestHeader) {
+	public Map<String, CommonData> getCommonDataModifiedSince(SyncRequestHeader requestHeader) {
 
 		List<CommonData> commons = repository.findModified(requestHeader.getDataModelName(),
 				requestHeader.getLastSyncTime());
 
-		Map<String, SyncResponseHeader> resultMap = new HashMap<>();
+		Map<String, CommonData> resultMap = new HashMap<>();
 		for (CommonData common : commons) {
 
-			SyncResponseHeader responseHeader = common.createResponseHeader();
-			// クエリ情報は共通データとして管理していないため、リクエストヘッダからコピーする
-			responseHeader.setQueryMap(requestHeader.getQueryMap());
-
-			resultMap.put(common.getResourceIdStr(), responseHeader);
+			resultMap.put(common.getResourceIdStr(), common);
 		}
 
 		return resultMap;
@@ -115,17 +100,17 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	/**
 	 * リソースに対応する共通データに対し、ロックを設定します.<br>
 	 *
-	 * @param responseHeader リソースからのレスポンスヘッダ
+	 * @param common リソースからのレスポンスヘッダ
 	 */
 	@Override
 	public boolean getLock(SyncRequestHeader requestHeader) {
 
-		CommonData common = findBean(requestHeader.getSyncDataId());
-		if (!common.getLockKey().equals(requestHeader.getStorageId())) {
+		CommonData existingCommon = findBean(requestHeader.getSyncDataId());
+		if (!existingCommon.getLockKey().equals(requestHeader.getStorageId())) {
 			return false;
 		}
-		common.setLockKey(requestHeader.getStorageId());
-		repository.save(common);
+		existingCommon.setLockKey(requestHeader.getStorageId());
+		repository.save(existingCommon);
 
 		return true;
 	}
@@ -133,18 +118,18 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	/**
 	 * リソースに対応する共通データに対し、ロックを解除して更新します.
 	 *
-	 * @param responseHeader リソースからのレスポンスヘッダ
+	 * @param common リソースからのレスポンスヘッダ
 	 */
 	@Override
-	public void releaseLock(SyncResponseHeader responseHeader) {
+	public void releaseLock(CommonData common) {
 
-		CommonData common = findBean(responseHeader.getSyncDataId());
-		if (!common.getLockKey().equals(responseHeader.getStorageId())) {
+		CommonData existingCommon = findBean(common.getSyncDataId());
+		if (!common.getLockKey().equals(existingCommon.getStorageId())) {
 
 			throw new IllegalStateException("this data is locked by another.");
 		}
-		common.setLockKey(null);
-		repository.save(common);
+		existingCommon.setLockKey(null);
+		repository.save(existingCommon);
 	}
 
 	/**
@@ -155,7 +140,7 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	 * @return リソースからのレスポンスヘッダ
 	 */
 	@Override
-	public SyncResponseHeader saveNewCommonData(SyncRequestHeader requestHeader, String targetResourceIdStr) {
+	public CommonData saveNewCommonData(SyncRequestHeader requestHeader, String targetResourceIdStr) {
 
 		String newSyncDataId = generateSyncDataId(requestHeader);
 
@@ -170,12 +155,7 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 
 		repository.save(newCommon);
 
-		SyncResponseHeader responseHeader = newCommon.createResponseHeader();
-
-		// 新規登録の場合はストレージローカルIDを設定
-		responseHeader.setStorageLocalId(requestHeader.getStorageLocalId());
-
-		return responseHeader;
+		return newCommon;
 	}
 
 	/**
@@ -186,7 +166,7 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 	 * @return リソースからのレスポンスヘッダ
 	 */
 	@Override
-	public SyncResponseHeader saveUpdatedCommonData(SyncRequestHeader requestHeader) {
+	public CommonData saveUpdatedCommonData(SyncRequestHeader requestHeader) {
 
 		CommonData updatingCommon = findBean(requestHeader.getSyncDataId());
 
@@ -194,9 +174,7 @@ public class SeparatedCommonDataSyncProvider implements SyncProvider {
 
 		repository.save(updatingCommon);
 
-		SyncResponseHeader responseHeader = updatingCommon.createResponseHeader();
-
-		return responseHeader;
+		return updatingCommon;
 	}
 
 	/**

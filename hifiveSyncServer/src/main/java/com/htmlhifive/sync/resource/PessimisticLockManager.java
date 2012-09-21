@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htmlhifive.sync.commondata.CommonData;
 import com.htmlhifive.sync.exception.PessimisticLockException;
 
 /**
@@ -39,12 +40,11 @@ public class PessimisticLockManager implements LockManager {
 	 * 仮実装として、PessimisticLockExceptionをスローします.
 	 *
 	 * @param requestHeader 同期リクエストヘッダ
-	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 * @param commonBeforUpdate 同期レスポンスヘッダ
 	 * @return
 	 */
 	@Override
-	public boolean lock(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate)
-			throws PessimisticLockException {
+	public boolean lock(SyncRequestHeader requestHeader, CommonData commonBeforUpdate) throws PessimisticLockException {
 
 		throw new PessimisticLockException();
 	}
@@ -54,11 +54,11 @@ public class PessimisticLockManager implements LockManager {
 	 * 仮実装として、PessimisticLockExceptionをスローします.
 	 *
 	 * @param requestHeader 同期リクエストヘッダ
-	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 * @param commonBeforUpdate 同期レスポンスヘッダ
 	 * @return
 	 */
 	@Override
-	public boolean canUpdate(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate)
+	public boolean canUpdate(SyncRequestHeader requestHeader, CommonData commonBeforUpdate)
 			throws PessimisticLockException {
 
 		throw new PessimisticLockException();
@@ -69,10 +69,10 @@ public class PessimisticLockManager implements LockManager {
 	 * 仮実装として、空実装とします.
 	 *
 	 * @param requestHeader 同期リクエストヘッダ
-	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 * @param commonBeforUpdate 同期レスポンスヘッダ
 	 */
 	@Override
-	public void release(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate) {
+	public void release(SyncRequestHeader requestHeader, CommonData commonBeforUpdate) {
 
 	}
 }

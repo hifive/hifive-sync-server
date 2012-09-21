@@ -21,16 +21,14 @@ import com.htmlhifive.sync.resource.SyncResponse;
 
 public class UploadResponseMessageOrdinary extends UploadResponseMessage {
 
-    /**
-     * 新規登録を除く同期の成功データを表現する上り更新レスポンスメッセージを生成します.
-     *
-     * @param response
-     *            同期レスポンスオブジェクト
-     */
-    public UploadResponseMessageOrdinary(SyncResponse<?> response) {
+	/**
+	 * 新規登録を除く同期の成功データを表現する上り更新レスポンスメッセージを生成します.
+	 *
+	 * @param response 同期レスポンスオブジェクト
+	 */
+	public UploadResponseMessageOrdinary(SyncResponse<?> response) {
 
-        super(
-                response.getHeader().getSyncDataId(),
-                JsonDataConvertor.convertSyncMethodToAction(response.getHeader().getSyncMethod()));
-    }
+		super(response.getCommon().getSyncDataId(), JsonDataConvertor.convertSyncMethodToAction(response.getCommon()
+				.getSyncMethod()));
+	}
 }

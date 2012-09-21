@@ -26,7 +26,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import com.htmlhifive.sync.resource.SyncMethod;
 import com.htmlhifive.sync.resource.SyncRequestHeader;
-import com.htmlhifive.sync.resource.SyncResponseHeader;
 
 /**
  * リソースを同期するために必要な共通データを管理するエンティティ.<br>
@@ -47,7 +46,7 @@ public class CommonData {
 	/**
 	 * クライアント(ストレージ)のID.<br>
 	 */
-	private String storageId;;
+	private String storageId;
 
 	/**
 	 * リソースのデータモデル名.<br>
@@ -75,10 +74,9 @@ public class CommonData {
 	private String lockKey;
 
 	/**
-	 * プライベートデフォルトコンストラクタ.
+	 * 共通データエンティティを生成します.
 	 */
-	@SuppressWarnings("unused")
-	private CommonData() {
+	public CommonData() {
 	}
 
 	/**
@@ -139,24 +137,6 @@ public class CommonData {
 
 		this.syncMethod = requestHeader.getSyncMethod();
 		this.lastModified = requestHeader.getRequestTime();
-	}
-
-	/**
-	 * この共通データの情報を同期レスポンスヘッダのオブジェクトで返します.<>
-	 *
-	 * @return 同期レスポンスのヘッダ
-	 */
-	public SyncResponseHeader createResponseHeader() {
-
-		SyncResponseHeader responseHeader = new SyncResponseHeader(this.resourceIdStr);
-
-		responseHeader.setDataModelName(this.dataModelName);
-		responseHeader.setSyncDataId(this.syncDataId);
-		responseHeader.setSyncMethod(this.syncMethod);
-		responseHeader.setLastModified(this.lastModified);
-		responseHeader.setStorageId(this.storageId);
-
-		return responseHeader;
 	}
 
 	/**

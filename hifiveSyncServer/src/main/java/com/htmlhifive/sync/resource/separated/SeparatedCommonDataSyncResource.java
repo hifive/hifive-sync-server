@@ -23,17 +23,17 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
+import com.htmlhifive.sync.commondata.CommonData;
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.exception.DuplicateElementException;
 import com.htmlhifive.sync.resource.LockManager;
-import com.htmlhifive.sync.resource.UpdateStrategy;
 import com.htmlhifive.sync.resource.SyncMethod;
 import com.htmlhifive.sync.resource.SyncProvider;
 import com.htmlhifive.sync.resource.SyncRequestHeader;
 import com.htmlhifive.sync.resource.SyncResource;
 import com.htmlhifive.sync.resource.SyncResourceManager;
 import com.htmlhifive.sync.resource.SyncResponse;
-import com.htmlhifive.sync.resource.SyncResponseHeader;
+import com.htmlhifive.sync.resource.UpdateStrategy;
 
 /**
  * 専用の共通データサービスによる同期制御処理を行うリソースの抽象クラス.<br>
@@ -71,16 +71,16 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 	@Override
 	public SyncResponse<E> get(SyncRequestHeader requestHeader) {
 
-		SyncResponseHeader responseHeader = syncProvider.getCommonData(requestHeader);
+		CommonData common = syncProvider.getCommonData(requestHeader);
 
 		E element = null;
 		try {
-			lockManager.lock(requestHeader, responseHeader);
+			lockManager.lock(requestHeader, common);
 		} finally {
-			element = getImpl(responseHeader.getResourceIdStr());
+			element = getImpl(common.getResourceIdStr());
 		}
 
-		return new SyncResponse<>(responseHeader, element);
+		return new SyncResponse<>(common, element);
 	}
 
 	/**
@@ -92,19 +92,19 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 	@Override
 	public Set<SyncResponse<E>> getModifiedSince(SyncRequestHeader requestHeader) {
 
-		Map<String, SyncResponseHeader> responseHeaderMap = syncProvider.getCommonDataModifiedSince(requestHeader);
+		Map<String, CommonData> commonMap = syncProvider.getCommonDataModifiedSince(requestHeader);
 
-		for (String resourceIdStr : responseHeaderMap.keySet()) {
-			lockManager.lock(requestHeader, responseHeaderMap.get(resourceIdStr));
+		for (String resourceIdStr : commonMap.keySet()) {
+			lockManager.lock(requestHeader, commonMap.get(resourceIdStr));
 		}
 
-		Map<String, E> elementMap = getImpl(responseHeaderMap.keySet(), requestHeader.getQueryMap());
+		Map<String, E> elementMap = getImpl(commonMap.keySet(), requestHeader.getQueryMap());
 
 		Set<SyncResponse<E>> responseSet = new HashSet<>();
-		for (String targetResourceIdStr : responseHeaderMap.keySet()) {
+		for (String targetResourceIdStr : commonMap.keySet()) {
 
-			responseSet.add(new SyncResponse<>(responseHeaderMap.get(targetResourceIdStr), elementMap
-					.get(targetResourceIdStr)));
+			responseSet
+					.add(new SyncResponse<>(commonMap.get(targetResourceIdStr), elementMap.get(targetResourceIdStr)));
 		}
 
 		return responseSet;
@@ -121,28 +121,27 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 	@Override
 	public SyncResponse<E> put(SyncRequestHeader requestHeader, E element) throws ConflictException {
 
-		SyncResponseHeader responseHeaderBeforUpdate = syncProvider.getCommonData(requestHeader);
+		CommonData commonBeforUpdate = syncProvider.getCommonData(requestHeader);
 
 		// ロックエラー判定
 		E putElement = element;
-		if (!lockManager.canUpdate(requestHeader, responseHeaderBeforUpdate)) {
+		if (!lockManager.canUpdate(requestHeader, commonBeforUpdate)) {
 
 			// サーバで保持しているエレメントを取得
-			E serverElement = responseHeaderBeforUpdate.getSyncMethod() == SyncMethod.DELETE ? null
-					: getImpl(responseHeaderBeforUpdate.getResourceIdStr());
+			E serverElement = commonBeforUpdate.getSyncMethod() == SyncMethod.DELETE ? null : getImpl(commonBeforUpdate
+					.getResourceIdStr());
 
 			// 楽観ロックエラー時の競合解決、更新エレメントを決定
-			putElement = updateStrategy.resolveConflict(requestHeader, element, responseHeaderBeforUpdate,
-					serverElement);
+			putElement = updateStrategy.resolveConflict(requestHeader, element, commonBeforUpdate, serverElement);
 		}
 
-		putImpl(responseHeaderBeforUpdate.getResourceIdStr(), putElement);
+		putImpl(commonBeforUpdate.getResourceIdStr(), putElement);
 
-		SyncResponseHeader responseHeaderAfterUpdate = syncProvider.saveUpdatedCommonData(requestHeader);
+		CommonData commonAfterUpdate = syncProvider.saveUpdatedCommonData(requestHeader);
 
-		lockManager.release(requestHeader, responseHeaderAfterUpdate);
+		lockManager.release(requestHeader, commonAfterUpdate);
 
-		return new SyncResponse<>(responseHeaderAfterUpdate, putElement);
+		return new SyncResponse<>(commonAfterUpdate, putElement);
 	}
 
 	/**
@@ -156,35 +155,35 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 	@Override
 	public SyncResponse<E> delete(SyncRequestHeader requestHeader) throws ConflictException {
 
-		SyncResponseHeader responseHeaderBeforUpdate = syncProvider.getCommonData(requestHeader);
+		CommonData commonBeforUpdate = syncProvider.getCommonData(requestHeader);
 
 		// ロックエラー判定
 		E putElement = null;
-		if (!lockManager.canUpdate(requestHeader, responseHeaderBeforUpdate)) {
+		if (!lockManager.canUpdate(requestHeader, commonBeforUpdate)) {
 
 			// サーバで保持しているエレメントを取得
-			E serverElement = responseHeaderBeforUpdate.getSyncMethod() == SyncMethod.DELETE ? null
-					: getImpl(responseHeaderBeforUpdate.getResourceIdStr());
+			E serverElement = commonBeforUpdate.getSyncMethod() == SyncMethod.DELETE ? null : getImpl(commonBeforUpdate
+					.getResourceIdStr());
 
 			// 楽観ロックエラー時の競合解決
-			putElement = updateStrategy.resolveConflict(requestHeader, null, responseHeaderBeforUpdate, serverElement);
+			putElement = updateStrategy.resolveConflict(requestHeader, null, commonBeforUpdate, serverElement);
 		}
 
 		// 更新するエレメントがあればputを行う
-		SyncResponseHeader responseHeaderAfterUpdate;
+		CommonData commonAfterUpdate;
 		if (putElement == null) {
-			deleteImpl(responseHeaderBeforUpdate.getResourceIdStr());
+			deleteImpl(commonBeforUpdate.getResourceIdStr());
 		} else {
-			putImpl(responseHeaderBeforUpdate.getResourceIdStr(), putElement);
+			putImpl(commonBeforUpdate.getResourceIdStr(), putElement);
 
 			// リクエストヘッダの同期メソッドを書き換える
 			requestHeader.setSyncMethod(SyncMethod.PUT);
 		}
-		responseHeaderAfterUpdate = syncProvider.saveUpdatedCommonData(requestHeader);
+		commonAfterUpdate = syncProvider.saveUpdatedCommonData(requestHeader);
 
-		lockManager.release(requestHeader, responseHeaderAfterUpdate);
+		lockManager.release(requestHeader, commonAfterUpdate);
 
-		return new SyncResponse<>(responseHeaderAfterUpdate, putElement);
+		return new SyncResponse<>(commonAfterUpdate, putElement);
 	}
 
 	/**
@@ -204,16 +203,16 @@ public abstract class SeparatedCommonDataSyncResource<I, E> implements SyncResou
 			newTargetResourceIdStr = postImpl(newElement);
 		} catch (DuplicateElementException e) {
 
-			SyncResponseHeader responseHeaderBeforeCreate = syncProvider.getCommonData(
-					requestHeader.getDataModelName(), e.getDuplicateResourceIdStr());
+			CommonData commonBeforeCreate = syncProvider.getCommonData(requestHeader.getDataModelName(),
+					e.getDuplicateResourceIdStr());
 
-			throw new ConflictException("duplicate key on target resource.", e, new SyncResponse<>(
-					responseHeaderBeforeCreate, e.getDuplicateElement()));
+			throw new ConflictException("duplicate key on target resource.", e, new SyncResponse<>(commonBeforeCreate,
+					e.getDuplicateElement()));
 		}
 
-		SyncResponseHeader responseHeader = syncProvider.saveNewCommonData(requestHeader, newTargetResourceIdStr);
+		CommonData common = syncProvider.saveNewCommonData(requestHeader, newTargetResourceIdStr);
 
-		return new SyncResponse<>(responseHeader, newElement);
+		return new SyncResponse<>(common, newElement);
 	}
 
 	/**

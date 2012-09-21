@@ -20,17 +20,17 @@ import mockit.Mocked;
 
 import org.junit.Test;
 
+import com.htmlhifive.sync.commondata.CommonData;
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.exception.DuplicateElementException;
 import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.resource.LockManager;
-import com.htmlhifive.sync.resource.UpdateStrategy;
 import com.htmlhifive.sync.resource.SyncMethod;
 import com.htmlhifive.sync.resource.SyncProvider;
 import com.htmlhifive.sync.resource.SyncRequestHeader;
 import com.htmlhifive.sync.resource.SyncResourceService;
 import com.htmlhifive.sync.resource.SyncResponse;
-import com.htmlhifive.sync.resource.SyncResponseHeader;
+import com.htmlhifive.sync.resource.UpdateStrategy;
 import com.htmlhifive.sync.sample.person.PersonResource;
 import com.htmlhifive.sync.sample.person.PersonResourceElement;
 
@@ -277,8 +277,9 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final SeparatedCommonDataSyncResource<?, ?> target = new TargetSubClass(resourceIdStr, expectedElement);
 
-		final SyncResponseHeader expectedResponseHeader = new SyncResponseHeader(resourceIdStr);
-		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedResponseHeader, expectedElement);
+		final CommonData expectedCommon = new CommonData();
+		expectedCommon.setResourceIdStr(resourceIdStr);
+		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedCommon, expectedElement);
 
 		new Expectations() {
 			SyncProvider syncProvider;
@@ -289,9 +290,9 @@ public class SeparatedCommonDataSyncResourceTest {
 				setField(target, "lockManager", lockManager);
 
 				syncProvider.getCommonData(requestHeader);
-				result = expectedResponseHeader;
+				result = expectedCommon;
 
-				lockManager.lock(requestHeader, expectedResponseHeader);
+				lockManager.lock(requestHeader, expectedCommon);
 				result = true;
 			}
 		};
@@ -373,19 +374,21 @@ public class SeparatedCommonDataSyncResourceTest {
 		final SeparatedCommonDataSyncResource<?, ?> target = new TargetSubClass(new String[] { resourceIdStr1,
 				resourceIdStr2 }, new Object[] { expectedElement1, expectedElement2 });
 
-		final SyncResponseHeader expectedResponseHeader1 = new SyncResponseHeader(resourceIdStr1);
-		final SyncResponseHeader expectedResponseHeader2 = new SyncResponseHeader(resourceIdStr2);
+		final CommonData expectedCommon1 = new CommonData();
+		expectedCommon1.setResourceIdStr(resourceIdStr1);
+		final CommonData expectedCommon2 = new CommonData();
+		expectedCommon2.setResourceIdStr(resourceIdStr1);
 
 		@SuppressWarnings("serial")
-		final Map<String, SyncResponseHeader> expectedResponseHeaderMap = new HashMap<String, SyncResponseHeader>() {
+		final Map<String, CommonData> expectedCommonMap = new HashMap<String, CommonData>() {
 			{
-				put(resourceIdStr1, expectedResponseHeader1);
-				put(resourceIdStr2, expectedResponseHeader2);
+				put(resourceIdStr1, expectedCommon1);
+				put(resourceIdStr2, expectedCommon2);
 			}
 		};
 
-		final SyncResponse<?> expectedResponse1 = new SyncResponse<>(expectedResponseHeader1, expectedElement1);
-		final SyncResponse<?> expectedResponse2 = new SyncResponse<>(expectedResponseHeader2, expectedElement2);
+		final SyncResponse<?> expectedResponse1 = new SyncResponse<>(expectedCommon1, expectedElement1);
+		final SyncResponse<?> expectedResponse2 = new SyncResponse<>(expectedCommon2, expectedElement2);
 
 		@SuppressWarnings("serial")
 		final Set<? extends SyncResponse<?>> expectedResponseSet = new HashSet<SyncResponse<?>>() {
@@ -404,11 +407,11 @@ public class SeparatedCommonDataSyncResourceTest {
 				setField(target, "lockManager", lockManager);
 
 				syncProvider.getCommonDataModifiedSince(requestHeader);
-				result = expectedResponseHeaderMap;
+				result = expectedCommonMap;
 
-				lockManager.lock(requestHeader, expectedResponseHeader1);
+				lockManager.lock(requestHeader, expectedCommon1);
 				result = true;
-				lockManager.lock(requestHeader, expectedResponseHeader2);
+				lockManager.lock(requestHeader, expectedCommon2);
 				result = true;
 			}
 		};
@@ -449,15 +452,16 @@ public class SeparatedCommonDataSyncResourceTest {
 		final SeparatedCommonDataSyncResource<?, ?> target = new TargetSubClass(new String[] { resourceIdStr1,
 				resourceIdStr2 }, new Object[] { expectedElement1, null });
 
-		final SyncResponseHeader expectedResponseHeader1 = new SyncResponseHeader(resourceIdStr1);
-
-		final SyncResponseHeader expectedResponseHeader2 = new SyncResponseHeader(resourceIdStr2);
+		final CommonData expectedCommon1 = new CommonData();
+		expectedCommon1.setResourceIdStr(resourceIdStr1);
+		final CommonData expectedCommon2 = new CommonData();
+		expectedCommon2.setResourceIdStr(resourceIdStr2);
 
 		@SuppressWarnings("serial")
-		final Map<String, SyncResponseHeader> expectedResponseHeaderMap = new HashMap<String, SyncResponseHeader>() {
+		final Map<String, CommonData> expectedCommonMap = new HashMap<String, CommonData>() {
 			{
-				put(resourceIdStr1, expectedResponseHeader1);
-				put(resourceIdStr2, expectedResponseHeader2);
+				put(resourceIdStr1, expectedCommon1);
+				put(resourceIdStr2, expectedCommon2);
 			}
 		};
 
@@ -470,11 +474,11 @@ public class SeparatedCommonDataSyncResourceTest {
 				setField(target, "lockManager", lockManager);
 
 				syncProvider.getCommonDataModifiedSince(requestHeader);
-				result = expectedResponseHeaderMap;
+				result = expectedCommonMap;
 
-				lockManager.lock(requestHeader, expectedResponseHeader1);
+				lockManager.lock(requestHeader, expectedCommon1);
 				result = true;
-				lockManager.lock(requestHeader, expectedResponseHeader2);
+				lockManager.lock(requestHeader, expectedCommon2);
 				result = new NotFoundException("CommonDataNotFound");
 			}
 		};
@@ -511,12 +515,13 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClass(resourceIdStr, elementBeforeUpdate);
 
-		final SyncResponseHeader expectedResponseHeaderBeforeUpdate = new SyncResponseHeader(resourceIdStr);
-
-		final SyncResponseHeader expectedResponseHeaderAfterUpdate = new SyncResponseHeader(resourceIdStr);
+		final CommonData expectedCommonBeforeUpdate = new CommonData();
+		expectedCommonBeforeUpdate.setResourceIdStr(resourceIdStr);
+		final CommonData expectedCommonAfterUpdate = new CommonData();
+		expectedCommonAfterUpdate.setResourceIdStr(resourceIdStr);
 
 		final Object updateElement = new Object();
-		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedResponseHeaderAfterUpdate, updateElement);
+		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedCommonAfterUpdate, updateElement);
 
 		new Expectations() {
 			SyncProvider syncProvider;
@@ -529,15 +534,15 @@ public class SeparatedCommonDataSyncResourceTest {
 				setField(target, "updateStrategy", updateStrategy);
 
 				syncProvider.getCommonData(requestHeader);
-				result = expectedResponseHeaderBeforeUpdate;
+				result = expectedCommonBeforeUpdate;
 
-				lockManager.canUpdate(requestHeader, expectedResponseHeaderBeforeUpdate);
+				lockManager.canUpdate(requestHeader, expectedCommonBeforeUpdate);
 				result = true;
 
 				syncProvider.saveUpdatedCommonData(requestHeader);
-				result = expectedResponseHeaderAfterUpdate;
+				result = expectedCommonAfterUpdate;
 
-				lockManager.release(requestHeader, expectedResponseHeaderAfterUpdate);
+				lockManager.release(requestHeader, expectedCommonAfterUpdate);
 			}
 		};
 
@@ -614,10 +619,11 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClass(resourceIdStr, elementBeforeUpdate);
 
-		final SyncResponseHeader expectedResponseHeaderBeforeUpdate = new SyncResponseHeader(resourceIdStr);
+		final CommonData expectedCommonBeforeUpdate = new CommonData();
+		expectedCommonBeforeUpdate.setResourceIdStr(resourceIdStr);
 
 		final Object updateElement = new Object();
-		final SyncResponse<?> expectedConflictResponse = new SyncResponse<>(expectedResponseHeaderBeforeUpdate,
+		final SyncResponse<?> expectedConflictResponse = new SyncResponse<>(expectedCommonBeforeUpdate,
 				elementBeforeUpdate);
 
 		new Expectations() {
@@ -631,12 +637,12 @@ public class SeparatedCommonDataSyncResourceTest {
 				setField(target, "updateStrategy", updateStrategy);
 
 				syncProvider.getCommonData(requestHeader);
-				result = expectedResponseHeaderBeforeUpdate;
+				result = expectedCommonBeforeUpdate;
 
-				lockManager.canUpdate(requestHeader, expectedResponseHeaderBeforeUpdate);
+				lockManager.canUpdate(requestHeader, expectedCommonBeforeUpdate);
 				result = false;
 
-				updateStrategy.resolveConflict(requestHeader, updateElement, expectedResponseHeaderBeforeUpdate,
+				updateStrategy.resolveConflict(requestHeader, updateElement, expectedCommonBeforeUpdate,
 						elementBeforeUpdate);
 				result = new ConflictException(expectedConflictResponse);
 			}
@@ -668,11 +674,12 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClass(resourceIdStr, elementBeforeUpdate);
 
-		final SyncResponseHeader expectedResponseHeaderBeforeDelete = new SyncResponseHeader(resourceIdStr);
+		final CommonData expectedCommonBeforeDelete = new CommonData();
+		expectedCommonBeforeDelete.setResourceIdStr(resourceIdStr);
+		final CommonData expectedCommonAfterDelete = new CommonData();
+		expectedCommonAfterDelete.setResourceIdStr(resourceIdStr);
 
-		final SyncResponseHeader expectedResponseHeaderAfterDelete = new SyncResponseHeader(resourceIdStr);
-
-		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedResponseHeaderAfterDelete, null);
+		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedCommonAfterDelete, null);
 
 		new Expectations() {
 			SyncProvider syncProvider;
@@ -683,15 +690,15 @@ public class SeparatedCommonDataSyncResourceTest {
 				setField(target, "lockManager", lockManager);
 
 				syncProvider.getCommonData(requestHeader);
-				result = expectedResponseHeaderBeforeDelete;
+				result = expectedCommonBeforeDelete;
 
-				lockManager.canUpdate(requestHeader, expectedResponseHeaderBeforeDelete);
+				lockManager.canUpdate(requestHeader, expectedCommonBeforeDelete);
 				result = true;
 
 				syncProvider.saveUpdatedCommonData(requestHeader);
-				result = expectedResponseHeaderAfterDelete;
+				result = expectedCommonAfterDelete;
 
-				lockManager.release(requestHeader, expectedResponseHeaderAfterDelete);
+				lockManager.release(requestHeader, expectedCommonAfterDelete);
 			}
 		};
 
@@ -765,9 +772,10 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClass(resourceIdStr, elementBeforeUpdate);
 
-		final SyncResponseHeader expectedResponseHeaderBeforeUpdate = new SyncResponseHeader(resourceIdStr);
+		final CommonData expectedCommonBeforeUpdate = new CommonData();
+		expectedCommonBeforeUpdate.setResourceIdStr(resourceIdStr);
 
-		final SyncResponse<?> expectedConflictResponse = new SyncResponse<>(expectedResponseHeaderBeforeUpdate,
+		final SyncResponse<?> expectedConflictResponse = new SyncResponse<>(expectedCommonBeforeUpdate,
 				elementBeforeUpdate);
 
 		new Expectations() {
@@ -781,13 +789,12 @@ public class SeparatedCommonDataSyncResourceTest {
 				setField(target, "updateStrategy", updateStrategy);
 
 				syncProvider.getCommonData(requestHeader);
-				result = expectedResponseHeaderBeforeUpdate;
+				result = expectedCommonBeforeUpdate;
 
-				lockManager.canUpdate(requestHeader, expectedResponseHeaderBeforeUpdate);
+				lockManager.canUpdate(requestHeader, expectedCommonBeforeUpdate);
 				result = false;
 
-				updateStrategy.resolveConflict(requestHeader, null, expectedResponseHeaderBeforeUpdate,
-						elementBeforeUpdate);
+				updateStrategy.resolveConflict(requestHeader, null, expectedCommonBeforeUpdate, elementBeforeUpdate);
 				result = new ConflictException(expectedConflictResponse);
 			}
 		};
@@ -821,11 +828,14 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final SeparatedCommonDataSyncResource<?, Object> target = new TargetSubClass(resourceIdStr, elementBeforeUpdate);
 
-		final SyncResponseHeader expectedResponseHeaderBeforeUpdate = new SyncResponseHeader(resourceIdStr);
+		final CommonData expectedCommonBeforeUpdate = new CommonData();
+		expectedCommonBeforeUpdate.setResourceIdStr(resourceIdStr);
 
 		final Object putElement = new Object();
-		final SyncResponseHeader expectedResponseHeaderAfterUpdate = new SyncResponseHeader(resourceIdStr);
-		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedResponseHeaderAfterUpdate, putElement);
+		final CommonData expectedCommonAfterUpdate = new CommonData();
+		expectedCommonAfterUpdate.setResourceIdStr(resourceIdStr);
+
+		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedCommonAfterUpdate, putElement);
 
 		new Expectations() {
 			SyncProvider syncProvider;
@@ -838,22 +848,21 @@ public class SeparatedCommonDataSyncResourceTest {
 				setField(target, "updateStrategy", updateStrategy);
 
 				syncProvider.getCommonData(requestHeader);
-				result = expectedResponseHeaderBeforeUpdate;
+				result = expectedCommonBeforeUpdate;
 
-				lockManager.canUpdate(requestHeader, expectedResponseHeaderBeforeUpdate);
+				lockManager.canUpdate(requestHeader, expectedCommonBeforeUpdate);
 				result = false;
 
-				updateStrategy.resolveConflict(requestHeader, null, expectedResponseHeaderBeforeUpdate,
-						elementBeforeUpdate);
+				updateStrategy.resolveConflict(requestHeader, null, expectedCommonBeforeUpdate, elementBeforeUpdate);
 				result = putElement;
 
 				// リクエストヘッダが書き換えられる
 				requestHeader.setSyncMethod(SyncMethod.PUT);
 
 				syncProvider.saveUpdatedCommonData(requestHeader);
-				result = expectedResponseHeaderAfterUpdate;
+				result = expectedCommonAfterUpdate;
 
-				lockManager.release(requestHeader, expectedResponseHeaderAfterUpdate);
+				lockManager.release(requestHeader, expectedCommonAfterUpdate);
 			}
 		};
 
@@ -878,10 +887,11 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final String expectedResourceIdStr = target.generateNewResourceIdStr(createElementId);
 
-		final SyncResponseHeader expectedResponseHeader = new SyncResponseHeader(expectedResourceIdStr);
+		final CommonData expectedCommon = new CommonData();
+		expectedCommon.setResourceIdStr(expectedResourceIdStr);
 
 		final Object createElement = new Object();
-		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedResponseHeader, createElement);
+		final SyncResponse<?> expectedResponse = new SyncResponse<>(expectedCommon, createElement);
 
 		new Expectations() {
 			SyncProvider syncProvider;
@@ -892,7 +902,7 @@ public class SeparatedCommonDataSyncResourceTest {
 				setField(target, "lockManager", lockManager);
 
 				syncProvider.saveNewCommonData(requestHeader, expectedResourceIdStr);
-				result = expectedResponseHeader;
+				result = expectedCommon;
 			}
 		};
 
@@ -939,10 +949,10 @@ public class SeparatedCommonDataSyncResourceTest {
 
 		final String expectedResourceIdStr = target.generateNewResourceIdStr(createElementId);
 
-		final SyncResponseHeader expectedExistingResponseHeader = new SyncResponseHeader(expectedResourceIdStr);
+		final CommonData expectedExistingCommon = new CommonData();
+		expectedExistingCommon.setResourceIdStr(expectedResourceIdStr);
 
-		final SyncResponse<?> expectedDuplicatedResponse = new SyncResponse<>(expectedExistingResponseHeader,
-				existingElement);
+		final SyncResponse<?> expectedDuplicatedResponse = new SyncResponse<>(expectedExistingCommon, existingElement);
 
 		new Expectations() {
 			SyncProvider syncProvider;
@@ -954,7 +964,7 @@ public class SeparatedCommonDataSyncResourceTest {
 				result = any;
 
 				syncProvider.getCommonData((String) any, expectedResourceIdStr);
-				result = expectedExistingResponseHeader;
+				result = expectedExistingCommon;
 
 				result = true;
 			}

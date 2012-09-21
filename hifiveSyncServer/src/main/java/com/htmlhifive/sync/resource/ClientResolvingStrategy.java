@@ -2,6 +2,7 @@ package com.htmlhifive.sync.resource;
 
 import org.springframework.stereotype.Service;
 
+import com.htmlhifive.sync.commondata.CommonData;
 import com.htmlhifive.sync.exception.ConflictException;
 
 /**
@@ -17,9 +18,9 @@ public class ClientResolvingStrategy implements UpdateStrategy {
 	 * ConflictExceptionをスローし、クライアントにサーバ状態を返します.
 	 */
 	@Override
-	public <E> E resolveConflict(SyncRequestHeader requestHeader, E clientElement, SyncResponseHeader responseHeader,
-			E serverElement) throws ConflictException {
+	public <E> E resolveConflict(SyncRequestHeader requestHeader, E clientElement, CommonData common, E serverElement)
+			throws ConflictException {
 
-		throw new ConflictException("resource element has updated.", new SyncResponse<>(responseHeader, serverElement));
+		throw new ConflictException("resource element has updated.", new SyncResponse<>(common, serverElement));
 	}
 }

@@ -20,6 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htmlhifive.sync.commondata.CommonData;
+
 /**
  * リソース対する楽観的ロック方式での制御ロジッククラス.<br>
  * TODO: ロックエラー発生時の処理
@@ -35,11 +37,11 @@ public class OptimisticLockManager implements LockManager {
 	 * 楽観的ロック方式では常にtrueを返し、更新の実行自体は可能です.
 	 *
 	 * @param requestHeader 同期リクエストヘッダ
-	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 * @param commonBeforUpdate 同期レスポンスヘッダ
 	 * @return true.
 	 */
 	@Override
-	public boolean lock(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate) {
+	public boolean lock(SyncRequestHeader requestHeader, CommonData commonBeforUpdate) {
 
 		return true;
 	}
@@ -50,13 +52,13 @@ public class OptimisticLockManager implements LockManager {
 	 * ロックエラー発生時、リソースで採用されている更新戦略に従い、競合判定および更新を実施します.
 	 *
 	 * @param requestHeader 同期リクエストヘッダ
-	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 * @param commonBeforUpdate 同期レスポンスヘッダ
 	 * @return update(/delete)できる場合true.
 	 */
 	@Override
-	public boolean canUpdate(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate) {
+	public boolean canUpdate(SyncRequestHeader requestHeader, CommonData commonBeforUpdate) {
 
-		return requestHeader.getLastModified() >= responseHeaderBeforUpdate.getLastModified();
+		return requestHeader.getLastModified() >= commonBeforUpdate.getLastModified();
 	}
 
 	/**
@@ -64,10 +66,10 @@ public class OptimisticLockManager implements LockManager {
 	 * 楽観的ロック方式ではロックを取得しないため、処理を実行しません.
 	 *
 	 * @param requestHeader 同期リクエストヘッダ
-	 * @param responseHeaderBeforUpdate 同期レスポンスヘッダ
+	 * @param commonBeforUpdate 同期レスポンスヘッダ
 	 */
 	@Override
-	public void release(SyncRequestHeader requestHeader, SyncResponseHeader responseHeaderBeforUpdate) {
+	public void release(SyncRequestHeader requestHeader, CommonData commonBeforUpdate) {
 
 		// ロジックなし
 	}

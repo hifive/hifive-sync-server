@@ -16,6 +16,7 @@
  */
 package com.htmlhifive.sync.resource;
 
+import com.htmlhifive.sync.commondata.CommonData;
 import com.htmlhifive.sync.exception.ConflictException;
 
 /**
@@ -31,11 +32,11 @@ public interface UpdateStrategy {
 	 *
 	 * @param requestHeader 同期リクエストヘッダ
 	 * @param clientElement リクエストされたエレメント、DELETEの場合null
-	 * @param responseHeader 同期レスポンスヘッダ(リクエスト処理前のサーバ側共通データ)
+	 * @param common 同期レスポンスヘッダ(リクエスト処理前のサーバ側共通データ)
 	 * @param serverElement リクエスト処理前のサーバ側エレメント(DELETE済み場合null)
 	 * @return 更新に用いるエレメント
 	 * @throws ConflictException 競合が解決できず、更新不可の場合
 	 */
-	<E> E resolveConflict(SyncRequestHeader requestHeader, E clientElement, SyncResponseHeader responseHeader,
-			E serverElement) throws ConflictException;
+	<E> E resolveConflict(SyncRequestHeader requestHeader, E clientElement, CommonData common, E serverElement)
+			throws ConflictException;
 }

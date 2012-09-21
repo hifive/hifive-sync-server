@@ -26,38 +26,35 @@ import com.htmlhifive.sync.resource.SyncResponse;
  */
 public class UploadResponseMessageForNewData extends UploadResponseMessage {
 
-    /**
-     * 新規登録データに対してクライアントで設定されていたストレージローカルID.
-     */
-    private String storageLocalId;
+	/**
+	 * 新規登録データに対してクライアントで設定されていたストレージローカルID.
+	 */
+	private String storageLocalId;
 
-    /**
-     * 新規登録データの同期結果を表現する上り更新レスポンスメッセージを生成します.
-     *
-     * @param response
-     *            同期レスポンスオブジェクト
-     */
-    public UploadResponseMessageForNewData(SyncResponse<?> response) {
+	/**
+	 * 新規登録データの同期結果を表現する上り更新レスポンスメッセージを生成します.
+	 *
+	 * @param response 同期レスポンスオブジェクト
+	 */
+	public UploadResponseMessageForNewData(SyncResponse<?> response) {
 
-        super(
-                response.getHeader().getSyncDataId(),
-                JsonDataConvertor.convertSyncMethodToAction(response.getHeader().getSyncMethod()));
+		super(response.getCommon().getSyncDataId(), JsonDataConvertor.convertSyncMethodToAction(response.getCommon()
+				.getSyncMethod()));
 
-        this.storageLocalId = response.getHeader().getStorageLocalId();
-    }
+		//        this.storageLocalId = response.getCommon().getStorageLocalId();
+	}
 
-    /**
-     * @return storageLocalId
-     */
-    public String getStorageLocalId() {
-        return storageLocalId;
-    }
+	/**
+	 * @return storageLocalId
+	 */
+	public String getStorageLocalId() {
+		return storageLocalId;
+	}
 
-    /**
-     * @param storageLocalId
-     *            セットする storageLocalId
-     */
-    public void setStorageLocalId(String storageLocalId) {
-        this.storageLocalId = storageLocalId;
-    }
+	/**
+	 * @param storageLocalId セットする storageLocalId
+	 */
+	public void setStorageLocalId(String storageLocalId) {
+		this.storageLocalId = storageLocalId;
+	}
 }

@@ -41,7 +41,7 @@ public class UploadResponseOrdinary extends UploadResponse {
 
 		for (SyncResponse<?> response : uploadResult.getResultDataSet()) {
 
-			UploadResponseMessage message = response.getHeader().getSyncMethod() == SyncMethod.POST ? new UploadResponseMessageForNewData(
+			UploadResponseMessage message = response.getCommon().getSyncMethod() == SyncMethod.POST ? new UploadResponseMessageForNewData(
 					response) : new UploadResponseMessageOrdinary(response);
 
 			dataList.add(message);

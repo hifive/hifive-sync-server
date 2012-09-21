@@ -18,6 +18,8 @@ package com.htmlhifive.sync.resource;
 
 import java.util.Map;
 
+import com.htmlhifive.sync.commondata.CommonData;
+
 /**
  * リソースを同期するための共通データを扱うサービスインターフェース.<br>
  * {@link SyncRequestHeader 同期リクエストヘッダ}、{@link SyncResponseHeader 同期レスポンスヘッダ} でデータを受渡します.<br>
@@ -33,7 +35,7 @@ public interface SyncProvider {
 	 * @param requestHeader リソースへのリクエストヘッダ
 	 * @return リソースからのレスポンスヘッダ
 	 */
-	SyncResponseHeader getCommonData(SyncRequestHeader requestHeader);
+	CommonData getCommonData(SyncRequestHeader requestHeader);
 
 	/**
 	 * リソースに対応する共通データを返します.<br>
@@ -42,7 +44,7 @@ public interface SyncProvider {
 	 * @param resourceIdStr リソースID文字列
 	 * @return リソースからのレスポンスヘッダ
 	 */
-	SyncResponseHeader getCommonData(String dataModelName, String resourceIdStr);
+	CommonData getCommonData(String dataModelName, String resourceIdStr);
 
 	/**
 	 * 指定された時刻以降に更新された全てのリソースに対応する共通データを返します. ロックは考慮しません.
@@ -50,7 +52,7 @@ public interface SyncProvider {
 	 * @param requestHeader リソースへのリクエストヘッダ
 	 * @return リソースID文字列をKey、リソースからのレスポンスヘッダをValueとするMap
 	 */
-	Map<String, SyncResponseHeader> getCommonDataModifiedSince(SyncRequestHeader requestHeader);
+	Map<String, CommonData> getCommonDataModifiedSince(SyncRequestHeader requestHeader);
 
 	/**
 	 * リソースに対応する共通データに対し、ロックを設定します.<br>
@@ -64,7 +66,7 @@ public interface SyncProvider {
 	 *
 	 * @param responseHeader リソースからのレスポンスヘッダ
 	 */
-	void releaseLock(SyncResponseHeader responseHeader);
+	void releaseLock(CommonData responseHeader);
 
 	/**
 	 * 新規リソースに対応する共通データを生成し、保存します.
@@ -73,7 +75,7 @@ public interface SyncProvider {
 	 * @param targetResourceIdStr リソースエレメントに固有のID文字列
 	 * @return リソースからのレスポンスヘッダ
 	 */
-	SyncResponseHeader saveNewCommonData(SyncRequestHeader requestHeader, String targetResourceIdStr);
+	CommonData saveNewCommonData(SyncRequestHeader requestHeader, String targetResourceIdStr);
 
 	/**
 	 * リソースに対応する共通データを更新し、保存します.<br>
@@ -82,5 +84,5 @@ public interface SyncProvider {
 	 * @param requestHeader リソースへのリクエストヘッダ
 	 * @return リソースからのレスポンスヘッダ
 	 */
-	SyncResponseHeader saveUpdatedCommonData(SyncRequestHeader requestHeader);
+	CommonData saveUpdatedCommonData(SyncRequestHeader requestHeader);
 }

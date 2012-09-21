@@ -24,124 +24,117 @@ import com.htmlhifive.sync.resource.SyncResponse;
  * 下り更新レスポンスの本体となるメッセージのデータクラス.<br>
  * サーバ上の1つのリソースエレメントに関する共通情報、およびエレメント本体を保持します.
  *
- * @param <E>
- *            リソースエレメントの型
+ * @param <E> リソースエレメントの型
  * @author kishigam
  */
 public class DownloadResponseMessage<E> {
 
-    /**
-     * 同期データID.
-     */
-    private String syncDataId;
+	/**
+	 * 同期データID.
+	 */
+	private String syncDataId;
 
-    /**
-     * データモデル名
-     */
-    private String dataModelName;
+	/**
+	 * データモデル名
+	 */
+	private String dataModelName;
 
-    /**
-     * このデータが生成された契機となった同期アクション.
-     */
-    private SyncAction action;
+	/**
+	 * このデータが生成された契機となった同期アクション.
+	 */
+	private SyncAction action;
 
-    /**
-     * このデータの最終更新時刻
-     */
-    private long lastModified;
+	/**
+	 * このデータの最終更新時刻
+	 */
+	private long lastModified;
 
-    /**
-     * このデータが表現するリソースエレメントの本体.
-     */
-    private E element;
+	/**
+	 * このデータが表現するリソースエレメントの本体.
+	 */
+	private E element;
 
-    /**
-     * 同期レスポンスオブジェクトからクライアントに返す下り更新レスポンスを生成します.
-     *
-     * @param response
-     *            同期レスポンスオブジェクト
-     */
-    public DownloadResponseMessage(SyncResponse<E> response) {
+	/**
+	 * 同期レスポンスオブジェクトからクライアントに返す下り更新レスポンスを生成します.
+	 *
+	 * @param response 同期レスポンスオブジェクト
+	 */
+	public DownloadResponseMessage(SyncResponse<E> response) {
 
-        dataModelName = response.getHeader().getDataModelName();
-        action = JsonDataConvertor.convertSyncMethodToAction(response.getHeader().getSyncMethod());
-        syncDataId = response.getHeader().getSyncDataId();
-        lastModified = response.getHeader().getLastModified();
-        element = response.getElement();
-    }
+		dataModelName = response.getCommon().getDataModelName();
+		action = JsonDataConvertor.convertSyncMethodToAction(response.getCommon().getSyncMethod());
+		syncDataId = response.getCommon().getSyncDataId();
+		lastModified = response.getCommon().getLastModified();
+		element = response.getElement();
+	}
 
-    /**
-     * @return syncDataId
-     */
-    public String getSyncDataId() {
-        return syncDataId;
-    }
+	/**
+	 * @return syncDataId
+	 */
+	public String getSyncDataId() {
+		return syncDataId;
+	}
 
-    /**
-     * @param syncDataId
-     *            セットする syncDataId
-     */
-    public void setSyncDataId(String syncDataId) {
-        this.syncDataId = syncDataId;
-    }
+	/**
+	 * @param syncDataId セットする syncDataId
+	 */
+	public void setSyncDataId(String syncDataId) {
+		this.syncDataId = syncDataId;
+	}
 
-    /**
-     * @return dataModelName
-     */
-    public String getDataModelName() {
-        return dataModelName;
-    }
+	/**
+	 * @return dataModelName
+	 */
+	public String getDataModelName() {
+		return dataModelName;
+	}
 
-    /**
-     * @param dataModelName
-     *            セットする dataModelName
-     */
-    public void setDataModelName(String dataModelName) {
-        this.dataModelName = dataModelName;
-    }
+	/**
+	 * @param dataModelName セットする dataModelName
+	 */
+	public void setDataModelName(String dataModelName) {
+		this.dataModelName = dataModelName;
+	}
 
-    /**
-     * @return action
-     */
-    public SyncAction getAction() {
-        return action;
-    }
+	/**
+	 * @return action
+	 */
+	public SyncAction getAction() {
+		return action;
+	}
 
-    /**
-     * @param action
-     *            セットする action
-     */
-    public void setAction(SyncAction action) {
-        this.action = action;
-    }
+	/**
+	 * @param action セットする action
+	 */
+	public void setAction(SyncAction action) {
+		this.action = action;
+	}
 
-    /**
-     * @return lastModified
-     */
-    public long getLastModified() {
-        return lastModified;
-    }
+	/**
+	 * @return lastModified
+	 */
+	public long getLastModified() {
+		return lastModified;
+	}
 
-    /**
-     * @param lastModified
-     *            セットする lastModified
-     */
-    public void setLastModified(long lastModified) {
-        this.lastModified = lastModified;
-    }
+	/**
+	 * @param lastModified セットする lastModified
+	 */
+	public void setLastModified(long lastModified) {
+		this.lastModified = lastModified;
+	}
 
-    /**
-     * @return element
-     */
-    public E getElement() {
-        return element;
-    }
+	/**
+	 * @return element
+	 */
+	public E getElement() {
+		return element;
+	}
 
-    /**
-     * @param element
-     *            セットする element
-     */
-    public void setElement(E element) {
-        this.element = element;
-    }
+	/**
+	 * @param element セットする element
+	 */
+	public void setElement(E element) {
+		this.element = element;
+	}
 }

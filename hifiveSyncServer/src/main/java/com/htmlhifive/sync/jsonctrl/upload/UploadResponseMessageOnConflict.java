@@ -54,11 +54,11 @@ public class UploadResponseMessageOnConflict<E> extends UploadResponseMessage {
 	 */
 	public UploadResponseMessageOnConflict(SyncResponse<E> response) {
 
-		super(response.getHeader().getSyncDataId(), JsonDataConvertor.convertSyncMethodToAction(response.getHeader()
+		super(response.getCommon().getSyncDataId(), JsonDataConvertor.convertSyncMethodToAction(response.getCommon()
 				.getSyncMethod()));
 
-		this.dataModelName = response.getHeader().getDataModelName();
-		this.lastModified = response.getHeader().getLastModified();
+		this.dataModelName = response.getCommon().getDataModelName();
+		this.lastModified = response.getCommon().getLastModified();
 
 		this.element = response.getElement();
 	}
