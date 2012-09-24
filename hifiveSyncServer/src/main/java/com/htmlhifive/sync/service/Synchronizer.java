@@ -18,7 +18,6 @@ package com.htmlhifive.sync.service;
 
 import java.util.List;
 
-
 /**
  * リソースの同期処理を実行するサービスインタフェース.
  *
@@ -41,9 +40,9 @@ public interface Synchronizer {
 	 * 対象のリソースを判断し、リソースアイテムの更新内容に応じた更新処理を呼び出します.
 	 *
 	 * @param storageId クライアントのストレージID
+	 * @param lastUploadTime クライアントごとの前回上り更新時刻
 	 * @param resourceItems リソースアイテムリスト
-	 * @param lastUploadTime 最終上り更新時刻
 	 * @return 上り更新結果を含む同期ステータスオブジェクト
 	 */
-	public SyncStatus upload(String storageId, List<ResourceItemsContainer> resourceItems, long lastUploadTime);
+	public SyncStatus upload(String storageId, long lastUploadTime, List<ResourceItemsContainer> resourceItems);
 }

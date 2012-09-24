@@ -115,8 +115,8 @@ public class JsonSyncController {
 
 		try {
 			// ストレージIDを渡し、下り更新サービスを呼び出し
-			SyncStatus statusAfterUpload = synchronizer.upload(storageId, request.getResourceItems(),
-					request.getLastUploadTime());
+			SyncStatus statusAfterUpload = synchronizer.upload(storageId, request.getLastUploadTime(),
+					request.getResourceItems());
 
 			// レスポンスデータを生成し、リターン
 			return createResponseEntity(new UploadResponseOrdinary(statusAfterUpload), HttpStatus.OK);

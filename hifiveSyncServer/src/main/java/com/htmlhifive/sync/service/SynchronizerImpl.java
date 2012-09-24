@@ -128,12 +128,12 @@ public class SynchronizerImpl implements Synchronizer {
 	 * 対象のリソースを判断し、リソースアイテムの更新内容に応じた更新処理を呼び出します.
 	 *
 	 * @param storageId クライアントのストレージID
-	 * @param resourceItems リソースアイテムリスト
 	 * @param lastUploadTime クライアントごとの前回上り更新時刻
+	 * @param resourceItems リソースアイテムリスト
 	 * @return 上り更新結果を含む同期ステータスオブジェクト
 	 */
 	@Override
-	public SyncStatus upload(String storageId, List<ResourceItemsContainer> resourceItems, long lastUploadTime) {
+	public SyncStatus upload(String storageId, long lastUploadTime, List<ResourceItemsContainer> resourceItems) {
 
 		// クライアントごとの(前回)同期ステータスオブジェクトを取得
 		SyncStatus currentStatus = currentStatus(storageId);
