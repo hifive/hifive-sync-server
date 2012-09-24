@@ -11,11 +11,11 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import com.htmlhifive.sync.jsonctrl.SyncAction;
 import com.htmlhifive.sync.jsonctrl.download.DownloadRequest;
-import com.htmlhifive.sync.jsonctrl.download.DownloadRequestMessage;
 import com.htmlhifive.sync.jsonctrl.upload.UploadRequest;
-import com.htmlhifive.sync.jsonctrl.upload.UploadRequestMessage;
-import com.htmlhifive.sync.sample.person.PersonResourceElement;
-import com.htmlhifive.sync.sample.scd.ScheduleResourceElement;
+import com.htmlhifive.sync.resource.ResourceItemWrapper;
+import com.htmlhifive.sync.resource.ResourceQuery;
+import com.htmlhifive.sync.sample.person.PersonResourceItem;
+import com.htmlhifive.sync.sample.scd.ScheduleResourceItem;
 
 /**
  * テスト用にJSONデータを生成するクラス.
@@ -43,21 +43,20 @@ public class TestJsonGenerator {
 
 	}
 
-	void downloadRequestJSON(String dataModelName, long lastSyncTime, String query) throws Exception {
+	void downloadRequestJSON(String resourceName, long lastSyncTime, String query) throws Exception {
 
 		DownloadRequest dr = new DownloadRequest();
 
-		DownloadRequestMessage drm;
-		ArrayList<DownloadRequestMessage> al = new ArrayList<>();
+		ResourceQuery drm;
+		ArrayList<ResourceQuery> al = new ArrayList<>();
 
-		drm = new DownloadRequestMessage();
-		drm.setDataModelName(dataModelName);
-		drm.setLastSyncTime(lastSyncTime);
-		drm.setQuery(new HashMap<String, String[]>());
+		drm = new ResourceQuery();
+		drm.setLastDownloadTime(lastSyncTime);
+		drm.setConditions(new HashMap<String, String[]>());
 
 		al.add(drm);
 
-		dr.setResources(al);
+		dr.putQueries(resourceName, al);
 
 		ObjectMapper om = new ObjectMapper();
 		om.writeValue(System.out, dr);
@@ -67,40 +66,39 @@ public class TestJsonGenerator {
 
 		UploadRequest req = new UploadRequest();
 
-		List<UploadRequestMessage<PersonResourceElement>> dataList = new ArrayList<>();
+		String resourceName = "person";
+		List<ResourceItemWrapper<PersonResourceItem>> dataList = new ArrayList<>();
 
-		UploadRequestMessage<PersonResourceElement> reqMsg = new UploadRequestMessage<>();
+		ResourceItemWrapper<PersonResourceItem> reqMsg = new ResourceItemWrapper<>();
 
 		reqMsg.setAction(SyncAction.UPDATE);
-		reqMsg.setDataModelName("person");
-		reqMsg.setSyncDataId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local1");
+		reqMsg.setResourceItemId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local1");
 		reqMsg.setLastModified(100000000000000L);
 
-		PersonResourceElement element = new PersonResourceElement("1");
+		PersonResourceItem element = new PersonResourceItem("1");
 		element.setName("kishigam2");
 		element.setAge(333);
 		element.setOrganization("AA2");
 
-		reqMsg.setElement(element);
+		reqMsg.setItem(element);
 
-		UploadRequestMessage<PersonResourceElement> reqMsg2 = new UploadRequestMessage<>();
+		ResourceItemWrapper<PersonResourceItem> reqMsg2 = new ResourceItemWrapper<>();
 
 		reqMsg2.setAction(SyncAction.UPDATE);
-		reqMsg2.setDataModelName("person");
-		reqMsg2.setSyncDataId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local2");
+		reqMsg2.setResourceItemId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local2");
 		reqMsg2.setLastModified(100000000000000L);
 
-		PersonResourceElement element2 = new PersonResourceElement("2");
+		PersonResourceItem element2 = new PersonResourceItem("2");
 		element2.setName("kk2");
 		element2.setAge(666);
 		element2.setOrganization("i-system2");
 
-		reqMsg2.setElement(element2);
+		reqMsg2.setItem(element2);
 
 		dataList.add(reqMsg);
 		dataList.add(reqMsg2);
 
-		req.setDataList(dataList);
+		req.putResourceItems(resourceName, dataList);
 
 		ObjectMapper om = new ObjectMapper();
 		om.writeValue(System.out, req);
@@ -110,15 +108,15 @@ public class TestJsonGenerator {
 
 		UploadRequest req = new UploadRequest();
 
-		List<UploadRequestMessage<ScheduleResourceElement>> dataList = new ArrayList<>();
+		String resourceName = "schedule";
+		List<ResourceItemWrapper<ScheduleResourceItem>> dataList = new ArrayList<>();
 
-		UploadRequestMessage<ScheduleResourceElement> reqMsg = new UploadRequestMessage<>();
+		ResourceItemWrapper<ScheduleResourceItem> reqMsg = new ResourceItemWrapper<>();
 
 		reqMsg.setAction(SyncAction.UPDATE);
-		reqMsg.setDataModelName("schedule");
-		reqMsg.setSyncDataId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local1");
+		reqMsg.setResourceItemId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local1");
 
-		ScheduleResourceElement element = new ScheduleResourceElement("1");
+		ScheduleResourceItem element = new ScheduleResourceItem("1");
 		List<String> userIds = new ArrayList<>();
 		userIds.add("111");
 		element.setUserIds(userIds);
@@ -133,15 +131,14 @@ public class TestJsonGenerator {
 		element.setDetail("_____meeting1");
 		element.setPlace("_____Yokohama");
 
-		reqMsg.setElement(element);
+		reqMsg.setItem(element);
 
-		UploadRequestMessage<ScheduleResourceElement> reqMsg2 = new UploadRequestMessage<>();
+		ResourceItemWrapper<ScheduleResourceItem> reqMsg2 = new ResourceItemWrapper<>();
 
 		reqMsg2.setAction(SyncAction.UPDATE);
-		reqMsg2.setDataModelName("schedule");
-		reqMsg2.setSyncDataId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local2");
+		reqMsg2.setResourceItemId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local2");
 
-		ScheduleResourceElement element2 = new ScheduleResourceElement("2766622a-a532-476a-b405-57cc810a17c6");
+		ScheduleResourceItem element2 = new ScheduleResourceItem("2766622a-a532-476a-b405-57cc810a17c6");
 		List<String> userIds2 = new ArrayList<>();
 		userIds2.add("222");
 		element2.setUserIds(userIds2);
@@ -156,12 +153,12 @@ public class TestJsonGenerator {
 		element2.setDetail("_____meeting2");
 		element2.setPlace("_____Yokohama2");
 
-		reqMsg2.setElement(element2);
+		reqMsg2.setItem(element2);
 
 		dataList.add(reqMsg);
 		dataList.add(reqMsg2);
 
-		req.setDataList(dataList);
+		req.putResourceItems(resourceName, dataList);
 
 		ObjectMapper om = new ObjectMapper();
 		om.writeValue(System.out, req);
@@ -171,38 +168,35 @@ public class TestJsonGenerator {
 
 		UploadRequest req = new UploadRequest();
 
-		List<UploadRequestMessage<PersonResourceElement>> dataList = new ArrayList<>();
+		String resourceName = "person";
+		List<ResourceItemWrapper<PersonResourceItem>> dataList = new ArrayList<>();
 
-		UploadRequestMessage<PersonResourceElement> reqMsg = new UploadRequestMessage<>();
+		ResourceItemWrapper<PersonResourceItem> reqMsg = new ResourceItemWrapper<>();
 
 		reqMsg.setAction(SyncAction.CREATE);
-		reqMsg.setDataModelName("person");
-		reqMsg.setStorageLocalId("Local1");
 
-		PersonResourceElement element = new PersonResourceElement("1");
+		PersonResourceItem element = new PersonResourceItem("1");
 		element.setName("kishigam");
 		element.setAge(33);
 		element.setOrganization("softsys");
 
-		reqMsg.setElement(element);
+		reqMsg.setItem(element);
 
-		UploadRequestMessage<PersonResourceElement> reqMsg2 = new UploadRequestMessage<>();
+		ResourceItemWrapper<PersonResourceItem> reqMsg2 = new ResourceItemWrapper<>();
 
 		reqMsg2.setAction(SyncAction.CREATE);
-		reqMsg2.setDataModelName("person");
-		reqMsg2.setStorageLocalId("Local2");
 
-		PersonResourceElement element2 = new PersonResourceElement("2");
+		PersonResourceItem element2 = new PersonResourceItem("2");
 		element2.setName("kk");
 		element2.setAge(66);
 		element2.setOrganization("i-system");
 
-		reqMsg2.setElement(element2);
+		reqMsg2.setItem(element2);
 
 		dataList.add(reqMsg);
 		dataList.add(reqMsg2);
 
-		req.setDataList(dataList);
+		req.putResourceItems(resourceName, dataList);
 
 		ObjectMapper om = new ObjectMapper();
 		om.writeValue(System.out, req);
@@ -212,15 +206,14 @@ public class TestJsonGenerator {
 
 		UploadRequest req = new UploadRequest();
 
-		List<UploadRequestMessage<ScheduleResourceElement>> dataList = new ArrayList<>();
+		String resourceName = "schedule";
+		List<ResourceItemWrapper<ScheduleResourceItem>> dataList = new ArrayList<>();
 
-		UploadRequestMessage<ScheduleResourceElement> reqMsg = new UploadRequestMessage<>();
+		ResourceItemWrapper<ScheduleResourceItem> reqMsg = new ResourceItemWrapper<>();
 
 		reqMsg.setAction(SyncAction.CREATE);
-		reqMsg.setDataModelName("schedule");
-		reqMsg.setStorageLocalId("Local1");
 
-		ScheduleResourceElement element = new ScheduleResourceElement("1");
+		ScheduleResourceItem element = new ScheduleResourceItem("1");
 		List<String> userIds = new ArrayList<>();
 		userIds.add("111");
 		userIds.add("222");
@@ -236,15 +229,13 @@ public class TestJsonGenerator {
 		element.setDetail("meeting1");
 		element.setPlace("Yokohama");
 
-		reqMsg.setElement(element);
+		reqMsg.setItem(element);
 
-		UploadRequestMessage<ScheduleResourceElement> reqMsg2 = new UploadRequestMessage<>();
+		ResourceItemWrapper<ScheduleResourceItem> reqMsg2 = new ResourceItemWrapper<>();
 
 		reqMsg2.setAction(SyncAction.CREATE);
-		reqMsg2.setDataModelName("schedule");
-		reqMsg2.setStorageLocalId("Local2");
 
-		ScheduleResourceElement element2 = new ScheduleResourceElement("2");
+		ScheduleResourceItem element2 = new ScheduleResourceItem("2");
 		List<String> userIds2 = new ArrayList<>();
 		userIds2.add("111");
 		userIds2.add("222");
@@ -260,12 +251,12 @@ public class TestJsonGenerator {
 		element2.setDetail("meeting2");
 		element2.setPlace("Yokohama2");
 
-		reqMsg2.setElement(element2);
+		reqMsg2.setItem(element2);
 
 		dataList.add(reqMsg);
 		dataList.add(reqMsg2);
 
-		req.setDataList(dataList);
+		req.putResourceItems(resourceName, dataList);
 
 		ObjectMapper om = new ObjectMapper();
 		om.writeValue(System.out, req);
@@ -275,26 +266,25 @@ public class TestJsonGenerator {
 
 		UploadRequest req = new UploadRequest();
 
-		List<UploadRequestMessage<PersonResourceElement>> dataList = new ArrayList<>();
+		String resourceName = "person";
+		List<ResourceItemWrapper<PersonResourceItem>> dataList = new ArrayList<>();
 
-		UploadRequestMessage<PersonResourceElement> reqMsg = new UploadRequestMessage<>();
+		ResourceItemWrapper<PersonResourceItem> reqMsg = new ResourceItemWrapper<>();
 
 		reqMsg.setAction(SyncAction.DELETE);
-		reqMsg.setDataModelName("person");
-		reqMsg.setSyncDataId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local1");
+		reqMsg.setResourceItemId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local1");
 		reqMsg.setLastModified(100000000000000L);
 
-		UploadRequestMessage<PersonResourceElement> reqMsg2 = new UploadRequestMessage<>();
+		ResourceItemWrapper<PersonResourceItem> reqMsg2 = new ResourceItemWrapper<>();
 
 		reqMsg2.setAction(SyncAction.DELETE);
-		reqMsg2.setDataModelName("person");
-		reqMsg2.setSyncDataId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local2");
+		reqMsg2.setResourceItemId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local2");
 		reqMsg2.setLastModified(100000000000000L);
 
 		dataList.add(reqMsg);
 		dataList.add(reqMsg2);
 
-		req.setDataList(dataList);
+		req.putResourceItems(resourceName, dataList);
 
 		ObjectMapper om = new ObjectMapper();
 		om.writeValue(System.out, req);
@@ -302,46 +292,42 @@ public class TestJsonGenerator {
 
 	void uploadMixedRequestJSON_Person() throws Exception {
 
-		UploadRequestMessage<PersonResourceElement> reqMsg = new UploadRequestMessage<>();
+		ResourceItemWrapper<PersonResourceItem> reqMsg = new ResourceItemWrapper<>();
 
 		reqMsg.setAction(SyncAction.CREATE);
-		reqMsg.setDataModelName("person");
-		reqMsg.setStorageLocalId("Local3");
-
-		PersonResourceElement element = new PersonResourceElement("3");
+		PersonResourceItem element = new PersonResourceItem("3");
 		element.setName("no3");
 		element.setAge(3);
 		element.setOrganization("no3.org");
 
-		reqMsg.setElement(element);
+		reqMsg.setItem(element);
 
-		UploadRequestMessage<PersonResourceElement> reqMsg2 = new UploadRequestMessage<>();
+		ResourceItemWrapper<PersonResourceItem> reqMsg2 = new ResourceItemWrapper<>();
 		reqMsg2.setAction(SyncAction.UPDATE);
-		reqMsg2.setDataModelName("person");
-		reqMsg2.setSyncDataId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local2");
+		reqMsg2.setResourceItemId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local2");
 		reqMsg2.setLastModified(100000000000000L);
 
-		PersonResourceElement element2 = new PersonResourceElement("2");
+		PersonResourceItem element2 = new PersonResourceItem("2");
 		element2.setName("no2");
 		element2.setAge(2);
 		element2.setOrganization("no2.org");
 
-		reqMsg2.setElement(element2);
+		reqMsg2.setItem(element2);
 
-		UploadRequestMessage<PersonResourceElement> reqMsg3 = new UploadRequestMessage<>();
+		ResourceItemWrapper<PersonResourceItem> reqMsg3 = new ResourceItemWrapper<>();
 		reqMsg3.setAction(SyncAction.DELETE);
-		reqMsg3.setDataModelName("person");
-		reqMsg3.setSyncDataId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local1");
+		reqMsg3.setResourceItemId("2ce1972a-26b3-4a2c-afa0-4c4c65ee1e43Local1");
 		reqMsg3.setLastModified(100000000000000L);
 
 		UploadRequest req = new UploadRequest();
 
-		List<UploadRequestMessage<PersonResourceElement>> dataList = new ArrayList<>();
+		String resourceName = "person";
+		List<ResourceItemWrapper<PersonResourceItem>> dataList = new ArrayList<>();
 		dataList.add(reqMsg);
 		dataList.add(reqMsg2);
 		dataList.add(reqMsg3);
 
-		req.setDataList(dataList);
+		req.putResourceItems(resourceName, dataList);
 
 		ObjectMapper om = new ObjectMapper();
 		om.writeValue(System.out, req);
