@@ -37,7 +37,7 @@ import com.htmlhifive.sync.sample.person.Person;
 import com.htmlhifive.sync.sample.person.PersonRepository;
 
 /**
- * scheduleデータモデルの情報を同期リソースとして公開するためのリソースクラス.<br>
+ * Scheduleリソースの情報を同期リソースとして公開するためのリソースクラス.<br>
  * 同期データを専用サービスで管理する抽象リソースクラスをこのリソース用に実装します.
  *
  * @author kishigam
@@ -53,7 +53,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	private ScheduleRepository repository;
 
 	/**
-	 * 関連するpersonエンティティを取得するためのリポジトリ.
+	 * 関連するPersonエンティティを取得するためのリポジトリ.
 	 */
 	@Resource
 	private PersonRepository personRepository;

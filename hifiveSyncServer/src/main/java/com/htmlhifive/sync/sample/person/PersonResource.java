@@ -34,7 +34,7 @@ import com.htmlhifive.sync.resource.OptimisticLockManager;
 import com.htmlhifive.sync.resource.SyncResourceService;
 
 /**
- * personデータモデルの情報を同期リソースとして公開するためのリソースクラス.<br>
+ * personリソースの情報を同期リソースとして公開するためのリソースクラス.<br>
  * 同期データを専用サービスで管理する抽象リソースクラスをこのリソース用に実装します.
  */
 @SyncResourceService(resourceName = "person", lockManager = OptimisticLockManager.class, updateStrategy = ClientResolvingStrategy.class)

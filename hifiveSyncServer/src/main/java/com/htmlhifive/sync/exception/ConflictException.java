@@ -26,7 +26,7 @@ import com.htmlhifive.sync.service.ResourceItemsContainer;
 
 /**
  * 同期(上り更新)において競合が発生したことを示す例外.<br>
- * サーバ側で管理しているリソースエレメントの内容を含む同期レスポンスオブジェクトを保持しており、クライアントに返す情報の生成に使用することができます.
+ * サーバ側で管理しているリソースアイテムの内容を含む同期レスポンスオブジェクトを保持しており、クライアントに返す情報の生成に使用することができます.
  *
  * @author kishigam
  */
@@ -53,6 +53,7 @@ public class ConflictException extends RuntimeException {
 	 *
 	 * @param conflictType 競合タイプ
 	 * @param resourceItems 競合したリソースアイテムリスト(コンテナ)
+	 * @see RuntimeException
 	 */
 	public ConflictException(SyncResultType conflictType, List<ResourceItemsContainer> resourceItems) {
 		super();
