@@ -51,7 +51,6 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 
 	/**
 	 * リソースごとに決まるロック方式のマネージャオブジェクト.<br>
-	 * リソースが生成される際に{@link SyncResourceManager } からセットされる.
 	 */
 	private LockManager lockManager;
 
