@@ -36,17 +36,6 @@ public interface CommonDataRepository extends JpaRepository<CommonData, CommonDa
 	 * @param since データを検索する時刻(指定時刻以降の更新データを検索)
 	 * @return 検索した共通データエンティティのList
 	 */
-	@Query("SELECT d FROM CommonData d WHERE d.resourceName = :dataModelName AND d.lastModified > :since AND d.syncAction <> DELETE")
+	@Query("SELECT d FROM CommonData d WHERE d.resourceName = :resourceName AND d.lastModified > :since AND d.syncAction <> DELETE")
 	List<CommonData> findModified(@Param("resourceName") String resourceName, @Param("since") long since);
-
-	/**
-	 * データモデル名、リソースID文字列が合致するリソースの共通データを返します.
-	 *
-	 * @param dataModelName データモデル名
-	 * @param resourceIdStr リソースID文字列
-	 * @return 共通データエンティティ
-	 */
-	@Query("SELECT d FROM CommonData d WHERE d.dataModelName = :dataModelName AND d.resourceIdStr = :resourceIdStr")
-	CommonData findByResourceIdStr(@Param("dataModelName") String dataModelName,
-			@Param("resourceIdStr") String resourceIdStr);
 }
