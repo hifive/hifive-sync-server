@@ -12,7 +12,7 @@
 
 	<context:property-placeholder location="/META-INF/database.properties" />
 	<context:component-scan base-package="com.htmlhifive.sync" />
-	<jpa:repositories base-package="com.htmlhifive.sync.status"
+	<jpa:repositories base-package="com.htmlhifive.sync.service"
 		transaction-manager-ref="txManager" />
 	<jpa:repositories base-package="com.htmlhifive.sync.commondata"
 		transaction-manager-ref="txManager" />
