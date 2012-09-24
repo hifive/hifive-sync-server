@@ -34,43 +34,37 @@ public class OptimisticLockManager implements LockManager {
 
 	/**
 	 * ロックを取得します.<br>
-	 * 楽観的ロック方式では常にtrueを返し、更新の実行自体は可能です.
+	 * 楽観的ロック方式では常にtrueを返します.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
-	 * @param commonBeforUpdate 同期レスポンスヘッダ
-	 * @return true.
+	 * @param commonData 共通データ
+	 * @return ロックを取得できた場合true.
 	 */
-	@Override
-	public boolean lock(SyncRequestHeader requestHeader, CommonData commonBeforUpdate) {
+	public boolean lock(CommonData commonData) {
 
 		return true;
 	}
 
 	/**
 	 * ロック取得状況に応じて、リソースの更新が実行できるか判定します.<br>
-	 * 楽観的ロック方式では、更新の実行に際して最終更新日付を比較し、すでにサーバ側の更新が発生していた場合にロックエラーとなります.<br>
+	 * 楽観的ロック方式では更新の実行に際して最終更新日付を比較し、すでにサーバ側の更新が発生していた場合にロックエラーとなります.<br>
 	 * ロックエラー発生時、リソースで採用されている更新戦略に従い、競合判定および更新を実施します.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
+	 * @param updateItem 更新対象リソースアイテムのラッパー
 	 * @param commonBeforUpdate 同期レスポンスヘッダ
 	 * @return update(/delete)できる場合true.
 	 */
-	@Override
-	public boolean canUpdate(SyncRequestHeader requestHeader, CommonData commonBeforUpdate) {
+	public boolean canUpdate(ResourceItemWrapper updateItem, CommonData commonBeforUpdate) {
 
-		return requestHeader.getLastModified() >= commonBeforUpdate.getLastModified();
+		return updateItem.getLastModified() >= commonBeforUpdate.getLastModified();
 	}
 
 	/**
 	 * ロックを解除します.<br>
 	 * 楽観的ロック方式ではロックを取得しないため、処理を実行しません.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
-	 * @param commonBeforUpdate 同期レスポンスヘッダ
+	 * @param commonData 共通データ
 	 */
-	@Override
-	public void release(SyncRequestHeader requestHeader, CommonData commonBeforUpdate) {
-
+	public void release(CommonData commonData) {
 		// ロジックなし
 	}
 }

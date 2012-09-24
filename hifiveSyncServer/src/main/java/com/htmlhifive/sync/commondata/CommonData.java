@@ -16,20 +16,20 @@
  */
 package com.htmlhifive.sync.commondata;
 
+import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
-import javax.persistence.Id;
 import javax.persistence.Table;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.htmlhifive.sync.resource.SyncMethod;
-import com.htmlhifive.sync.resource.SyncRequestHeader;
+import com.htmlhifive.sync.resource.ResourceItemWrapper;
+import com.htmlhifive.sync.resource.SyncAction;
 
 /**
  * リソースを同期するために必要な共通データを管理するエンティティ.<br>
- * リソースエレメントごとに1つの共通データが生成されます.
+ * リソースアイテムごとに1つの共通データが生成されます.
  *
  * @author kishigam
  */
@@ -38,10 +38,15 @@ import com.htmlhifive.sync.resource.SyncRequestHeader;
 public class CommonData {
 
 	/**
-	 * このエンティティのID(同期データID).
+	 * IDオブジェクト.<br>
 	 */
-	@Id
-	private String syncDataId;
+	@EmbeddedId
+	private CommonDataId id;
+
+	/**
+	 * この共通データが対象とするリソースアイテムのID.<br>
+	 */
+	private String targetItemId;
 
 	/**
 	 * クライアント(ストレージ)のID.<br>
@@ -49,51 +54,31 @@ public class CommonData {
 	private String storageId;
 
 	/**
-	 * リソースのデータモデル名.<br>
+	 * このリソースアイテムを現在の状態に登録したアクション.<br>
 	 */
-	private String dataModelName;
+	private SyncAction action;
 
 	/**
-	 * リソースエレメントを識別するためのID.<br>
-	 */
-	private String resourceIdStr;
-
-	/**
-	 * リソースエレメントの登録形態.<br>
-	 */
-	private SyncMethod syncMethod;
-
-	/**
-	 * リソースエレメントの最終更新時刻(ミリ秒)
+	 * リソースアイテムの最終更新時刻(ミリ秒)
 	 */
 	private long lastModified;
 
 	/**
-	 * 悲観ロック時のロックキー.
+	 * 悲観ロック時のロックキー(将来の実装のため).
 	 */
 	private String lockKey;
 
 	/**
-	 * 共通データエンティティを生成します.
-	 */
-	public CommonData() {
-	}
-
-	/**
-	 * 同期データIDを指定して共通データエンティティを生成します.
+	 * IDオブジェクト、対象リソースアイテムのIDを指定して共通データを生成します.
 	 *
 	 * @param syncDataId 同期データID
 	 * @param requestHeader リソースへのリクエストヘッダ
 	 * @param targetResourceIdStr リソースID文字列
 	 */
-	public CommonData(String syncDataId, SyncRequestHeader requestHeader, String resourceIdStr) {
+	public CommonData(CommonDataId id, String targetItemId) {
 
-		this.syncDataId = syncDataId;
-		this.dataModelName = requestHeader.getDataModelName();
-		this.storageId = requestHeader.getStorageId();
-		this.syncMethod = requestHeader.getSyncMethod();
-		this.lastModified = requestHeader.getRequestTime();
-		this.resourceIdStr = resourceIdStr;
+		this.id = id;
+		this.targetItemId = targetItemId;
 	}
 
 	/**
@@ -107,7 +92,7 @@ public class CommonData {
 		if (!(obj instanceof CommonData))
 			return false;
 
-		return EqualsBuilder.reflectionEquals(this, ((CommonData) obj), "syncDataId");
+		return EqualsBuilder.reflectionEquals(this, ((CommonData) obj));
 	}
 
 	/**
@@ -116,7 +101,7 @@ public class CommonData {
 	@Override
 	public int hashCode() {
 
-		return HashCodeBuilder.reflectionHashCode(this, "syncDataId");
+		return HashCodeBuilder.reflectionHashCode(this);
 	}
 
 	/**
@@ -129,28 +114,40 @@ public class CommonData {
 	}
 
 	/**
-	 * リソースエレメントが更新された場合など、その登録形態と更新時刻を更新します.
+	 * リソースアイテムの更新内容をこのオブジェクトに反映します.
 	 *
-	 * @param requestHeader 同期リクエストのヘッダ
+	 * @param itemWrapper リソースアイテムのラッパー
 	 */
-	public void modifiy(SyncRequestHeader requestHeader) {
+	public void modifiy(ResourceItemWrapper itemWrapper) {
 
-		this.syncMethod = requestHeader.getSyncMethod();
-		this.lastModified = requestHeader.getRequestTime();
+		this.action = itemWrapper.getAction();
+		this.lastModified = itemWrapper.getLastModified();
 	}
 
 	/**
-	 * @return syncDataId
+	 * このオブジェクトの内容を設定してリソースアイテムのラッパーオブジェクトを生成します.
 	 */
-	public String getSyncDataId() {
-		return syncDataId;
+	public ResourceItemWrapper generateItemWrapper() {
+
+		ResourceItemWrapper wrapper = new ResourceItemWrapper(this.id.getResourceItemId());
+		wrapper.setAction(this.action);
+		wrapper.setLastModified(lastModified);
+
+		return wrapper;
 	}
 
 	/**
-	 * @param syncDataId セットする syncDataId
+	 * @return id
 	 */
-	public void setSyncDataId(String syncDataId) {
-		this.syncDataId = syncDataId;
+	public CommonDataId getId() {
+		return id;
+	}
+
+	/**
+	 * @return targetItemId
+	 */
+	public String getTargetItemId() {
+		return targetItemId;
 	}
 
 	/**
@@ -168,45 +165,17 @@ public class CommonData {
 	}
 
 	/**
-	 * @return dataModelName
+	 * @return action
 	 */
-	public String getDataModelName() {
-		return dataModelName;
+	public SyncAction getAction() {
+		return action;
 	}
 
 	/**
-	 * @param dataModelName セットする dataModelName
+	 * @param action セットする action
 	 */
-	public void setDataModelName(String dataModelName) {
-		this.dataModelName = dataModelName;
-	}
-
-	/**
-	 * @return resourceIdStr
-	 */
-	public String getResourceIdStr() {
-		return resourceIdStr;
-	}
-
-	/**
-	 * @param resourceIdStr セットする resourceIdStr
-	 */
-	public void setResourceIdStr(String resourceIdStr) {
-		this.resourceIdStr = resourceIdStr;
-	}
-
-	/**
-	 * @return syncMethod
-	 */
-	public SyncMethod getSyncMethod() {
-		return syncMethod;
-	}
-
-	/**
-	 * @param syncMethod セットする syncMethod
-	 */
-	public void setSyncMethod(SyncMethod syncMethod) {
-		this.syncMethod = syncMethod;
+	public void setAction(SyncAction action) {
+		this.action = action;
 	}
 
 	/**

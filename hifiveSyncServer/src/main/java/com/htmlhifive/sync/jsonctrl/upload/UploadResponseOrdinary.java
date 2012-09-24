@@ -16,35 +16,80 @@
  */
 package com.htmlhifive.sync.jsonctrl.upload;
 
-import java.util.ArrayList;
-import java.util.List;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.htmlhifive.sync.resource.SyncResponse;
-import com.htmlhifive.sync.service.SyncUploadResult;
+import com.htmlhifive.sync.service.SyncStatus;
 
 /**
- * 上り更新リクエストに対する同期成功時のレスポンスデータクラス.
+ * クライアントからの上り更新リクエストに対する正常終了時のレスポンスデータ.
  *
  * @author kishigam
  */
 public class UploadResponseOrdinary extends UploadResponse {
 
 	/**
-	 * 上り更新結果オブジェクトからレスポンスデータを生成します.
-	 *
-	 * @param uploadResult 上り更新結果オブジェクト
+	 * 上り更新処理を実行した時刻.
 	 */
-	public UploadResponseOrdinary(SyncUploadResult uploadResult) {
+	private long lastUploadTime;
 
-		List<UploadResponseMessage> dataList = new ArrayList<>();
+	/**
+	 * 同期ステータスオブジェクトから上り更新レスポンスを生成します.
+	 *
+	 * @param statusAfterDownload 同期ステータスオブジェクト
+	 */
+	public UploadResponseOrdinary(SyncStatus statusAfterDownload) {
 
-		for (SyncResponse<?> response : uploadResult.getResultDataSet()) {
+		this.lastUploadTime = statusAfterDownload.getLastUploadTime();
+	}
 
-			UploadResponseMessage message = new UploadResponseMessageOrdinary(response);
+	/**
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
 
-			dataList.add(message);
-		}
+		if (this == obj)
+			return true;
 
-		setDataList(dataList);
+		if (!(obj instanceof UploadResponseOrdinary))
+			return false;
+
+		UploadResponseOrdinary req = (UploadResponseOrdinary) obj;
+
+		return new EqualsBuilder().append(this.lastUploadTime, req.lastUploadTime).isEquals();
+	}
+
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+
+		return new HashCodeBuilder(17, 37).append(this.lastUploadTime).hashCode();
+	}
+
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+
+		return ToStringBuilder.reflectionToString(this);
+	}
+
+	/**
+	 * @return lastUploadTime
+	 */
+	public long getLastUploadTime() {
+		return lastUploadTime;
+	}
+
+	/**
+	 * @param lastUploadTime セットする lastUploadTime
+	 */
+	public void setLastUploadTime(long lastUploadTime) {
+		this.lastUploadTime = lastUploadTime;
 	}
 }

@@ -14,27 +14,32 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.jsonctrl;
+package com.htmlhifive.sync.resource;
 
 /**
- * 同期(上り更新)リクエストに対して指定されている同期アクションを表す列挙型.
+ * 同期リクエストに対して指定されている同期アクションを表す列挙型.
  *
  * @author kishigam
  */
 public enum SyncAction {
 
-    /**
-     * 新規リソースエレメントの生成.
-     */
-    CREATE,
+	/**
+	 * 新規リソースアイテムの生成.
+	 */
+	CREATE,
 
-    /**
-     * 既存リソースエレメントの更新.
-     */
-    UPDATE,
+	/**
+	 * リソースアイテムの参照.
+	 */
+	READ,
 
-    /**
-     * 既存リソースエレメントの削除.
-     */
-    DELETE;
+	/**
+	 * 既存リソースアイテムの更新.
+	 */
+	UPDATE,
+
+	/**
+	 * 既存リソースアイテムの削除.
+	 */
+	DELETE;
 }

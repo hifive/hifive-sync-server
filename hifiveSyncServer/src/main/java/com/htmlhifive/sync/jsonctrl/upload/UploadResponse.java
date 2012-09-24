@@ -16,8 +16,6 @@
  */
 package com.htmlhifive.sync.jsonctrl.upload;
 
-import java.util.List;
-
 import com.htmlhifive.sync.jsonctrl.ResponseBody;
 
 /**
@@ -27,22 +25,4 @@ import com.htmlhifive.sync.jsonctrl.ResponseBody;
  */
 public abstract class UploadResponse implements ResponseBody {
 
-	/**
-	 * 上り更新レスポンスの本体となるメッセージオブジェクトのリスト.
-	 */
-	private List<UploadResponseMessage> dataList;
-
-	/**
-	 * @return dataList
-	 */
-	public List<UploadResponseMessage> getDataList() {
-		return dataList;
-	}
-
-	/**
-	 * @param dataList セットする dataList
-	 */
-	protected void setDataList(List<UploadResponseMessage> dataList) {
-		this.dataList = dataList;
-	}
 }

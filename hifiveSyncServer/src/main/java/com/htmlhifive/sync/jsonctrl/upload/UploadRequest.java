@@ -22,65 +22,89 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import com.htmlhifive.sync.service.ResourceItemsContainer;
+
 /**
- * JSON形式の上り更新リクエストデータを表現するデータクラス.
+ * JSON形式の上り更新リクエスト内容全体を表現するデータクラス.<br>
+ * 上り更新データには、同じリソース、および同じリソースアイテムが複数個存在します. <br>
+ * また、これらは順序を守って処理されなければなりません. そのため、MultiMapオブジェクトでリソース別のリストを保持します.<br>
+ * リソース別のリソースアイテムをSetで保持することや、それをリソース名をキーとするHashMap等に保持することはできません.
  *
  * @author kishigam
  */
 public class UploadRequest {
 
-    /**
-     * 同期対象を表すメッセージオブジェクトのリスト.
-     */
-    private List<? extends UploadRequestMessage<?>> dataList;
+	/**
+	 * 最終上り更新時刻.
+	 */
+	private long lastUploadTime;
 
-    /**
-     * @see Object#equals(Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
+	/**
+	 * 上り更新対象のリソースアイテムリスト
+	 */
+	private List<ResourceItemsContainer> resourceItems;
 
-        if (this == obj)
-            return true;
+	/**
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
 
-        if (!(obj instanceof UploadRequest))
-            return false;
+		if (this == obj)
+			return true;
 
-        UploadRequest req = (UploadRequest)obj;
+		if (!(obj instanceof UploadRequest))
+			return false;
 
-        return new EqualsBuilder().append(this.dataList, req.dataList).isEquals();
-    }
+		UploadRequest req = (UploadRequest) obj;
 
-    /**
-     * @see Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
+		return new EqualsBuilder().append(this.lastUploadTime, req.lastUploadTime)
+				.append(this.resourceItems, req.resourceItems).isEquals();
+	}
 
-        return new HashCodeBuilder(17, 37).append(this.dataList).hashCode();
-    }
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
 
-    /**
-     * @see Object#toString()
-     */
-    @Override
-    public String toString() {
+		return new HashCodeBuilder(17, 37).append(this.lastUploadTime).append(this.resourceItems).hashCode();
+	}
 
-        return ToStringBuilder.reflectionToString(this);
-    }
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
 
-    /**
-     * @return dataList
-     */
-    public List<? extends UploadRequestMessage<?>> getDataList() {
-        return dataList;
-    }
+		return ToStringBuilder.reflectionToString(this);
+	}
 
-    /**
-     * @param dataList
-     *            セットする dataList
-     */
-    public void setDataList(List<? extends UploadRequestMessage<?>> dataList) {
-        this.dataList = dataList;
-    }
+	/**
+	 * @return lastUploadTime
+	 */
+	public long getLastUploadTime() {
+		return lastUploadTime;
+	}
+
+	/**
+	 * @param lastUploadTime セットする lastUploadTime
+	 */
+	public void setLastUploadTime(long lastUploadTime) {
+		this.lastUploadTime = lastUploadTime;
+	}
+
+	/**
+	 * @return resourceItems
+	 */
+	public List<ResourceItemsContainer> getResourceItems() {
+		return resourceItems;
+	}
+
+	/**
+	 * @param resourceItems セットする resourceItems
+	 */
+	public void setResourceItems(List<ResourceItemsContainer> resourceItems) {
+		this.resourceItems = resourceItems;
+	}
 }

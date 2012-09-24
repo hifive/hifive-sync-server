@@ -16,72 +16,72 @@
  */
 package com.htmlhifive.sync.resource;
 
-import java.util.Set;
-
-import com.htmlhifive.sync.exception.ConflictException;
+import java.util.List;
 
 /**
- * 「リソース」を表すインターフェースです.<br>
- * このフレームワークにおける「リソース」とは、 ある形を持ったデータの集合を表します。<br>
- * リソースはリソースエレメントを持ちます。エレメントはデータ同期の最小単位です。 概ねDAOパターンにおけるDAOとEntityの関係と同じですが、 実際のDB操作などのために別途DAOと呼ばれるクラスができる
- * ことと、HTTPにおけるURLにマッピングできることから リソースと呼ぶことにしています。<br>
- * 例えばスケジュール管理アプリの場合 　- リソースエレメント = １件１件のスケジュール 　- リソース = スケジュールの集合 と設計することができます。<br>
+ * 「リソース」を表すインターフェース.<br>
+ * このフレームワークにおける「リソース」とは、 ある形を持ったデータの集合を表します.<br>
+ * リソースはリソースアイテムを持ちます。リソースアイテムはデータ同期の最小単位です.
  *
- * @param <E> エレメントのデータ型
+ * @param <T> アイテムのデータ型
  */
-public interface SyncResource<E> {
+public interface SyncResource<T> {
 
 	/**
-	 * リクエストヘッダが指定する単一のリソースエレメントを取得します.<br>
+	 * 指定されたリソースアイテムIDを持つリソースアイテムを取得します.<br>
+	 *
+	 * @param resourceItemId リソースアイテムID
+	 * @return リソースアイテムのラッパーオブジェクト
+	 */
+	ResourceItemWrapper read(String resourceItemId);
+
+	/**
+	 * クエリの条件に合致する全リソースアイテムを取得します.<br>
+	 * ロックは考慮しません.
+	 *
+	 * @param query クエリオブジェクト
+	 * @return 条件に合致するリソースアイテムのリスト
+	 */
+	List<ResourceItemWrapper> readByQuery(ResourceQuery query);
+
+	/**
+	 * リソースアイテムを新規追加登録します.
+	 *
+	 * @param itemWrapper 登録リソースアイテム
+	 * @return 登録されたリソースアイテム
+	 */
+	ResourceItemWrapper create(ResourceItemWrapper itemWrapper);
+
+	/**
+	 * リクエストヘッダが指定するリソースアイテムを更新します.<br>
 	 *
 	 * @param requestHeader 同期リクエストヘッダ
-	 * @return 取得したエレメントを含む同期レスポンスオブジェクト
-	 */
-	SyncResponse<E> get(SyncRequestHeader requestHeader);
-
-	/**
-	 * リクエストヘッダが指定し、指定時刻以降に更新された全リソースエレメントを取得します.<br>
-	 *
-	 * @param lastSyncTime 指定時刻
-	 * @return 指定時刻以降に更新されたエレメントを含む同期レスポンスのリスト
-	 */
-	Set<SyncResponse<E>> getModifiedSince(SyncRequestHeader requestHeader);
-
-	/**
-	 * リクエストヘッダが指定するリソースエレメントを更新します.<br>
-	 *
-	 * @param requestHeader 同期リクエストヘッダ
-	 * @param element 更新後のリソースエレメント
+	 * @param item 更新後のリソースアイテム
 	 * @return 更新結果を含む同期レスポンスのリスト
-	 * @throws ConflictException 衝突発生時の例外
 	 */
-	SyncResponse<E> put(SyncRequestHeader requestHeader, E element) throws ConflictException;
+	ResourceItemWrapper update(ResourceItemWrapper itemWrapper);
 
 	/**
-	 * リクエストヘッダが指定するリソースエレメントを削除します.
+	 * リクエストヘッダが指定するリソースアイテムを削除します.
 	 *
 	 * @param requestHeader 同期リクエストヘッダ
 	 * @return 削除結果を含む同期レスポンスのリスト
-	 * @throws ConflictException 衝突発生時の例外
 	 */
-	SyncResponse<E> delete(SyncRequestHeader requestHeader) throws ConflictException;
+	ResourceItemWrapper delete(ResourceItemWrapper itemWrapper);
 
 	/**
-	 * リソースエレメントを追加します.
+	 * このリソースのリソース名を返します.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
-	 * @param newElement 追加したいリソースエレメント
-	 * @return 追加結果を含む同期レスポンスのリスト
-	 * @throws ConflictException 衝突が発生
+	 * @return リソース名
 	 */
-	SyncResponse<E> post(SyncRequestHeader requestHeader, E newElement) throws ConflictException;
+	String getResourceName();
 
 	/**
-	 * このリソースのエレメント型を返します.
+	 * このリソースのアイテム型を返します.
 	 *
-	 * @return エレメントの型を表すClassオブジェクト
+	 * @return アイテムの型を表すClassオブジェクト
 	 */
-	Class<E> getElementType();
+	Class<T> getItemType();
 
 	/**
 	 * リソースのロックを管理するマネージャを設定します.<br>

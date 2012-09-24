@@ -17,6 +17,7 @@
 package com.htmlhifive.sync.resource;
 
 import com.htmlhifive.sync.commondata.CommonData;
+import com.htmlhifive.sync.exception.LockException;
 
 /**
  * リソースのロック方式を制御するロジックを規定したインタフェース.
@@ -27,29 +28,27 @@ public interface LockManager {
 
 	/**
 	 * ロックを取得します.<br>
-	 * 同期リクエストのヘッダオブジェクトと、同期対象をGETして得られたレスポンスヘッダオブジェクトの内容の比較によりロック取得の可否を判定します.
+	 * 共通データの状態からロック可否を判断し、可能であればロックします.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
-	 * @param commonBeforeUpdate 同期レスポンスヘッダ
+	 * @param commonData 共通データ
 	 * @return ロックを取得できた場合true.
 	 */
-	public boolean lock(SyncRequestHeader requestHeader, CommonData commonBeforeUpdate);
+	public boolean lock(CommonData commonData) throws LockException;
 
 	/**
 	 * ロック取得状況に応じて、リソースの更新が実行できるか判定します.<br>
-	 * 同期リクエストのヘッダオブジェクトと、同期対象をGETして得られたレスポンスヘッダオブジェクトの内容を判定に使用します.
+	 * 更新対象リソースアイテムの情報と、現在の共通データの情報を用いて判定を行い、更新できる場合trueを返します.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
+	 * @param updateItem 更新対象リソースアイテムのラッパー
 	 * @param commonBeforUpdate 同期レスポンスヘッダ
 	 * @return update(/delete)できる場合true.
 	 */
-	public boolean canUpdate(SyncRequestHeader requestHeader, CommonData commonBeforUpdate);
+	public boolean canUpdate(ResourceItemWrapper updateItem, CommonData commonBeforUpdate);
 
 	/**
-	 * ロックを解除します.
+	 * ロックを解放します.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
-	 * @param commonBeforUpdate 同期レスポンスヘッダ
+	 * @param commonData 共通データ
 	 */
-	public void release(SyncRequestHeader requestHeader, CommonData commonBeforUpdate);
+	public void release(CommonData commonData);
 }

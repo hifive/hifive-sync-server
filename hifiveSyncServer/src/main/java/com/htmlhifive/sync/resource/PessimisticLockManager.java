@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htmlhifive.sync.commondata.CommonData;
-import com.htmlhifive.sync.exception.PessimisticLockException;
+import com.htmlhifive.sync.exception.LockException;
 
 /**
  * リソース対する悲観的ロック方式での制御ロジッククラス.<br>
@@ -37,42 +37,35 @@ public class PessimisticLockManager implements LockManager {
 
 	/**
 	 * ロックを取得します.<br>
-	 * 仮実装として、PessimisticLockExceptionをスローします.
+	 * 共通データの状態からロック可否を判断し、可能であればロックします.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
-	 * @param commonBeforUpdate 同期レスポンスヘッダ
-	 * @return
+	 * @param commonData 共通データ
+	 * @return ロックを取得できた場合true.
 	 */
-	@Override
-	public boolean lock(SyncRequestHeader requestHeader, CommonData commonBeforUpdate) throws PessimisticLockException {
+	public boolean lock(CommonData commonData) throws LockException {
 
-		throw new PessimisticLockException();
+		throw new LockException();
 	}
 
 	/**
 	 * ロック取得状況に応じて、リソースの更新が実行できるか判定します.<br>
-	 * 仮実装として、PessimisticLockExceptionをスローします.
+	 * 更新対象リソースアイテムの情報と、現在の共通データの情報を用いて判定を行い、更新できる場合trueを返します.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
+	 * @param updateItem 更新対象リソースアイテムのラッパー
 	 * @param commonBeforUpdate 同期レスポンスヘッダ
-	 * @return
+	 * @return update(/delete)できる場合true.
 	 */
-	@Override
-	public boolean canUpdate(SyncRequestHeader requestHeader, CommonData commonBeforUpdate)
-			throws PessimisticLockException {
+	public boolean canUpdate(ResourceItemWrapper updateItem, CommonData commonBeforUpdate) {
 
-		throw new PessimisticLockException();
+		return false;
 	}
 
 	/**
-	 * ロックを解除します.<br>
-	 * 仮実装として、空実装とします.
+	 * ロックを解放します.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
-	 * @param commonBeforUpdate 同期レスポンスヘッダ
+	 * @param commonData 共通データ
 	 */
-	@Override
-	public void release(SyncRequestHeader requestHeader, CommonData commonBeforUpdate) {
+	public void release(CommonData commonData) {
 
 	}
 }

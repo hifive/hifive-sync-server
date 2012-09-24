@@ -16,27 +16,24 @@
  */
 package com.htmlhifive.sync.resource;
 
-import com.htmlhifive.sync.commondata.CommonData;
-import com.htmlhifive.sync.exception.ConflictException;
+import com.htmlhifive.sync.exception.ItemUpdatedException;
 
 /**
- * ロックエラー発生時の更新戦略、競合判定ロジックのインターフェース.<br>
+ * 競合発生時の更新可否を判断する戦略オブジェクトのインターフェース.<br>
  *
  * @author kishigam
  */
 public interface UpdateStrategy {
 
 	/**
-	 * 引数の情報をもとに更新可否を判断します.<br>
-	 * 更新可能な場合、更新に使用するエレメントを返し、そうでない場合、サーバ側エレメントを含むConflictExceptionをスローします.
+	 * 競合している更新前後のリソースアイテムから戦略に従って解決を行います.<br>
+	 * 競合が解決できた場合、更新するリソースアイテムを返します.<br>
+	 * 競合が解決できない場合、ItemUpdatedExceptionをスローします.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
-	 * @param clientElement リクエストされたエレメント、DELETEの場合null
-	 * @param common 同期レスポンスヘッダ(リクエスト処理前のサーバ側共通データ)
-	 * @param serverElement リクエスト処理前のサーバ側エレメント(DELETE済み場合null)
-	 * @return 更新に用いるエレメント
-	 * @throws ConflictException 競合が解決できず、更新不可の場合
+	 * @param clientItemWrapper クライアントのリソースアイテムのラッパー
+	 * @param serverItemWrapper サーバのリソースアイテムのラッパー
+	 * @param resourceItemType リソースアイテムの型
 	 */
-	<E> E resolveConflict(SyncRequestHeader requestHeader, E clientElement, CommonData common, E serverElement)
-			throws ConflictException;
+	public <T> T resolveConflict(ResourceItemWrapper clientItemWrapper, ResourceItemWrapper serverItemWrapper,
+			Class<T> resourceItemType) throws ItemUpdatedException;
 }

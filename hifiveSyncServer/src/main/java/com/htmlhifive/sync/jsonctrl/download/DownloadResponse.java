@@ -16,17 +16,18 @@
  */
 package com.htmlhifive.sync.jsonctrl.download;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import com.htmlhifive.sync.jsonctrl.ResponseBody;
-import com.htmlhifive.sync.resource.SyncResponse;
+import com.htmlhifive.sync.service.ResourceItemsContainer;
 
 /**
- * クライアントからの下り更新リクエストに対する結果データの抽象クラス.
+ * クライアントからの下り更新リクエストに対する結果データの抽象クラス.<br>
+ * このクラスが保持するリソースアイテムリスト内には、リソースの重複およびリソースアイテムの重複はありません.
  *
  * @author kishigam
  */
@@ -38,9 +39,9 @@ public abstract class DownloadResponse implements ResponseBody {
 	private long lastDownloadTime;
 
 	/**
-	 * 下り更新結果のリソースアイテムリスト(リソース名別ListのMap)
+	 * 下り更新結果のリソースアイテムリスト
 	 */
-	private Map<String, List<? extends DownloadResponseMessage<?>>> resourceItems = new HashMap<>();
+	private List<ResourceItemsContainer> resourceItems;
 
 	/**
 	 * 下り更新レスポンスを生成します.
@@ -52,20 +53,39 @@ public abstract class DownloadResponse implements ResponseBody {
 	}
 
 	/**
-	 * 同期処理レスポンスから、クライアントに返す下り更新レスポンスメッセージを生成します.<br>
-	 *
-	 * @param responseSet 同期処理のレスポンスオブジェクトのセット
-	 * @return 下り更新レスポンスメッセージのリスト
+	 * @see Object#equals(Object)
 	 */
-	protected static List<DownloadResponseMessage<?>> createResponseMessageList(Set<SyncResponse<?>> responseSet) {
+	@Override
+	public boolean equals(Object obj) {
 
-		List<DownloadResponseMessage<?>> responseMessages = new ArrayList<>();
+		if (this == obj)
+			return true;
 
-		for (SyncResponse<?> response : responseSet) {
-			responseMessages.add(new DownloadResponseMessage<>(response));
-		}
+		if (!(obj instanceof DownloadResponse))
+			return false;
 
-		return responseMessages;
+		DownloadResponse req = (DownloadResponse) obj;
+
+		return new EqualsBuilder().append(this.lastDownloadTime, req.lastDownloadTime)
+				.append(this.resourceItems, req.resourceItems).isEquals();
+	}
+
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+
+		return new HashCodeBuilder(17, 37).append(this.lastDownloadTime).append(this.resourceItems).hashCode();
+	}
+
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+
+		return ToStringBuilder.reflectionToString(this);
 	}
 
 	/**
@@ -85,21 +105,14 @@ public abstract class DownloadResponse implements ResponseBody {
 	/**
 	 * @return resourceItems
 	 */
-	public Map<String, List<? extends DownloadResponseMessage<?>>> getResourceItems() {
+	public List<ResourceItemsContainer> getResourceItems() {
 		return resourceItems;
 	}
 
 	/**
 	 * @param resourceItems セットする resourceItems
 	 */
-	public void setResourceItems(Map<String, List<? extends DownloadResponseMessage<?>>> resourceItems) {
+	public void setResourceItems(List<ResourceItemsContainer> resourceItems) {
 		this.resourceItems = resourceItems;
-	}
-
-	/**
-	 * @param resourceItems セットする resourceItems
-	 */
-	public void addResourceItems(String resourceName, List<? extends DownloadResponseMessage<?>> resourceItemList) {
-		this.resourceItems.put(resourceName, resourceItemList);
 	}
 }

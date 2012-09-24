@@ -16,15 +16,19 @@
  */
 package com.htmlhifive.sync.jsonctrl.upload;
 
-import java.util.ArrayList;
 import java.util.List;
 
-import com.htmlhifive.sync.resource.SyncResponse;
-import com.htmlhifive.sync.service.SyncResultType;
-import com.htmlhifive.sync.service.SyncUploadResult;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import com.htmlhifive.sync.exception.ConflictException;
+import com.htmlhifive.sync.resource.SyncResultType;
+import com.htmlhifive.sync.service.ResourceItemsContainer;
 
 /**
- * 上り更新リクエストに対する競合発生時のレスポンスデータクラス.
+ * クライアントからの上り更新リクエストに対する競合発生時のレスポンスデータ.<br>
+ * このクラスが保持するリソースアイテムリスト内には、リソースの重複およびリソースアイテムの重複はありません.
  *
  * @author kishigam
  */
@@ -36,23 +40,55 @@ public class UploadResponseOnConflict extends UploadResponse {
 	private SyncResultType conflictType;
 
 	/**
-	 * 上り更新結果オブジェクトからレスポンスデータを生成します.
-	 *
-	 * @param uploadResult 上り更新結果オブジェクト
+	 * 競合データのリソースアイテムリスト
 	 */
-	public UploadResponseOnConflict(SyncUploadResult uploadResult) {
+	private List<ResourceItemsContainer> resourceItems;
 
-		List<UploadResponseMessage> dataList = new ArrayList<>();
+	/**
+	 * ConflictExceptionの情報から上り更新レスポンスを生成します.
+	 *
+	 * @param e ConflictExceptionインスタンス
+	 */
+	public UploadResponseOnConflict(ConflictException e) {
 
-		for (SyncResponse<?> response : uploadResult.getResultDataSet()) {
+		this.conflictType = e.getConflictType();
+		this.resourceItems = e.getResourceItems();
+	}
 
-			UploadResponseMessage message = new UploadResponseMessageOnConflict<>(response);
+	/**
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
 
-			dataList.add(message);
-		}
+		if (this == obj)
+			return true;
 
-		setDataList(dataList);
-		this.conflictType = uploadResult.getResultType();
+		if (!(obj instanceof UploadResponseOnConflict))
+			return false;
+
+		UploadResponseOnConflict req = (UploadResponseOnConflict) obj;
+
+		return new EqualsBuilder().append(this.conflictType, req.conflictType)
+				.append(this.resourceItems, req.resourceItems).isEquals();
+	}
+
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+
+		return new HashCodeBuilder(17, 37).append(this.conflictType).append(this.resourceItems).hashCode();
+	}
+
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+
+		return ToStringBuilder.reflectionToString(this);
 	}
 
 	/**
@@ -67,5 +103,19 @@ public class UploadResponseOnConflict extends UploadResponse {
 	 */
 	public void setConflictType(SyncResultType conflictType) {
 		this.conflictType = conflictType;
+	}
+
+	/**
+	 * @return resourceItems
+	 */
+	public List<ResourceItemsContainer> getResourceItems() {
+		return resourceItems;
+	}
+
+	/**
+	 * @param resourceItems セットする resourceItems
+	 */
+	public void setResourceItems(List<ResourceItemsContainer> resourceItems) {
+		this.resourceItems = resourceItems;
 	}
 }

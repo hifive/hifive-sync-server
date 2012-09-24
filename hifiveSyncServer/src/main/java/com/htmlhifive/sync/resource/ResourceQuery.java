@@ -16,29 +16,31 @@
  */
 package com.htmlhifive.sync.resource;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.htmlhifive.sync.commondata.CommonData;
-
 /**
- * リソースへの同期リクエストに対する同期レスポンスのデータクラス.<br>
+ * リソースに更新アイテムを要求するクエリ(問い合わせ)情報クラス.
  *
  * @author kishigam
- * @param <E> エレメントのデータ型
  */
-public class SyncResponse<E> {
+public class ResourceQuery {
 
 	/**
-	 * 同期レスポンスの共通データ.
+	 * リソースごとにダウンロード対象アイテムを絞り込む条件. <br>
+	 * 対象項目と条件(配列形式)のMapで表現されます.
 	 */
-	private CommonData common;
+	private Map<String, String[]> conditions = new HashMap<>();
 
 	/**
-	 * 同期レスポンスのリソースエレメント.
+	 * 前回ダウンロード時刻.<br>
+	 * この時刻以降の更新データが取得対象になります.
 	 */
-	private E element;
+	private long lastDownloadTime = 0L;
 
 	/**
 	 * @see Object#equals(Object)
@@ -48,12 +50,13 @@ public class SyncResponse<E> {
 
 		if (this == obj)
 			return true;
-		if (!(obj instanceof SyncResponse))
+
+		if (!(obj instanceof ResourceQuery))
 			return false;
 
-		SyncResponse<?> res = (SyncResponse<?>) obj;
+		ResourceQuery msg = (ResourceQuery) obj;
 
-		return new EqualsBuilder().append(this.common, res.common).append(this.element, res.element).isEquals();
+		return EqualsBuilder.reflectionEquals(this, msg);
 	}
 
 	/**
@@ -62,7 +65,7 @@ public class SyncResponse<E> {
 	@Override
 	public int hashCode() {
 
-		return new HashCodeBuilder(17, 37).append(this.common).append(this.element).hashCode();
+		return HashCodeBuilder.reflectionHashCode(this);
 	}
 
 	/**
@@ -75,41 +78,30 @@ public class SyncResponse<E> {
 	}
 
 	/**
-	 * 同期レスポンスオブジェクトを生成します.
-	 *
-	 * @param common 共通データ
-	 * @param element リソースエレメント
+	 * @return conditions
 	 */
-	public SyncResponse(CommonData common, E element) {
-		this.common = common;
-		this.element = element;
+	public Map<String, String[]> getConditions() {
+		return conditions;
 	}
 
 	/**
-	 * @return common
+	 * @param conditions セットする conditions
 	 */
-	public CommonData getCommon() {
-		return common;
+	public void setConditions(Map<String, String[]> conditions) {
+		this.conditions = conditions;
 	}
 
 	/**
-	 * @param common セットする common
+	 * @return lastDownloadTime
 	 */
-	public void setCommon(CommonData common) {
-		this.common = common;
+	public long getLastDownloadTime() {
+		return lastDownloadTime;
 	}
 
 	/**
-	 * @return element
+	 * @param lastDownloadTime セットする lastDownloadTime
 	 */
-	public E getElement() {
-		return element;
-	}
-
-	/**
-	 * @param element セットする element
-	 */
-	public void setElement(E element) {
-		this.element = element;
+	public void setLastDownloadTime(long lastDownloadTime) {
+		this.lastDownloadTime = lastDownloadTime;
 	}
 }

@@ -23,54 +23,54 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * 予定リソースが外部と受け渡しするリソースエレメントクラス.
+ * 予定リソースが外部と受け渡しするリソースアイテムクラス.
  *
  * @author kishigam
  */
-public class ScheduleResourceElement {
+public class ScheduleResourceItem {
 
 	/**
-	 * このエレメントが示す予定のID.
+	 * このアイテムが示す予定のID.
 	 */
 	private String scheduleId;
 
 	/**
-	 * このエレメントが示す予定の対象者(文字列IDのリスト).
+	 * このアイテムが示す予定の対象者(文字列IDのリスト).
 	 */
 	private List<String> userIds;
 
 	/**
-	 * このエレメントが示す予定のタイトル.
+	 * このアイテムが示す予定のタイトル.
 	 */
 	private String title;
 
 	/**
-	 * このエレメントが示す予定の種類.
+	 * このアイテムが示す予定の種類.
 	 */
 	private String category;
 
 	/**
-	 * このエレメントが示す予定の予定日(文字列)のリスト.
+	 * このアイテムが示す予定の予定日(文字列)のリスト.
 	 */
 	private List<String> dates;
 
 	/**
-	 * このエレメントが示す予定の開始時刻.
+	 * このアイテムが示す予定の開始時刻.
 	 */
 	private String startTime;
 
 	/**
-	 * このエレメントが示す予定の終了時刻.
+	 * このアイテムが示す予定の終了時刻.
 	 */
 	private String finishTime;
 
 	/**
-	 * このエレメントが示す予定の詳細情報.
+	 * このアイテムが示す予定の詳細情報.
 	 */
 	private String detail;
 
 	/**
-	 * このエレメントが示す予定の実施場所.
+	 * このアイテムが示す予定の実施場所.
 	 */
 	private String place;
 
@@ -79,22 +79,19 @@ public class ScheduleResourceElement {
 	 * アプリケーションからの使用は想定されないため、privateとする.
 	 */
 	@SuppressWarnings("unused")
-	private ScheduleResourceElement() {
+	private ScheduleResourceItem() {
 	}
 
 	/**
-	 * IDを指定して予定リソースのエレメントを生成します.
+	 * IDを指定して予定リソースのアイテムを生成します.
 	 *
 	 * @param scheduleId 予定を一意に識別するID
 	 */
-	public ScheduleResourceElement(String scheduleId) {
+	public ScheduleResourceItem(String scheduleId) {
 		this.scheduleId = scheduleId;
 	}
 
 	/**
-	 * 予定IDが一致する場合同一となるよう同一性判定します.<br>
-	 * 他のフィールドが全て同一の予定であっても同一とはなりません.
-	 *
 	 * @see Object#equals(Object)
 	 */
 	@Override
@@ -104,13 +101,13 @@ public class ScheduleResourceElement {
 			return true;
 		}
 
-		if (!(obj instanceof ScheduleResourceElement)) {
+		if (!(obj instanceof ScheduleResourceItem)) {
 			return false;
 		}
 
-		ScheduleResourceElement element = (ScheduleResourceElement) obj;
+		ScheduleResourceItem otherObj = (ScheduleResourceItem) obj;
 
-		return new EqualsBuilder().append(this.scheduleId, element.scheduleId).isEquals();
+		return EqualsBuilder.reflectionEquals(this, otherObj);
 	}
 
 	/**
@@ -119,7 +116,7 @@ public class ScheduleResourceElement {
 	@Override
 	public int hashCode() {
 
-		return new HashCodeBuilder(17, 37).append(this.scheduleId).hashCode();
+		return HashCodeBuilder.reflectionHashCode(this);
 	}
 
 	/**

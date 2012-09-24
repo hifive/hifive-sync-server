@@ -30,7 +30,6 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
 import com.htmlhifive.sync.exception.SyncException;
-import com.htmlhifive.sync.resource.separated.SeparatedCommonDataSyncResource;
 
 /**
  * アプリケーション内に存在するリソースを管理するサービスオブジェクト.<br>
@@ -86,7 +85,7 @@ public class SyncResourceManager {
 		Set<BeanDefinition> candidates = scanner.findCandidateComponents("");
 		for (BeanDefinition def : candidates) {
 
-			Class<? extends SeparatedCommonDataSyncResource<?, ?>> resourceClass = selectResource(def);
+			Class<? extends AbstractSyncResource<?>> resourceClass = selectResource(def);
 			if (resourceClass == null) {
 				continue;
 			}
@@ -95,17 +94,17 @@ public class SyncResourceManager {
 			SyncResourceService resourceAnnotation = resourceClass.getAnnotation(SyncResourceService.class);
 
 			// データモデルを特定する
-			String dataModelName = resourceAnnotation.syncDataModel();
-			if (dataModelName == null || dataModelName.isEmpty()) {
+			String resourceName = resourceAnnotation.resourceName();
+			if (resourceName == null || resourceName.isEmpty()) {
 				continue;
 			}
-			resourceMap.put(dataModelName, resourceClass);
+			resourceMap.put(resourceName, resourceClass);
 
 			// ロックマネージャを特定する
-			lockManagerMap.put(dataModelName, resourceAnnotation.lockManager());
+			lockManagerMap.put(resourceName, resourceAnnotation.lockManager());
 
 			// 更新戦略オブジェクトを特定する
-			updateStrategyMap.put(dataModelName, resourceAnnotation.updateStrategy());
+			updateStrategyMap.put(resourceName, resourceAnnotation.updateStrategy());
 
 		}
 	}
@@ -117,16 +116,16 @@ public class SyncResourceManager {
 	 * @return クラスオブジェクト
 	 */
 	@SuppressWarnings("unchecked")
-	private Class<? extends SeparatedCommonDataSyncResource<?, ?>> selectResource(BeanDefinition def) {
+	private Class<? extends AbstractSyncResource<?>> selectResource(BeanDefinition def) {
 
 		try {
 			// null,interface,SeparatedSyncResourceのサブタイプ以外,abstractのクラスを除外
 			Class<?> found = Class.forName(def.getBeanClassName());
-			if (found == null || found.isInterface() || !SeparatedCommonDataSyncResource.class.isAssignableFrom(found)
+			if (found == null || found.isInterface() || !AbstractSyncResource.class.isAssignableFrom(found)
 					|| Modifier.isAbstract(found.getModifiers())) {
 				return null;
 			} else {
-				return (Class<? extends SeparatedCommonDataSyncResource<?, ?>>) found;
+				return (Class<? extends AbstractSyncResource<?>>) found;
 			}
 		} catch (ClassNotFoundException e) {
 			throw new SyncException("An Exception thrown by SyncResourceLocator", e);
@@ -137,12 +136,12 @@ public class SyncResourceManager {
 	 * データモデル名から対応するリソースを返します.<br>
 	 * リソースが存在しない場合、nullを返します.
 	 *
-	 * @param dataModelName データモデル名
+	 * @param resourceName リソース名
 	 * @return リソースクラス
 	 */
-	public SyncResource<?> locateSyncResource(String dataModelName) {
+	public SyncResource<?> locateSyncResource(String resourceName) {
 
-		Class<? extends SyncResource<?>> resourceClass = resourceMap.get(dataModelName);
+		Class<? extends SyncResource<?>> resourceClass = resourceMap.get(resourceName);
 
 		if (resourceClass == null) {
 			return null;
@@ -151,8 +150,8 @@ public class SyncResourceManager {
 		SyncResource<?> sr = context.getBean(resourceClass);
 
 		// LockManager,UpdateStrategyのセット
-		sr.setLockManager(context.getBean(lockManagerMap.get(dataModelName)));
-		sr.setUpdateStrategy(context.getBean(updateStrategyMap.get(dataModelName)));
+		sr.setLockManager(context.getBean(lockManagerMap.get(resourceName)));
+		sr.setUpdateStrategy(context.getBean(updateStrategyMap.get(resourceName)));
 
 		return sr;
 	}

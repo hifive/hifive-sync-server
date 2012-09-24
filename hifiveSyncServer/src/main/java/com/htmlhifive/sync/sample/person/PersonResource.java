@@ -17,33 +17,29 @@
 package com.htmlhifive.sync.sample.person;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.Resource;
 
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htmlhifive.sync.exception.DuplicateElementException;
+import com.htmlhifive.sync.commondata.CommonData;
+import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.NotFoundException;
+import com.htmlhifive.sync.resource.AbstractSyncResource;
 import com.htmlhifive.sync.resource.ClientResolvingStrategy;
 import com.htmlhifive.sync.resource.OptimisticLockManager;
 import com.htmlhifive.sync.resource.SyncResourceService;
-import com.htmlhifive.sync.resource.separated.SeparatedCommonDataSyncResource;
 
 /**
  * personデータモデルの情報を同期リソースとして公開するためのリソースクラス.<br>
  * 同期データを専用サービスで管理する抽象リソースクラスをこのリソース用に実装します.
  */
-@SyncResourceService(syncDataModel = "person", lockManager = OptimisticLockManager.class, updateStrategy = ClientResolvingStrategy.class)
+@SyncResourceService(resourceName = "person", lockManager = OptimisticLockManager.class, updateStrategy = ClientResolvingStrategy.class)
 @Transactional(propagation = Propagation.MANDATORY)
-public class PersonResource extends SeparatedCommonDataSyncResource<String, PersonResourceElement> {
-
-	/**
-	 * リソースID文字列を生成するためのprefix.
-	 */
-	private final String TARGET_ID_PREFIX = this.getClass().getName();
+public class PersonResource extends AbstractSyncResource<PersonResourceItem> {
 
 	/**
 	 * エンティティの永続化を担うリポジトリ.
@@ -52,152 +48,118 @@ public class PersonResource extends SeparatedCommonDataSyncResource<String, Pers
 	private PersonRepository repository;
 
 	/**
-	 * 単一データGETメソッドのリソース別独自処理. <br>
-	 * エンティティをリポジトリから取得し、elementに設定して返します.
+	 * 単一データreadメソッドのリソース別独自処理を行う抽象メソッド.<br>
+	 * エンティティをリポジトリから取得し、アイテムクラスのオブジェクトに設定して返します.
 	 *
-	 * @param resourceIdStr リソースID文字列
-	 * @return リソースエレメント
-	 * @throws NotFoundException 指定されたIDのエンティティが存在しない場合
+	 * @param targetItemId 対象リソースアイテムのID
+	 * @return リソースアイテム
 	 */
 	@Override
-	protected PersonResourceElement getImpl(String resourceIdStr) {
+	protected PersonResourceItem doRead(String targetItemId) {
 
-		PersonBean gotBean = findBean(resourceIdStr);
+		Person gotBean = findPerson(targetItemId);
 
-		PersonResourceElement element = new PersonResourceElement(gotBean.getId());
-		element.setName(gotBean.getName());
-		element.setAge(gotBean.getAge());
-		element.setOrganization(gotBean.getOrganization());
-		return element;
+		PersonResourceItem item = new PersonResourceItem(gotBean.getPersonId());
+		item.setName(gotBean.getName());
+		item.setAge(gotBean.getAge());
+		item.setOrganization(gotBean.getOrganization());
+		return item;
 	}
 
 	/**
-	 * 複数データGETメソッドのリソース別独自処理. <br>
-	 * 単一データの取得をループし、Mapに格納して返します. TODO: リポジトリアクセスは一回で済ませる改善
+	 * クエリによってリソースアイテムを取得する抽象メソッド.<br>
+	 * 指定された共通データが対応するリソースアイテムであり、かつデータ項目が指定された条件に合致するものを検索し、返します.
 	 *
-	 * @param resourceIdStrSet リソースID文字列のSet
-	 * @param queryMap クエリMap
-	 * @return リソースエレメント(IDをKeyとするMap)
-	 * @throws NotFoundException 指定されたIDのエンティティが存在しない場合
+	 * @param commonDataList 共通データリスト
+	 * @param conditions 条件Map(データ項目名,データ項目の条件)
+	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
 	 */
 	@Override
-	protected Map<String, PersonResourceElement> getImpl(Set<String> resourceIdStrSet, Map<String, String[]> queryMap) {
+	protected Map<PersonResourceItem, CommonData> doReadByQuery(List<CommonData> commonDataList,
+			Map<String, String[]> conditions) {
 
-		Map<String, PersonResourceElement> elementMap = new HashMap<>();
-		for (String resourceIdStr : resourceIdStrSet) {
+		Map<PersonResourceItem, CommonData> itemMap = new HashMap<>();
+		for (CommonData common : commonDataList) {
 
-			PersonResourceElement element = getImpl(resourceIdStr);
+			PersonResourceItem item = doRead(common.getTargetItemId());
 
 			// TODO: queryの適用
 
-			elementMap.put(resourceIdStr, element);
+			itemMap.put(item, common);
 		}
-		return elementMap;
+
+		return itemMap;
 	}
 
 	/**
-	 * PUTメソッドのリソース別独自処理. <br>
-	 * エンティティをリポジトリから取得し、更新します.
+	 * createメソッドのリソース別独自処理. <br>
+	 * エンティティを新規生成、保存し、リソースアイテムのIDを返します.
 	 *
-	 * @param resourceIdStr リソースID文字列
-	 * @param element 更新内容を含むリソースエレメント
+	 * @param newItem 生成内容を含むリソースアイテム
+	 * @return 採番されたリソースアイテムのID
 	 */
 	@Override
-	protected void putImpl(String resourceIdStr, PersonResourceElement element) {
+	protected String doCreate(PersonResourceItem newItem) throws DuplicateIdException {
 
-		PersonBean updatingEntity = findBean(resourceIdStr);
+		if (repository.exists(newItem.getPersonId())) {
 
-		updatingEntity.setName(element.getName());
-		updatingEntity.setAge(element.getAge());
-		updatingEntity.setOrganization(element.getOrganization());
+			throw new DuplicateIdException(newItem.getPersonId(), doRead(newItem.getPersonId()));
+		}
+
+		Person newEntity = new Person();
+		newEntity.setPersonId(newItem.getPersonId());
+		newEntity.setName(newItem.getName());
+		newEntity.setAge(newItem.getAge());
+		newEntity.setOrganization(newItem.getOrganization());
+
+		repository.save(newEntity);
+
+		return newEntity.getPersonId();
+	}
+
+	/**
+	 * updateメソッドのリソース別独自処理.<br>
+	 *
+	 * @param item 更新内容を含むリソースアイテム
+	 */
+	@Override
+	protected void doUpdate(PersonResourceItem item) {
+
+		Person updatingEntity = findPerson(item.getPersonId());
+
+		updatingEntity.setName(item.getName());
+		updatingEntity.setAge(item.getAge());
+		updatingEntity.setOrganization(item.getOrganization());
 
 		repository.save(updatingEntity);
 	}
 
 	/**
-	 * DELETEメソッドのリソース別独自処理. <br>
+	 * deleteメソッドのリソース別独自処理. <br>
 	 * エンティティをリポジトリから取得し、物理削除します.
 	 *
-	 * @param resourceIdStr リソースID文字列
+	 * @param targetItemId リソースアイテムのID
 	 */
 	@Override
-	protected void deleteImpl(String resourceIdStr) {
+	protected void doDelete(String targetItemId) {
 
-		PersonBean removingEntity = findBean(resourceIdStr);
+		Person removingEntity = findPerson(targetItemId);
 
 		repository.delete(removingEntity);
 	}
 
 	/**
-	 * POSTメソッドのリソース別独自処理. <br>
-	 * エンティティを新規生成、保存し、採番されたリソースIDを返します.
-	 *
-	 * @param newElement 生成内容を含むリソースエレメント
-	 * @return 採番されたリソースID文字列
-	 */
-	@Override
-	protected String postImpl(PersonResourceElement newElement) throws DuplicateElementException {
-
-		if (repository.exists(newElement.getId())) {
-
-			String resourceIdStr = generateNewResourceIdStr(newElement.getId());
-			throw new DuplicateElementException(resourceIdStr, getImpl(resourceIdStr));
-		}
-
-		PersonBean newEntity = new PersonBean(newElement.getId());
-
-		newEntity.setName(newElement.getName());
-		newEntity.setAge(newElement.getAge());
-		newEntity.setOrganization(newElement.getOrganization());
-
-		repository.save(newEntity);
-
-		return generateNewResourceIdStr(newEntity.getId());
-	}
-
-	/**
-	 * リソースID文字列から1件のエンティティをリポジトリを検索して取得します. <br>
-	 * エンティティのIDは{@link this#resolveResourceId(String)}で与えられます.<br>
+	 * このリソースのリソースアイテムのIDから1件のエンティティをリポジトリを検索して取得します. <br>
 	 * 取得できない場合、{@link NotFoundException}をスローします.
 	 *
-	 * @param resourceIdStr リソースID文字列
+	 * @param personId リソースアイテムのID
 	 * @return Personエンティティ
-	 * @throws NotFoundException IDからエンティティが取得できなかったとき
 	 */
-	private PersonBean findBean(String resourceIdStr) {
-		String personId = resolveResourceId(resourceIdStr);
-
-		PersonBean found = repository.findOne(personId);
+	private Person findPerson(String personId) {
+		Person found = repository.findOne(personId);
 		if (found == null) {
 			throw new NotFoundException("entity not found :" + personId);
 		}
 		return found;
-	}
-
-	/**
-	 * リソースIDからprefixを除去し、エンティティのIDを返します. <br>
-	 *
-	 * @param resourceIdStr リソースID文字列
-	 * @return エンティティのID
-	 */
-	@Override
-	protected String resolveResourceId(String resourceIdStr) {
-
-		// クラス名を除去し、実データのID文字列を抽出する
-		return resourceIdStr.replace(TARGET_ID_PREFIX, "");
-	}
-
-	/**
-	 * エンティティのIDからリソースIDを生成します.<br>
-	 * リソースID文字列はリソースごとの生成ルールによって生成された文字列で、リソースエレメントを一意に識別します.
-	 *
-	 * @param id エンティティのID
-	 * @return リソースID
-	 */
-	@Override
-	protected String generateNewResourceIdStr(String id) {
-
-		// クラス名＋実データのID文字列で実データIDとする
-		return TARGET_ID_PREFIX + id;
 	}
 }

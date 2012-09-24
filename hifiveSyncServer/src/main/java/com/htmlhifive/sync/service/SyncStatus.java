@@ -14,24 +14,29 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.status;
+package com.htmlhifive.sync.service;
+
+import java.util.List;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import com.htmlhifive.sync.resource.SyncResultType;
+
 /**
- * 各クライアントの前回上り更新処理に関するステータスを保持するエンティティ.<br>
+ * 各クライアントからの同期状態に関する情報保持するエンティティ.<br>
  *
  * @author kishigam
  */
 @Entity
-@Table(name = "LAST_UPLOAD_STATUS")
-public class LastUploadStatus {
+@Table(name = "SYNC_STATUS")
+public class SyncStatus {
 
 	/**
 	 * クライアントのストレージID.<br>
@@ -45,11 +50,31 @@ public class LastUploadStatus {
 	private long lastUploadTime;
 
 	/**
+	 * 前回下り更新時刻.
+	 */
+	@Transient
+	private long lastDownloadTime;
+
+	/**
+	 * 更新結果タイプ.<br>
+	 */
+	@Transient
+	private SyncResultType resultType;
+
+	/**
+	 * 同期データのリソースアイテムリスト.<br>
+	 * 下り更新時に同期時点のサーバデータを保持します.<br>
+	 * 上り更新ではデータは保持されません.
+	 */
+	@Transient
+	private List<ResourceItemsContainer> resourceItems;
+
+	/**
 	 * プライベートのデフォルトコンストラクタ. <br>
 	 * 永続マネージャーが使用するため、実装する必要があります.
 	 */
 	@SuppressWarnings("unused")
-	private LastUploadStatus() {
+	private SyncStatus() {
 	}
 
 	/**
@@ -57,7 +82,7 @@ public class LastUploadStatus {
 	 *
 	 * @param storageId クライアントのストレージID
 	 */
-	public LastUploadStatus(String storageId) {
+	public SyncStatus(String storageId) {
 		this.storageId = storageId;
 	}
 
@@ -88,14 +113,14 @@ public class LastUploadStatus {
 	}
 
 	/**
-	 * 指定された時刻が、保持している前回上り更新時刻より前であればtrueを返します.
+	 * 指定された前回上り更新時刻が、この同期ステータスが保持している前回上り更新時刻よりも前のとき、二重送信と判断し、trueを返します.
 	 *
-	 * @param currentSyncTime
+	 * @param clientLastUploadTime クライアントごとの前回上り更新時刻
 	 * @return 前回上り更新時刻より前であればtrue
 	 */
-	public boolean isPassed(long currentSyncTime) {
+	public boolean isNewerStatusThanClient(long clientLastUploadTime) {
 
-		return currentSyncTime <= this.lastUploadTime;
+		return this.lastUploadTime > clientLastUploadTime;
 	}
 
 	/**
@@ -117,5 +142,47 @@ public class LastUploadStatus {
 	 */
 	public void setLastUploadTime(long lastUploadTime) {
 		this.lastUploadTime = lastUploadTime;
+	}
+
+	/**
+	 * @return lastDownloadTime
+	 */
+	public long getLastDownloadTime() {
+		return lastDownloadTime;
+	}
+
+	/**
+	 * @param lastDownloadTime セットする lastDownloadTime
+	 */
+	public void setLastDownloadTime(long lastDownloadTime) {
+		this.lastDownloadTime = lastDownloadTime;
+	}
+
+	/**
+	 * @return resultType
+	 */
+	public SyncResultType getResultType() {
+		return resultType;
+	}
+
+	/**
+	 * @param resultType セットする resultType
+	 */
+	public void setResultType(SyncResultType resultType) {
+		this.resultType = resultType;
+	}
+
+	/**
+	 * @return resourceItems
+	 */
+	public List<ResourceItemsContainer> getResourceItems() {
+		return resourceItems;
+	}
+
+	/**
+	 * @param resourceItems セットする resourceItems
+	 */
+	public void setResourceItems(List<ResourceItemsContainer> resourceItems) {
+		this.resourceItems = resourceItems;
 	}
 }

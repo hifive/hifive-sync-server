@@ -16,6 +16,8 @@
  */
 package com.htmlhifive.sync.jsonctrl.download;
 
+import com.htmlhifive.sync.service.SyncStatus;
+
 /**
  * 既知のクライアントからの下り更新リクエストに対するレスポンスデータクラス.
  *
@@ -24,12 +26,12 @@ package com.htmlhifive.sync.jsonctrl.download;
 public class DownloadResponseOrdinary extends DownloadResponse {
 
 	/**
-	 * 下り更新結果データを生成します.
+	 * 同期ステータスオブジェクトから下り更新レスポンスを生成します.
 	 *
-	 * @param lastDownloadTime 下り更新時刻
+	 * @param statusAfterDownload 同期ステータスオブジェクト
 	 */
-	public DownloadResponseOrdinary(long lastDownloadTime) {
+	public DownloadResponseOrdinary(SyncStatus statusAfterDownload) {
 
-		super(lastDownloadTime);
+		super(statusAfterDownload.getLastDownloadTime());
 	}
 }

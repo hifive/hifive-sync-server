@@ -20,20 +20,20 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
 
 import javax.annotation.Resource;
 
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htmlhifive.sync.commondata.CommonData;
+import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.NotFoundException;
+import com.htmlhifive.sync.resource.AbstractSyncResource;
 import com.htmlhifive.sync.resource.ClientResolvingStrategy;
 import com.htmlhifive.sync.resource.OptimisticLockManager;
 import com.htmlhifive.sync.resource.SyncResourceService;
-import com.htmlhifive.sync.resource.separated.SeparatedCommonDataSyncResource;
-import com.htmlhifive.sync.sample.person.PersonBean;
+import com.htmlhifive.sync.sample.person.Person;
 import com.htmlhifive.sync.sample.person.PersonRepository;
 
 /**
@@ -42,14 +42,9 @@ import com.htmlhifive.sync.sample.person.PersonRepository;
  *
  * @author kishigam
  */
-@SyncResourceService(syncDataModel = "schedule", lockManager = OptimisticLockManager.class, updateStrategy = ClientResolvingStrategy.class)
+@SyncResourceService(resourceName = "schedule", lockManager = OptimisticLockManager.class, updateStrategy = ClientResolvingStrategy.class)
 @Transactional(propagation = Propagation.MANDATORY)
-public class ScheduleResource extends SeparatedCommonDataSyncResource<String, ScheduleResourceElement> {
-
-	/**
-	 * リソースID文字列を生成するためのprefix.
-	 */
-	private static final String TARGET_ID_PREFIX = ScheduleResource.class.getName();
+public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem> {
 
 	/**
 	 * エンティティの永続化を担うリポジトリ.
@@ -64,185 +59,151 @@ public class ScheduleResource extends SeparatedCommonDataSyncResource<String, Sc
 	private PersonRepository personRepository;
 
 	/**
-	 * 単一データGETメソッドのリソース別独自処理. <br>
-	 * エンティティをリポジトリから取得しエレメント(コンストラクタ）wokaesu .します.
+	 * 単一データreadメソッドのリソース別独自処理を行う抽象メソッド.<br>
+	 * エンティティをリポジトリから取得し、アイテムクラスのオブジェクトに設定して返します.
 	 *
-	 * @param resourceIdStr リソースID文字列
-	 * @return リソースエレメント
-	 * @throws NotFoundException 指定されたIDのエンティティが存在しない場合
+	 * @param targetItemId 対象リソースアイテムのID
+	 * @return リソースアイテム
 	 */
 	@Override
-	protected ScheduleResourceElement getImpl(String resourceIdStr) {
+	protected ScheduleResourceItem doRead(String targetItemId) {
 
-		ScheduleBean bean = findBean(resourceIdStr);
+		Schedule bean = findSchedule(targetItemId);
 
-		ScheduleResourceElement element = new ScheduleResourceElement(bean.getScheduleId());
-		element.setUserIds(bean.getUserIds());
-		element.setTitle(bean.getTitle());
-		element.setCategory(bean.getCategory());
-		element.setDates(bean.getDates());
-		element.setStartTime(bean.getStartTime());
-		element.setFinishTime(bean.getFinishTime());
-		element.setDetail(bean.getDetail());
-		element.setPlace(bean.getPlace());
+		ScheduleResourceItem item = new ScheduleResourceItem(bean.getScheduleId());
+		item.setUserIds(bean.getUserIds());
+		item.setTitle(bean.getTitle());
+		item.setCategory(bean.getCategory());
+		item.setDates(bean.getDates());
+		item.setStartTime(bean.getStartTime());
+		item.setFinishTime(bean.getFinishTime());
+		item.setDetail(bean.getDetail());
+		item.setPlace(bean.getPlace());
 
-		return element;
+		return item;
 	}
 
 	/**
-	 * 複数データGETメソッドのリソース別独自処理. <br>
-	 * 単一データの取得をループし、Mapに格納して返します. TODO: リポジトリアクセスは一回で済ませる改善
+	 * クエリによってリソースアイテムを取得する抽象メソッド.<br>
+	 * 指定された共通データが対応するリソースアイテムであり、かつデータ項目が指定された条件に合致するものを検索し、返します.
 	 *
-	 * @param resourceIdStrSet リソースID文字列のSet
-	 * @param queryMap クエリMap
-	 * @return リソースエレメント(IDをKeyとするMap)
-	 * @throws NotFoundException 指定されたIDのエンティティが存在しない場合
+	 * @param commonDataList 共通データリスト
+	 * @param conditions 条件Map(データ項目名,データ項目の条件)
+	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
 	 */
 	@Override
-	protected Map<String, ScheduleResourceElement> getImpl(Set<String> resourceIdStrSet, Map<String, String[]> queryMap) {
+	protected Map<ScheduleResourceItem, CommonData> doReadByQuery(List<CommonData> commonDataList,
+			Map<String, String[]> conditions) {
 
-		Map<String, ScheduleResourceElement> elementMap = new HashMap<>();
-		for (String resourceIdStr : resourceIdStrSet) {
+		Map<ScheduleResourceItem, CommonData> itemMap = new HashMap<>();
+		for (CommonData common : commonDataList) {
 
-			ScheduleResourceElement element = getImpl(resourceIdStr);
+			ScheduleResourceItem item = doRead(common.getTargetItemId());
 
 			// TODO: queryの適用
 
-			elementMap.put(resourceIdStr, element);
+			itemMap.put(item, common);
 		}
-		return elementMap;
+
+		return itemMap;
 	}
 
 	/**
-	 * PUTメソッドのリソース別独自処理. <br>
-	 * エンティティをリポジトリから取得し、更新します. 取得できない場合、{@link NotFoundException}をスローします.
+	 * createメソッドのリソース別独自処理. <br>
+	 * エンティティを新規生成、保存し、リソースアイテムのIDを返します.
 	 *
-	 * @param resourceIdStr リソースID文字列
-	 * @param element 更新内容を含むリソースエレメント
+	 * @param newItem 生成内容を含むリソースアイテム
+	 * @return 採番されたリソースアイテムのID
 	 */
 	@Override
-	protected void putImpl(String resourceIdStr, ScheduleResourceElement element) {
+	protected String doCreate(ScheduleResourceItem newItem) throws DuplicateIdException {
 
-		ScheduleBean updatingEntity = findBean(resourceIdStr);
+		if (repository.exists(newItem.getScheduleId())) {
 
-		List<PersonBean> userIdBeans = updatingEntity.getUserBeans();
+			throw new DuplicateIdException(newItem.getScheduleId(), doRead(newItem.getScheduleId()));
+		}
+
+		Schedule newEntity = new Schedule();
+		newEntity.setScheduleId(newItem.getScheduleId());
+
+		List<Person> userIdBeans = new ArrayList<>();
+		for (String userId : newItem.getUserIds()) {
+			userIdBeans.add(personRepository.findOne(userId));
+		}
+		newEntity.setUserBeans(userIdBeans);
+		newEntity.setTitle(newItem.getTitle());
+		newEntity.setCategory(newItem.getCategory());
+
+		// 日付リストの新規生成
+		newEntity.setNewDateBeans(newItem.getDates());
+
+		newEntity.setStartTime(newItem.getStartTime());
+		newEntity.setFinishTime(newItem.getFinishTime());
+		newEntity.setDetail(newItem.getDetail());
+		newEntity.setPlace(newItem.getPlace());
+
+		repository.save(newEntity);
+
+		return newEntity.getScheduleId();
+	}
+
+	/**
+	 * updateメソッドのリソース別独自処理.<br>
+	 *
+	 * @param item 更新内容を含むリソースアイテム
+	 */
+	@Override
+	protected void doUpdate(ScheduleResourceItem item) {
+
+		Schedule updatingEntity = findSchedule(item.getScheduleId());
+
+		List<Person> userIdBeans = updatingEntity.getUserBeans();
 		userIdBeans.clear();
-		for (String userId : element.getUserIds()) {
+		for (String userId : item.getUserIds()) {
 			userIdBeans.add(personRepository.findOne(userId));
 		}
 		updatingEntity.setUserBeans(userIdBeans);
-		updatingEntity.setTitle(element.getTitle());
-		updatingEntity.setCategory(element.getCategory());
+		updatingEntity.setTitle(item.getTitle());
+		updatingEntity.setCategory(item.getCategory());
+
 		// 元の日付リストの更新
-		updatingEntity.setUpdatedDateBeans(element.getDates());
-		updatingEntity.setStartTime(element.getStartTime());
-		updatingEntity.setFinishTime(element.getFinishTime());
-		updatingEntity.setDetail(element.getDetail());
-		updatingEntity.setPlace(element.getPlace());
+		updatingEntity.setUpdatedDateBeans(item.getDates());
+
+		updatingEntity.setStartTime(item.getStartTime());
+		updatingEntity.setFinishTime(item.getFinishTime());
+		updatingEntity.setDetail(item.getDetail());
+		updatingEntity.setPlace(item.getPlace());
 
 		repository.save(updatingEntity);
 	}
 
 	/**
-	 * DELETEメソッドのリソース別独自処理. <br>
+	 * deleteメソッドのリソース別独自処理. <br>
 	 * エンティティをリポジトリから取得し、物理削除します.
 	 *
-	 * @param resourceIdStr リソースID文字列
+	 * @param targetItemId リソースアイテムのID
 	 */
 	@Override
-	protected void deleteImpl(String resourceIdStr) {
+	protected void doDelete(String targetItemId) {
 
-		ScheduleBean removingEntity = findBean(resourceIdStr);
+		Schedule removingEntity = findSchedule(targetItemId);
 
 		repository.delete(removingEntity);
 	}
 
 	/**
-	 * POSTメソッドのリソース別独自処理. <br>
-	 * エンティティを新規生成、保存し、採番されたリソースIDを返します.
-	 *
-	 * @param newElement 生成内容を含むリソースエレメント
-	 * @return 採番されたリソースID文字列
-	 */
-	@Override
-	protected String postImpl(ScheduleResourceElement newElement) {
-
-		// 既に存在するIDの場合、IDを振りなおす
-		ScheduleBean newEntity = repository.exists(newElement.getScheduleId()) ? new ScheduleBean(generateNewId())
-				: new ScheduleBean(newElement.getScheduleId());
-
-		List<PersonBean> userIdBeans = new ArrayList<>();
-		for (String userId : newElement.getUserIds()) {
-			userIdBeans.add(personRepository.findOne(userId));
-		}
-		newEntity.setUserBeans(userIdBeans);
-		newEntity.setTitle(newElement.getTitle());
-		newEntity.setCategory(newElement.getCategory());
-		// 日付リストの新規生成
-		newEntity.setNewDateBeans(newElement.getDates());
-		newEntity.setStartTime(newElement.getStartTime());
-		newEntity.setFinishTime(newElement.getFinishTime());
-		newEntity.setDetail(newElement.getDetail());
-		newEntity.setPlace(newElement.getPlace());
-
-		repository.save(newEntity);
-
-		return generateNewResourceIdStr(newEntity.getScheduleId());
-	}
-
-	/**
-	 * リソースID文字列から1件のエンティティをリポジトリを検索して取得します. <br>
-	 * エンティティのIDは{@link this#resolveResourceId(String)}で与えられます.<br>
+	 * このリソースのリソースアイテムのIDから1件のエンティティをリポジトリを検索して取得します. <br>
 	 * 取得できない場合、{@link NotFoundException}をスローします.
 	 *
-	 * @param resourceIdStr リソースID文字列
-	 * @return 予定エンティティ
-	 * @throws NotFoundException IDからエンティティが取得できなかったとき
+	 * @param scheduleId リソースアイテムのID
+	 * @return Scheduleエンティティ
 	 */
-	private ScheduleBean findBean(String resourceIdStr) {
-		String scheduleId = resolveResourceId(resourceIdStr);
+	private Schedule findSchedule(String scheduleId) {
 
-		ScheduleBean found = repository.findOne(scheduleId);
+		Schedule found = repository.findOne(scheduleId);
 		if (found == null) {
 			throw new NotFoundException("entity not found :" + scheduleId);
 		}
 		return found;
-	}
-
-	/**
-	 * この予定データのIDを文字列で採番します.
-	 *
-	 * @return ID文字列
-	 */
-	private String generateNewId() {
-
-		return UUID.randomUUID().toString();
-	}
-
-	/**
-	 * リソースIDからprefixを除去し、エンティティのIDを返します. <br>
-	 *
-	 * @param resourceIdStr リソースID文字列
-	 * @return エンティティのID
-	 */
-	@Override
-	protected String resolveResourceId(String resourceIdStr) {
-
-		// クラス名を除去し、実データのID文字列を抽出する
-		return resourceIdStr.replace(TARGET_ID_PREFIX, "");
-	}
-
-	/**
-	 * エンティティのIDからリソースIDを生成します.<br>
-	 * リソースID文字列はリソースごとの生成ルールによって生成された文字列で、リソースエレメントを一意に識別します.
-	 *
-	 * @param id エンティティのID
-	 * @return リソースID
-	 */
-	@Override
-	protected String generateNewResourceIdStr(String id) {
-
-		// クラス名＋実データのID文字列で実データIDとする
-		return TARGET_ID_PREFIX + id;
 	}
 }

@@ -24,5 +24,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
  *
  * @author kishigam
  */
-public interface PersonRepository extends JpaRepository<PersonBean, String> {
+public interface PersonRepository extends JpaRepository<Person, String> {
 }

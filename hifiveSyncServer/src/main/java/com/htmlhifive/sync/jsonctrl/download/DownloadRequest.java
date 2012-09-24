@@ -22,6 +22,8 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import com.htmlhifive.sync.service.ResourceQueriesContainer;
+
 /**
  * JSON形式の下り更新リクエスト内容全体を表現するデータクラス.
  *
@@ -30,9 +32,10 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 public class DownloadRequest {
 
 	/**
-	 * 同期対象を表すメッセージオブジェクトのリスト.
+	 * 下り更新対象を表すクエリリストのMap.<br>
+	 * リソース別にクエリリストを保持します.
 	 */
-	private List<DownloadRequestMessage> resources;
+	private List<ResourceQueriesContainer> queries;
 
 	/**
 	 * @see Object#equals(Object)
@@ -47,7 +50,7 @@ public class DownloadRequest {
 
 		DownloadRequest request = (DownloadRequest) obj;
 
-		return new EqualsBuilder().append(this.resources, request.resources).isEquals();
+		return new EqualsBuilder().append(this.queries, request.queries).isEquals();
 	}
 
 	/**
@@ -56,7 +59,7 @@ public class DownloadRequest {
 	@Override
 	public int hashCode() {
 
-		return new HashCodeBuilder(17, 37).append(this.resources).hashCode();
+		return new HashCodeBuilder(17, 37).append(this.queries).hashCode();
 	}
 
 	/**
@@ -69,16 +72,16 @@ public class DownloadRequest {
 	}
 
 	/**
-	 * @return resouces
+	 * @return queries
 	 */
-	public List<DownloadRequestMessage> getResources() {
-		return resources;
+	public List<ResourceQueriesContainer> getQueries() {
+		return queries;
 	}
 
 	/**
-	 * @param resouces セットする resouces
+	 * @param queries セットする queries
 	 */
-	public void setResources(List<DownloadRequestMessage> resouces) {
-		this.resources = resouces;
+	public void setQueries(List<ResourceQueriesContainer> queries) {
+		this.queries = queries;
 	}
 }

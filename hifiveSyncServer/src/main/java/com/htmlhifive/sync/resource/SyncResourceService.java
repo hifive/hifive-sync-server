@@ -24,7 +24,7 @@ import java.lang.annotation.Target;
 import org.springframework.stereotype.Service;
 
 /**
- * リソースのサービスクラスであることを指示アノテーション.<br>
+ * リソースとしてのサービスを提供するクラスであることを指示するアノテーション.<br>
  *
  * @author kishigam
  */
@@ -34,11 +34,11 @@ import org.springframework.stereotype.Service;
 public @interface SyncResourceService {
 
 	/**
-	 * リソースが扱うデータモデル名.<br>
+	 * 対象リソース名.<br>
 	 *
-	 * @return データモデル名
+	 * @return リソース名
 	 */
-	String syncDataModel();
+	String resourceName();
 
 	/**
 	 * リソースが使用するLockManagerのクラスオブジェクト.<br>

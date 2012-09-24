@@ -24,13 +24,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.htmlhifive.sync.exception.SyncException;
+import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.jsonctrl.download.DownloadRequest;
 import com.htmlhifive.sync.jsonctrl.download.DownloadResponseOnInit;
 import com.htmlhifive.sync.jsonctrl.download.DownloadResponseOrdinary;
@@ -38,12 +37,8 @@ import com.htmlhifive.sync.jsonctrl.upload.UploadRequest;
 import com.htmlhifive.sync.jsonctrl.upload.UploadResponse;
 import com.htmlhifive.sync.jsonctrl.upload.UploadResponseOnConflict;
 import com.htmlhifive.sync.jsonctrl.upload.UploadResponseOrdinary;
-import com.htmlhifive.sync.service.AbstractSyncResult;
-import com.htmlhifive.sync.service.SyncDownloadResult;
-import com.htmlhifive.sync.service.SyncUploadResult;
+import com.htmlhifive.sync.service.SyncStatus;
 import com.htmlhifive.sync.service.Synchronizer;
-import com.htmlhifive.sync.status.LastUploadStatus;
-import com.htmlhifive.sync.status.SyncStatusService;
 
 /**
  * JSON形式の同期リクエストを処理するコントローラクラス.
@@ -60,53 +55,39 @@ public class JsonSyncController {
 	private Synchronizer synchronizer;
 
 	/**
-	 * 二重送信発生時の処理を効率化するレスポンスキャッシュサービス.
-	 */
-	@Resource
-	private SyncStatusService<LastUploadStatus> statusService;
-
-	/**
 	 * 初めて同期処理を行うクライアントからのリクエストを受け付け、下り更新処理のレスポンスを返します.<br>
 	 *
 	 * @param request JSON形式の同期リクエストデータ(初回下り更新用)
 	 * @return JSON形式の同期レスポンスデータ(初回下り更新用)
 	 */
-	@Transactional
 	@RequestMapping(value = "/download", method = RequestMethod.POST, params = {}, headers = {
 			"Accept=application/json", "Content-Type=application/json" })
 	public ResponseEntity<DownloadResponseOnInit> syncInit(final @RequestBody DownloadRequest request) {
 
-		// ストレージIdを新規採番
-		String newStorageId = generateNewStorageId();
+		// ストレージIDを新規採番し、下り更新サービスを呼び出し
+		SyncStatus statusAfterDownload = synchronizer.download(generateNewStorageId(), request.getQueries());
 
-		AbstractSyncResult downloadResult = synchronizer.syncDownload(newStorageId, request.getResources());
-
-		// レスポンスデータ(初回用)の生成
-		DownloadResponseOnInit responseBody = new DownloadResponseOnInit(downloadResult.getCurrentSyncTime(),
-				newStorageId);
-
-		return createResponseEntity(responseBody, HttpStatus.OK);
+		// レスポンスデータ(初回用)を生成、HTTPレスポンスをリターン
+		return createResponseEntity(new DownloadResponseOnInit(statusAfterDownload), HttpStatus.OK);
 	}
 
 	/**
 	 * 同期処理を行うクライアントからのリクエストを受け付け、下り更新処理のレスポンスを返します.<br>
-	 * クエリパラメータとして、クライアントのストレージIDを指定します.
+	 * クエリパラメータとして、クライアントのストレージIDが指定されています.
 	 *
 	 * @param request JSON形式の同期リクエストデータ(下り更新用)
 	 * @return JSON形式の同期レスポンスデータ(下り更新用)
 	 */
-	@Transactional
 	@RequestMapping(value = "/download", method = RequestMethod.POST, params = { "storageid" }, headers = {
 			"Accept=application/json", "Content-Type=application/json" })
 	public ResponseEntity<DownloadResponseOrdinary> syncDownload(final @RequestParam("storageid") String storageId,
 			final @RequestBody DownloadRequest request) {
 
-		SyncDownloadResult downloadResult = synchronizer.syncDownload(storageId, request.getResources());
+		// ストレージIDを渡し、下り更新サービスを呼び出し
+		SyncStatus statusAfterDownload = synchronizer.download(storageId, request.getQueries());
 
-		// レスポンスデータの生成
-		DownloadResponseOrdinary responseBody = new DownloadResponseOrdinary(downloadResult.getCurrentSyncTime());
-
-		return createResponseEntity(responseBody, HttpStatus.OK);
+		// レスポンスデータを生成、HTTPレスポンスをリターン
+		return createResponseEntity(new DownloadResponseOrdinary(statusAfterDownload), HttpStatus.OK);
 	}
 
 	/**
@@ -122,56 +103,32 @@ public class JsonSyncController {
 
 	/**
 	 * 同期処理を行うクライアントからのリクエストを受け付け、上り更新処理のレスポンスを返します.<br>
-	 * クエリパラメータとして、クライアントのストレージIDを指定します.
+	 * クエリパラメータとして、クライアントのストレージIDが指定されています.
 	 *
 	 * @param request JSON形式の同期リクエストデータ(上り更新用)
 	 * @return JSON形式の同期レスポンスデータ(上り更新用)
 	 */
-	@Transactional
 	@RequestMapping(value = "/upload", method = RequestMethod.POST, params = { "storageid" }, headers = {
 			"Accept=application/json", "Content-Type=application/json" })
 	public ResponseEntity<? extends UploadResponse> syncUpload(final @RequestParam("storageid") String storageId,
 			final @RequestBody UploadRequest request) {
 
-		// 結果オブジェクトを生成
-		SyncUploadResult result = new SyncUploadResult(storageId);
+		try {
+			// ストレージIDを渡し、下り更新サービスを呼び出し
+			SyncStatus statusAfterUpload = synchronizer.upload(storageId, request.getResourceItems(),
+					request.getLastUploadTime());
 
-		// 前回上り更新時刻の取得、今回の同期時刻より後になっていれば、今回の同期は二重送信などで処理済と判断する
-		LastUploadStatus currentStatus = statusService.currentStatus(storageId);
-		if (currentStatus.isPassed(result.getCurrentSyncTime())) {
-			UploadResponseOrdinary responseBody = new UploadResponseOrdinary(result);
-			return createResponseEntity(responseBody, HttpStatus.OK);
-		}
+			// レスポンスデータを生成し、リターン
+			return createResponseEntity(new UploadResponseOrdinary(statusAfterUpload), HttpStatus.OK);
 
-		// 上り更新実行
-		SyncUploadResult uploadResult = synchronizer.syncUpload(storageId, request.getDataList());
+		} catch (ConflictException e) {
 
-		// 上り更新結果ごとにレスポンスデータを生成
-		switch (uploadResult.getResultType()) {
-			case OK:
+			// 競合時用のレスポンスデータを生成し、リターン
+			UploadResponseOnConflict responseBodyOnConflict = new UploadResponseOnConflict(e);
 
-				// 上り更新処理成功の場合、今回の更新時刻を保存
-				currentStatus.setLastUploadTime(result.getCurrentSyncTime());
-				statusService.updateStatus(currentStatus);
-
-				UploadResponseOrdinary responseBody = new UploadResponseOrdinary(uploadResult);
-
-				return createResponseEntity(responseBody, HttpStatus.OK);
-
-			case UPDATED:
-			case DUPLICATEDID:
-
-				UploadResponseOnConflict responseBodyOnConflict = new UploadResponseOnConflict(uploadResult);
-
-				return createResponseEntity(responseBodyOnConflict, HttpStatus.CONFLICT);
-
-			default:
-				throw new SyncException("illegal upload result");
+			return createResponseEntity(responseBodyOnConflict, HttpStatus.CONFLICT);
 		}
 	}
-
-	/*
-     */
 
 	/**
 	 * HTTPレスポンスボディとステータスコードからレスポンスエンティティを返します.

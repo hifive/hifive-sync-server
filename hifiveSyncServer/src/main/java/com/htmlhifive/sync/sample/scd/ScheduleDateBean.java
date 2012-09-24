@@ -51,7 +51,7 @@ public class ScheduleDateBean {
      * この日付が設定された予定エンティティ.
      */
     @ManyToOne
-    private ScheduleBean schedule;
+    private Schedule schedule;
 
     /**
      * プライベートのデフォルトコンストラクタ. <br>
@@ -69,7 +69,7 @@ public class ScheduleDateBean {
      * @param date
      *            日付文字列
      */
-    public ScheduleDateBean(ScheduleBean schedule, String date) {
+    public ScheduleDateBean(Schedule schedule, String date) {
         this.schedule = schedule;
         this.scheduleDate = date;
     }
@@ -141,7 +141,7 @@ public class ScheduleDateBean {
     /**
      * @return schedule
      */
-    public ScheduleBean getSchedule() {
+    public Schedule getSchedule() {
         return schedule;
     }
 
@@ -149,7 +149,7 @@ public class ScheduleDateBean {
      * @param schedule
      *            セットする schedule
      */
-    public void setSchedule(ScheduleBean schedule) {
+    public void setSchedule(Schedule schedule) {
         this.schedule = schedule;
     }
 

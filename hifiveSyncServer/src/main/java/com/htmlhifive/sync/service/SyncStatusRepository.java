@@ -14,16 +14,17 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.status;
+package com.htmlhifive.sync.service;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
+
 /**
- * LastUploadStatusエンティティを永続化するためのリポジトリ. <br>
+ * 同期ステータスを永続化するためのリポジトリ. <br>
  * SpringFrameworkの標準的なリポジトリメソッドを継承します.
  *
  * @author kishigam
  */
-public interface LastUploadStatusRepository extends JpaRepository<LastUploadStatus, String> {
+public interface SyncStatusRepository extends JpaRepository<SyncStatus, String> {
 
 }

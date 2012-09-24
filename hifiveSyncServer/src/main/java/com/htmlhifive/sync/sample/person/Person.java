@@ -16,73 +16,64 @@
  */
 package com.htmlhifive.sync.sample.person;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * 人リソースが外部と受け渡しするリソースエレメントクラス.
+ * 人情報を保持するエンティティ.
  *
  * @author kishigam
  */
-public class PersonResourceElement {
+@Entity
+@Table(name = "PERSON")
+public class Person {
 
 	/**
-	 * ID.
+	 * このエンティティのID.<br>
 	 */
-	private String id;
+	@Id
+	private String personId;
 
 	/**
-	 * このエレメントが示す人の名前.
+	 * この人の名前.
 	 */
 	private String name;
 
 	/**
-	 * このエレメントが示す人の年齢.
+	 * この人の年齢.
 	 */
 	private int age;
 
 	/**
-	 * このエレメントが示す人の所属組織.
+	 * この人の所属組織
 	 */
 	private String organization;
 
 	/**
-	 * デフォルトコンストラクタ.<br>
-	 * アプリケーションからの使用は想定されないため、privateとする.
+	 * 人情報インスタンスを生成します.
 	 */
-	@SuppressWarnings("unused")
-	private PersonResourceElement() {
+	public Person() {
 	}
 
 	/**
-	 * IDを指定してエレメントを生成します.
-	 *
-	 * @param id エレメントデータを一意に識別するID
-	 */
-	public PersonResourceElement(String id) {
-		this.id = id;
-	}
-
-	/**
-	 * IDが等しいエンティティを同一とします.
-	 *
 	 * @see Object#equals(Object)
 	 */
 	@Override
 	public boolean equals(Object obj) {
 
-		if (obj == this) {
+		if (this == obj)
 			return true;
-		}
-
-		if (!(obj instanceof PersonResourceElement)) {
+		if (!(obj instanceof Person))
 			return false;
-		}
 
-		PersonResourceElement element = (PersonResourceElement) obj;
+		Person otherObj = (Person) obj;
 
-		return new EqualsBuilder().append(this.id, element.id).isEquals();
+		return EqualsBuilder.reflectionEquals(this, otherObj);
 	}
 
 	/**
@@ -91,7 +82,7 @@ public class PersonResourceElement {
 	@Override
 	public int hashCode() {
 
-		return new HashCodeBuilder(17, 37).append(this.id).hashCode();
+		return HashCodeBuilder.reflectionHashCode(this);
 	}
 
 	/**
@@ -104,20 +95,17 @@ public class PersonResourceElement {
 	}
 
 	/**
-	 * @return id
+	 * @return personId
 	 */
-	public String getId() {
-		return id;
+	public String getPersonId() {
+		return personId;
 	}
 
 	/**
-	 * アプリケーションからの使用は想定されないため、privateとする.
-	 *
-	 * @param id セットする id
+	 * @param personId セットする personId
 	 */
-	@SuppressWarnings("unused")
-	private void setId(String id) {
-		this.id = id;
+	public void setPersonId(String personId) {
+		this.personId = personId;
 	}
 
 	/**
@@ -161,4 +149,5 @@ public class PersonResourceElement {
 	public void setOrganization(String organization) {
 		this.organization = organization;
 	}
+
 }

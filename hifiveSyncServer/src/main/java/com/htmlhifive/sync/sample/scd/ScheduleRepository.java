@@ -24,5 +24,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
  *
  * @author kishigam
  * */
-public interface ScheduleRepository extends JpaRepository<ScheduleBean, String> {
+public interface ScheduleRepository extends JpaRepository<Schedule, String> {
 }

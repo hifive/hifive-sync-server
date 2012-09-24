@@ -16,7 +16,13 @@
  */
 package com.htmlhifive.sync.exception;
 
-import com.htmlhifive.sync.resource.SyncResponse;
+import java.util.List;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+import com.htmlhifive.sync.resource.SyncResultType;
+import com.htmlhifive.sync.service.ResourceItemsContainer;
 
 /**
  * 同期(上り更新)において競合が発生したことを示す例外.<br>
@@ -24,88 +30,109 @@ import com.htmlhifive.sync.resource.SyncResponse;
  *
  * @author kishigam
  */
-public class ConflictException extends Exception {
+@ResponseStatus(value = HttpStatus.CONFLICT, reason = "conflicted")
+public class ConflictException extends RuntimeException {
 
 	/**
 	 * シリアルバージョンUID.
 	 */
-	private static final long serialVersionUID = 4223423810625297238L;
+	private static final long serialVersionUID = 2402614340391069636L;
 
 	/**
-	 * 競合したリソースエレメントの内容を含む同期レスポンスオブジェクト.
+	 * 競合タイプ.
 	 */
-	private SyncResponse<?> response;
+	private SyncResultType conflictType;
 
 	/**
-	 * 競合対象のサーバ側リソースエレメントの内容を含んだ同期レスポンスオブジェクトを指定して、例外オブジェクトを生成します.
+	 * 競合データのリソースアイテムリスト
+	 */
+	private List<ResourceItemsContainer> resourceItems;
+
+	/**
+	 * 指定された情報をもとに例外オブジェクトを生成します.
 	 *
-	 * @param response 同期レスポンスオブジェクト
-	 * @see RuntimeException
+	 * @param conflictType 競合タイプ
+	 * @param resourceItems 競合したリソースアイテムリスト(コンテナ)
 	 */
-	public ConflictException(SyncResponse<?> response) {
+	public ConflictException(SyncResultType conflictType, List<ResourceItemsContainer> resourceItems) {
 		super();
-		this.response = response;
+		this.conflictType = conflictType;
+		this.resourceItems = resourceItems;
 	}
 
 	/**
-	 * 競合対象のサーバ側リソースエレメントの内容を含んだ同期レスポンスオブジェクトを指定して、例外オブジェクトを生成します.
+	 * 指定された情報をもとに例外オブジェクトを生成します.
 	 *
 	 * @param message
 	 * @param cause
 	 * @param enableSuppression
 	 * @param writableStackTrace
-	 * @param response 同期レスポンスオブジェクト
+	 * @param conflictType 競合タイプ
+	 * @param resourceItems 競合したリソースアイテムリスト(コンテナ)
 	 * @see RuntimeException
 	 */
 	public ConflictException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace,
-			SyncResponse<?> response) {
+			SyncResultType conflictType, List<ResourceItemsContainer> resourceItems) {
 		super(message, cause, enableSuppression, writableStackTrace);
-		this.response = response;
+		this.conflictType = conflictType;
+		this.resourceItems = resourceItems;
 	}
 
 	/**
-	 * 競合対象のサーバ側リソースエレメントの内容を含んだ同期レスポンスオブジェクトを指定して、例外オブジェクトを生成します.
+	 * 指定された情報をもとに例外オブジェクトを生成します.
 	 *
 	 * @param message
-	 * @param cause 原因となった例外.
-	 * @param response 同期レスポンスオブジェクト
+	 * @param cause
+	 * @param conflictType 競合タイプ
+	 * @param resourceItems 競合したリソースアイテムリスト(コンテナ)
 	 * @see RuntimeException
 	 */
-	public ConflictException(String message, Throwable cause, SyncResponse<?> response) {
+	public ConflictException(String message, Throwable cause, SyncResultType conflictType,
+			List<ResourceItemsContainer> resourceItems) {
 		super(message, cause);
-		this.response = response;
+		this.conflictType = conflictType;
+		this.resourceItems = resourceItems;
 	}
 
 	/**
-	 * 競合対象のサーバ側リソースエレメントの内容を含んだ同期レスポンスオブジェクトを指定して、例外オブジェクトを生成します.
+	 * 指定された情報をもとに例外オブジェクトを生成します.
 	 *
 	 * @param message
-	 * @param response 同期レスポンスオブジェクト
+	 * @param conflictType 競合タイプ
+	 * @param resourceItems 競合したリソースアイテムリスト(コンテナ)
 	 * @see RuntimeException
 	 */
-	public ConflictException(String message, SyncResponse<?> response) {
+	public ConflictException(String message, SyncResultType conflictType, List<ResourceItemsContainer> resourceItems) {
 		super(message);
-		this.response = response;
+		this.conflictType = conflictType;
+		this.resourceItems = resourceItems;
 	}
 
 	/**
-	 * 競合対象のサーバ側リソースエレメントの内容を含んだ同期レスポンスオブジェクトを指定して、例外オブジェクトを生成します.
+	 * 指定された情報をもとに例外オブジェクトを生成します.
 	 *
 	 * @param cause
-	 * @param response 同期レスポンスオブジェクト
+	 * @param conflictType 競合タイプ
+	 * @param resourceItems 競合したリソースアイテムリスト(コンテナ)
 	 * @see RuntimeException
 	 */
-	public ConflictException(Throwable cause, SyncResponse<?> response) {
+	public ConflictException(Throwable cause, SyncResultType conflictType, List<ResourceItemsContainer> resourceItems) {
 		super(cause);
-		this.response = response;
+		this.conflictType = conflictType;
+		this.resourceItems = resourceItems;
 	}
 
 	/**
-	 * この例外が保持する、競合対象のサーバ側リソースエレメントの内容を含む同期レスポンスオブジェクトを返します.
-	 *
-	 * @return 同期レスポンスオブジェクト
+	 * @return conflictType
 	 */
-	public SyncResponse<?> getConflictedResponse() {
-		return response;
+	public SyncResultType getConflictType() {
+		return conflictType;
+	}
+
+	/**
+	 * @return resourceItems
+	 */
+	public List<ResourceItemsContainer> getResourceItems() {
+		return resourceItems;
 	}
 }

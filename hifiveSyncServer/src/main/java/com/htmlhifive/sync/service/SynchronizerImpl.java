@@ -16,124 +16,202 @@
  */
 package com.htmlhifive.sync.service;
 
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import javax.annotation.Resource;
 
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.interceptor.TransactionAspectSupport;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.ConflictException;
-import com.htmlhifive.sync.exception.DuplicateElementException;
-import com.htmlhifive.sync.jsonctrl.JsonDataConvertor;
-import com.htmlhifive.sync.jsonctrl.download.DownloadRequestMessage;
-import com.htmlhifive.sync.jsonctrl.upload.UploadRequestMessage;
-import com.htmlhifive.sync.resource.SyncRequestHeader;
+import com.htmlhifive.sync.resource.ResourceItemWrapper;
+import com.htmlhifive.sync.resource.ResourceQuery;
 import com.htmlhifive.sync.resource.SyncResource;
 import com.htmlhifive.sync.resource.SyncResourceManager;
-import com.htmlhifive.sync.resource.SyncResponse;
+import com.htmlhifive.sync.resource.SyncResultType;
 
 /**
- * リソースに対する同期処理を実行するサービス実装. <br>
- * TODO: JSON形式の抽象化
+ * リソースの同期処理を実行するサービス実装.<br>
+ * このオブジェクトのパブリックメソッドがトランザクション境界です.
  *
  * @author kishigam
  */
-@Component
+@Transactional
+@Service
 public class SynchronizerImpl implements Synchronizer {
 
+	/**
+	 * リソースへのインターフェースを取得するためのマネージャ.
+	 */
 	@Resource
 	private SyncResourceManager resourceManager;
 
 	/**
+	 * 同期ステータスのリポジトリ.
+	 */
+	@Resource
+	private SyncStatusRepository repository;
+
+	/**
+	 * クライアントに返す今回の同期時刻を、実際の同期実行時刻の何ミリ秒前とするかを設定します.<br>
+	 * (現在の設定は60,000ミリ秒＝1分)
+	 */
+	private static final long BUFFER_TIME_FOR_DOWNLOAD = 1L * 60L * 1_000L;
+
+	/**
 	 * 下り更新を実行します.<br>
-	 * 前回同期時刻以降、messageで指定したリソースにおける更新データをGETします.
+	 * リソースごとに、指定されたクエリでリソースアイテムを検索、取得します.
 	 *
 	 * @param storageId クライアントのストレージID
-	 * @param requestMessages 下り更新のリクエストメッセージのリスト
-	 * @return 下り更新結果オブジェクト
+	 * @param queries クエリリスト
+	 * @return 下り更新結果を含む同期ステータスオブジェクト
 	 */
 	@Override
-	public SyncDownloadResult syncDownload(final String storageId,
-			final List<? extends DownloadRequestMessage> requestMessages) {
+	public SyncStatus download(String storageId, List<ResourceQueriesContainer> queries) {
 
-		// 同期結果オブジェクトを生成、同期実行時刻(＝リクエスト時刻)が設定される
-		SyncDownloadResult downloadResult = new SyncDownloadResult(storageId);
+		// クライアントごとの(前回)同期ステータスオブジェクトを取得
+		SyncStatus currentStatus = currentStatus(storageId);
 
-		// リクエストに含まれるMessageごとに処理
-		for (DownloadRequestMessage message : requestMessages) {
+		// 下り更新時刻の設定
+		currentStatus.setLastDownloadTime(generateDownloadTime());
 
-			// 同期リクエストヘッダ作成
-			SyncRequestHeader requestHeader = message.createHeader(storageId, downloadResult.getCurrentSyncTime());
+		// リソース名ごとに結果をコンテナに格納する
+		Map<String, ResourceItemsContainer> resultMap = new HashMap<>();
 
-			// synchronizerへリクエスト発行
-			SyncResource<?> resource = resourceManager.locateSyncResource(requestHeader.getDataModelName());
+		// クエリごとに処理し、結果をコンテナに格納
+		for (ResourceQueriesContainer queryContainer : queries) {
 
-			Set<? extends SyncResponse<?>> responseSet = resource.getModifiedSince(requestHeader);
+			String resourceName = queryContainer.getResourceName();
 
-			// 結果は他のリクエストのものとマージされる
-			downloadResult.addAllResultData(responseSet);
+			// Mapにリソース名ごとのコンテナが存在しない場合は生成
+			if (!resultMap.containsKey(resourceName)) {
+				resultMap.put(resourceName, new ResourceItemsContainer(resourceName));
+			}
+
+			ResourceItemsContainer resultContainer = resultMap.get(resourceName);
+			for (ResourceQuery query : queryContainer.getQueryList()) {
+
+				// synchronizerへリクエスト発行
+				SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
+				List<ResourceItemWrapper> resultItemList = resource.readByQuery(query);
+
+				// 結果をマージする(同じリソースアイテムは1件のみとなる)
+				resultContainer.mergeItem(resultItemList);
+			}
+
+			resultMap.put(resourceName, resultContainer);
 		}
+		currentStatus.setResourceItems(new ArrayList<>(resultMap.values()));
 
-		// OK
-		downloadResult.setResultType(SyncResultType.OK);
-		return downloadResult;
+		// 下り更新では同期ステータスを更新しない
+		return currentStatus;
+	}
+
+	/**
+	 * 下り更新時刻を決定します.<br>
+	 * 同時に行われている他のクライアントによる上り更新データを確実に含めるため、バッファ時間を考慮します.
+	 *
+	 * @return
+	 */
+	private long generateDownloadTime() {
+
+		return new Date().getTime() - BUFFER_TIME_FOR_DOWNLOAD;
 	}
 
 	/**
 	 * 上り更新を実行します.<br>
-	 * 対象のリソースを判断し、リソースエレメントの更新内容に応じてリクエストを発行します.
+	 * 対象のリソースを判断し、リソースアイテムの更新内容に応じた更新処理を呼び出します.
 	 *
 	 * @param storageId クライアントのストレージID
-	 * @param requestMessages 上り更新のリクエストメッセージのリスト
-	 * @return 上り更新結果オブジェクト
+	 * @param resourceItems リソースアイテムリスト
+	 * @param lastUploadTime クライアントごとの前回上り更新時刻
+	 * @return 上り更新結果を含む同期ステータスオブジェクト
 	 */
 	@Override
-	public SyncUploadResult syncUpload(String storageId, List<? extends UploadRequestMessage<?>> requestMessages) {
+	public SyncStatus upload(String storageId, List<ResourceItemsContainer> resourceItems, long lastUploadTime) {
 
-		SyncUploadResult result = new SyncUploadResult(storageId);
-		result.setResultType(SyncResultType.OK);
+		// クライアントごとの(前回)同期ステータスオブジェクトを取得
+		SyncStatus currentStatus = currentStatus(storageId);
 
-		for (UploadRequestMessage<?> requestMessage : requestMessages) {
+		// 二重送信判定
+		// サーバ側で管理されている前回上り更新時刻より前の場合、二重送信と判断し、現在の同期ステータスをそのまま返します.
+		if (currentStatus.isNewerStatusThanClient(lastUploadTime)) {
+			return currentStatus;
+		}
 
-			// ヘッダの生成
-			SyncRequestHeader requestHeader = requestMessage.createtHeader(storageId, result.getCurrentSyncTime());
+		// 上り更新時刻の設定
+		currentStatus.setLastUploadTime(generateUploadTime());
 
-			try {
-				SyncResource<?> resource = resourceManager.locateSyncResource(requestHeader.getDataModelName());
-				SyncResponse<?> response = doSyncUpload(resource, requestHeader, requestMessage.getElement());
+		// リソース名ごとに結果をコンテナに格納する
+		Map<String, ResourceItemsContainer> resultMap = new HashMap<>();
 
-				// 一度CONFLICTEDになったらOKになることはなく、OKの結果データは不要
-				// 他のCONFLICTED更新を検知するためメッセージの処理は継続
-				if (result.getResultType() == SyncResultType.OK) {
-					result.addResultData(response);
+		// リソースごとに処理(1リソースが複数回出現する可能性もある)
+		for (ResourceItemsContainer uploadingItemContainer : resourceItems) {
+
+			String resourceName = uploadingItemContainer.getResourceName();
+
+			// アイテムごとに処理
+			for (ResourceItemWrapper uploadingItem : uploadingItemContainer.getItemsList()) {
+
+				// 更新時刻を各リソースアイテムに設定
+				uploadingItem.setLastModified(currentStatus.getLastUploadTime());
+
+				SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
+
+				ResourceItemWrapper itemWrapper = doSyncUpload(resource, uploadingItem);
+
+				// 競合でない場合のアイテムは使用しない
+				if (itemWrapper.getResultType() == SyncResultType.OK) {
+					continue;
 				}
 
-			} catch (ConflictException e) {
+				// Mapにリソース名ごとのコンテナが存在しない場合は生成
+				if (!resultMap.containsKey(resourceName)) {
 
-				// 全てのリクエスト処理結果をロールバックする
-				// (ここで例外を止めてしまうため、Transactionalアノテーションの"rollbackFor"が効かない？)
-				TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+					ResourceItemsContainer container = new ResourceItemsContainer(resourceName);
+					container.setItemsLIst(new ArrayList<ResourceItemWrapper>());
 
-				// 最初のCONFLICTED(UPDATED)のときにOKデータを除去する
-				if (result.getResultType() == SyncResultType.OK) {
-					result.clearResultSet();
+					resultMap.put(resourceName, container);
 				}
 
-				result.addResultData(e.getConflictedResponse());
+				ResourceItemsContainer resultContainer = resultMap.get(resource);
 
-				// CREATEのキー重複が発生した場合は以降のメッセージ処理は行わず、中断
-				if (e.getCause() instanceof DuplicateElementException) {
-					result.setResultType(SyncResultType.DUPLICATEDID);
-					break;
+				// 競合しているアイテムをItemMapにマージ(同じリソースアイテムは1件のみとなる)
+				resultContainer.mergeItem(itemWrapper);
+				resultMap.put(resourceName, resultContainer);
+
+				// 競合タイプを判断し、ConflictExceptionのスローまたは続行
+				if (itemWrapper.getResultType() == SyncResultType.DUPLICATEDID) {
+					throwConflictException(SyncResultType.DUPLICATEDID, resultMap);
+				} else {
+					currentStatus.setResultType(SyncResultType.UPDATED);
 				}
-				result.setResultType(SyncResultType.UPDATED);
 			}
 		}
 
-		return result;
+		if (currentStatus.getResultType() == SyncResultType.UPDATED) {
+			throwConflictException(SyncResultType.UPDATED, resultMap);
+		}
+
+		repository.save(currentStatus);
+
+		return currentStatus;
+	}
+
+	/**
+	 * 上り更新時刻を決定します.<br>
+	 * 現在時刻を使用します.
+	 *
+	 * @return
+	 */
+	private long generateUploadTime() {
+
+		return new Date().getTime();
 	}
 
 	/**
@@ -141,25 +219,54 @@ public class SynchronizerImpl implements Synchronizer {
 	 * エレメント型を固定することで、JSONからの型変換を行ったエレメントをリソースに渡すことができます.
 	 *
 	 * @param resource リソース
-	 * @param requestHeader 上り更新リクエストヘッダ
-	 * @param elementObj エレメント(DELETEのとき等、存在しない場合null)
-	 * @return 同期レスポンスオブジェクト
+	 * @param itemWrapper 更新するリソースアイテム
+	 * @return 更新後のリソースアイテム
 	 */
-	private <E> SyncResponse<E> doSyncUpload(SyncResource<E> resource, SyncRequestHeader requestHeader,
-			Object elementObj) throws ConflictException {
+	private ResourceItemWrapper doSyncUpload(SyncResource<?> resource, ResourceItemWrapper itemWrapper)
+			throws ConflictException {
 
-		switch (requestHeader.getSyncMethod()) {
-			case POST:
-				return resource.post(requestHeader,
-						JsonDataConvertor.convertJSONToElement(elementObj, resource.getElementType()));
-			case PUT:
-				return resource.put(requestHeader,
-						JsonDataConvertor.convertJSONToElement(elementObj, resource.getElementType()));
+		switch (itemWrapper.getAction()) {
+			case CREATE:
+				return resource.create(itemWrapper);
+			case UPDATE:
+				return resource.update(itemWrapper);
 			case DELETE:
-				return resource.delete(requestHeader);
+				return resource.delete(itemWrapper);
 			default:
 				throw new BadRequestException("undefined action has called.");
 		}
 
+	}
+
+	/**
+	 * 競合したリソースアイテムのリストを生成し、競合発生時の例外をスローします.
+	 *
+	 * @param conflictType 競合タイプ
+	 * @param conflictItemMap 競合したリソースアイテムの情報を保持しているMap
+	 */
+	private void throwConflictException(SyncResultType conflictType, Map<String, ResourceItemsContainer> conflictItemMap) {
+
+		List<ResourceItemsContainer> containerList = new ArrayList<>();
+		for (String resourceName : conflictItemMap.keySet()) {
+
+			containerList.add(conflictItemMap.get(resourceName));
+		}
+		throw new ConflictException(conflictType, containerList);
+	}
+
+	/**
+	 * リポジトリを検索し、前回の同期ステータスを取得します.<br>
+	 * 存在しない場合は新規生成します.
+	 *
+	 * @param storageId クライアントのストレージID
+	 * @return 同期ステータスオブジェクト
+	 */
+	private SyncStatus currentStatus(String storageId) {
+
+		SyncStatus status = repository.findOne(storageId);
+		if (status == null) {
+			status = new SyncStatus(storageId);
+		}
+		return status;
 	}
 }
