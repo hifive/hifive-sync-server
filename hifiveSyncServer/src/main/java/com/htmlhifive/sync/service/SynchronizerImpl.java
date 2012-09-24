@@ -36,8 +36,8 @@ import com.htmlhifive.sync.resource.SyncResourceManager;
 import com.htmlhifive.sync.resource.SyncResultType;
 
 /**
- * リソースの同期処理を実行するサービス実装.<br>
- * このオブジェクトのパブリックメソッドがトランザクション境界です.
+ * リソースの同期処理を実行するデフォルトサービス実装.<br>
+ * このオブジェクトのパブリックメソッドがトランザクション境界になります.
  *
  * @author kishigam
  */
