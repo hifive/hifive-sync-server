@@ -30,12 +30,12 @@ import org.springframework.data.repository.query.Param;
 public interface CommonDataRepository extends JpaRepository<CommonData, CommonDataId> {
 
 	/**
-	 * データモデル名が合致し、ある時刻以降に更新されたリソースの共通データを返します.<br>
+	 * リソース名が合致し、ある時刻以降に更新されたリソースの共通データを返します.<br>
 	 *
-	 * @param dataModelName データモデル名
+	 * @param resourceName リソース名
 	 * @param since データを検索する時刻(指定時刻以降の更新データを検索)
 	 * @return 検索した共通データエンティティのList
 	 */
-	@Query("SELECT d FROM CommonData d WHERE d.resourceName = :resourceName AND d.lastModified > :since AND d.syncAction <> DELETE")
+	@Query("SELECT d FROM CommonData d WHERE d.id.resourceName = :resourceName AND d.lastModified > :since AND d.action <> 'DELETE'")
 	List<CommonData> findModified(@Param("resourceName") String resourceName, @Param("since") long since);
 }
