@@ -157,7 +157,8 @@ public class SynchronizerImpl implements Synchronizer {
 		for (ResourceItemWrapper uploadingItemWrapper : resourceItems) {
 
 			// 更新時刻を設定
-			uploadingItemWrapper.setLastModified(currentStatus.getLastUploadTime());
+			// TODO:lastModifiedフィールドを使用してはいけない
+			uploadingItemWrapper.setUploadTime(currentStatus.getLastUploadTime());
 
 			SyncResource<?> resource = resourceManager.locateSyncResource(uploadingItemWrapper.getResourceName());
 

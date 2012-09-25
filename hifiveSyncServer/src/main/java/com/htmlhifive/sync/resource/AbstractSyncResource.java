@@ -240,48 +240,6 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	}
 
 	/**
-	 * リソースに対応する共通データを更新し、保存します.<br>
-	 * ロックは開放されます.
-	 *
-	 * @param requestHeader リソースへのリクエストヘッダ
-	 * @return リソースからのレスポンスヘッダ
-	 */
-	private CommonData saveUpdatedCommonData(ResourceItemWrapper itemWrapper) {
-
-		CommonData updatingCommon = currentCommonData(itemWrapper.getResourceItemId());
-
-		updatingCommon.modifiy(itemWrapper);
-
-		repository.save(updatingCommon);
-
-		return updatingCommon;
-	}
-
-	/**
-	 * 新規リソースに対応する共通データを生成し、保存します.
-	 *
-	 * @param itemWrapper リソースアイテムのラッパーオブジェクト
-	 * @param targetItemId 各リソースアイテムのID
-	 * @return 保存された共通データ
-	 */
-	private CommonData saveNewCommonData(ResourceItemWrapper itemWrapper, String targetItemId) {
-
-		CommonData newCommon = new CommonData(new CommonDataId(getResourceName(), itemWrapper.getResourceItemId()),
-				targetItemId);
-		newCommon.setAction(SyncAction.CREATE);
-		newCommon.setLastModified(itemWrapper.getLastModified());
-
-		if (repository.exists(newCommon.getId())) {
-
-			EntityExistsException cause = new EntityExistsException("duplicated common data : id = "
-					+ newCommon.getId());
-			throw new BadRequestException("inconsistent data exists", cause);
-		}
-
-		return repository.save(newCommon);
-	}
-
-	/**
 	 * 単一データreadメソッドのリソース別独自処理を行う抽象メソッド.<br>
 	 * サブクラスでは与えられたIDが示すリソースアイテムを返すようにこのメソッドを実装します.
 	 *
@@ -401,13 +359,54 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @throws NotFoundException IDからエンティティが取得できなかったとき
 	 */
 	private CommonData currentCommonData(String resourceItemId) {
-
+	
 		CommonData common = repository.findOne(new CommonDataId(getResourceName(), resourceItemId));
-
+	
 		if (common == null) {
 			throw new NotFoundException("entity not found");
 		}
 		return common;
+	}
+
+	/**
+	 * 新規リソースに対応する共通データを生成し、保存します.
+	 *
+	 * @param itemWrapper リソースアイテムのラッパーオブジェクト
+	 * @param targetItemId 各リソースアイテムのID
+	 * @return 保存された共通データ
+	 */
+	private CommonData saveNewCommonData(ResourceItemWrapper itemWrapper, String targetItemId) {
+	
+		CommonData newCommon = new CommonData(new CommonDataId(getResourceName(), itemWrapper.getResourceItemId()),
+				targetItemId);
+		newCommon.modifiy(itemWrapper);
+	
+		if (repository.exists(newCommon.getId())) {
+	
+			EntityExistsException cause = new EntityExistsException("duplicated common data : id = "
+					+ newCommon.getId());
+			throw new BadRequestException("inconsistent data exists", cause);
+		}
+	
+		return repository.save(newCommon);
+	}
+
+	/**
+	 * リソースに対応する共通データを更新し、保存します.<br>
+	 * ロックは開放されます.
+	 *
+	 * @param requestHeader リソースへのリクエストヘッダ
+	 * @return リソースからのレスポンスヘッダ
+	 */
+	private CommonData saveUpdatedCommonData(ResourceItemWrapper itemWrapper) {
+	
+		CommonData updatingCommon = currentCommonData(itemWrapper.getResourceItemId());
+	
+		updatingCommon.modifiy(itemWrapper);
+	
+		repository.save(updatingCommon);
+	
+		return updatingCommon;
 	}
 
 	/**

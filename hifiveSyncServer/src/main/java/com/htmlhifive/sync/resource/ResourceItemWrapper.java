@@ -56,10 +56,15 @@ public class ResourceItemWrapper {
 	private Object item;
 
 	/**
-	 * リソースアイテムの同期結果.<br>
-	 * OKを初期値とする.
+	 * このデータの更新時刻に使用される値. サーバ内でのみ管理するデータのため、getterメソッドに{@link @JsonIgnore}が設定されています.<br>
 	 */
-	private SyncResultType resultType = SyncResultType.OK;
+	private long uploadTime;
+
+	/**
+	 * リソースアイテムの同期結果.<br>
+	 * サーバ内でのみ管理するデータのため、getterメソッドに{@link @JsonIgnore}が設定されています.<br>
+	 */
+	private SyncResultType resultType;
 
 	/**
 	 * IDを指定してリソースアイテムを生成します.
@@ -133,6 +138,23 @@ public class ResourceItemWrapper {
 	 */
 	public void setItem(Object item) {
 		this.item = item;
+	}
+
+	/**
+	 * サーバ内でのみ管理するデータのため、{@link @JsonIgnore}を設定しています.<br>
+	 *
+	 * @return uploadTime
+	 */
+	@JsonIgnore
+	public long getUploadTime() {
+		return uploadTime;
+	}
+
+	/**
+	 * @param uploadTime セットする uploadTime
+	 */
+	public void setUploadTime(long uploadTime) {
+		this.uploadTime = uploadTime;
 	}
 
 	/**
