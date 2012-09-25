@@ -14,13 +14,12 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.jsonctrl;
+package com.htmlhifive.sync.resource;
 
 import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import com.htmlhifive.sync.exception.BadRequestException;
-import com.htmlhifive.sync.resource.ResourceItemConvertor;
 
 /**
  * JSON形式のデータをリソースアイテムの型に変換するコンバータ実装.

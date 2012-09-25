@@ -32,7 +32,6 @@ import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.ItemUpdatedException;
 import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.exception.SyncException;
-import com.htmlhifive.sync.jsonctrl.JsonResourceItemConvertor;
 
 /**
  * リソースの抽象実装クラス.<br>
