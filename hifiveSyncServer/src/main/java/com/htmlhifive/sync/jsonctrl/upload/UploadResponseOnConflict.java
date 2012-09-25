@@ -33,7 +33,7 @@ import com.htmlhifive.sync.resource.SyncResultType;
  *
  * @author kishigam
  */
-public class UploadResponseOnConflict extends UploadResponse {
+public class UploadResponseOnConflict {
 
 	/**
 	 * 競合タイプ.

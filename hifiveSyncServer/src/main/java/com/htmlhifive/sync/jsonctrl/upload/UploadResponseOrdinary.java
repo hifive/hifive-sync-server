@@ -27,7 +27,7 @@ import com.htmlhifive.sync.service.SyncStatus;
  *
  * @author kishigam
  */
-public class UploadResponseOrdinary extends UploadResponse {
+public class UploadResponseOrdinary {
 
 	/**
 	 * 上り更新処理を実行した時刻.
