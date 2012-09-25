@@ -8,9 +8,7 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import mockit.Expectations;
 
@@ -35,18 +33,18 @@ public class SyncResourceManagerTest {
 	/**
 	 * コンストラクタ以外のテストに使用するターゲットクラスインスタンス.
 	 */
-	private final SyncResourceManager target = new SyncResourceManager();
+	private final SyncResourceManager target = new SyncResourceManagerImpl();
 
 	/**
 	 * typeテストメソッド.
 	 */
 	@Test
 	public void testType() {
-		assertThat(SyncResourceManager.class, notNullValue());
+		assertThat(SyncResourceManagerImpl.class, notNullValue());
 	}
 
 	/**
-	 * {@link SyncResourceManager#locateSyncResource()}用テストメソッド.
+	 * {@link SyncResourceManagerImpl#locateSyncResource()}用テストメソッド.
 	 */
 	@Test
 	public void testLocateSyncResource() {
@@ -104,7 +102,7 @@ public class SyncResourceManagerTest {
 	}
 
 	/**
-	 * {@link SyncResourceManager#locateSyncResource()}用テストメソッド.<br>
+	 * {@link SyncResourceManagerImpl#locateSyncResource()}用テストメソッド.<br>
 	 * データモデルに対するリソースが見つからない場合nullを返す.
 	 */
 	@Test
@@ -131,7 +129,7 @@ public class SyncResourceManagerTest {
 	}
 
 	/**
-	 * {@link SyncResourceManager#locateSyncResource()}用テストメソッド.<br>
+	 * {@link SyncResourceManagerImpl#locateSyncResource()}用テストメソッド.<br>
 	 * nullが与えられた場合nullを返す.
 	 */
 	public void testCannotLocateSyncResourceBecauseNullInput() {
@@ -141,37 +139,5 @@ public class SyncResourceManagerTest {
 
 		// Assert：結果が正しいこと
 		assertThat(actual, nullValue());
-	}
-
-	/**
-	 * {@link SyncResourceManager#getAllDataModelNames()}用テストメソッド.
-	 */
-	@Test
-	public void testGetAllDataModelNames() {
-
-		// Arrange：正常系
-		@SuppressWarnings("serial")
-		final Set<String> expected = new HashSet<String>() {
-			{
-				add("dataModel1");
-				add("dataModel2");
-			}
-		};
-
-		new Expectations() {
-			Map<String, Class<? extends SyncResource<?>>> resourceMap;
-			{
-				setField(target, "resourceMap", resourceMap);
-
-				resourceMap.keySet();
-				result = expected;
-			}
-		};
-
-		// Act
-		Set<String> actual = target.getAllDataModelNames();
-
-		// Assert：結果が正しいこと
-		assertThat(actual, is(expected));
 	}
 }
