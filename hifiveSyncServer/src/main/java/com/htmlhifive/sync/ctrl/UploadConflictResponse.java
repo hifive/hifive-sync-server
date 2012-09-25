@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.jsonctrl.upload;
+package com.htmlhifive.sync.ctrl;
 
 import java.util.List;
 import java.util.Map;
@@ -33,7 +33,7 @@ import com.htmlhifive.sync.resource.SyncResultType;
  *
  * @author kishigam
  */
-public class UploadResponseOnConflict {
+public class UploadConflictResponse {
 
 	/**
 	 * 競合タイプ.
@@ -51,7 +51,7 @@ public class UploadResponseOnConflict {
 	 *
 	 * @param e ConflictExceptionインスタンス
 	 */
-	public UploadResponseOnConflict(ConflictException e) {
+	public UploadConflictResponse(ConflictException e) {
 
 		this.conflictType = e.getConflictType();
 		this.resourceItems = e.getResourceItems();
@@ -66,10 +66,10 @@ public class UploadResponseOnConflict {
 		if (this == obj)
 			return true;
 
-		if (!(obj instanceof UploadResponseOnConflict))
+		if (!(obj instanceof UploadConflictResponse))
 			return false;
 
-		UploadResponseOnConflict req = (UploadResponseOnConflict) obj;
+		UploadConflictResponse req = (UploadConflictResponse) obj;
 
 		return new EqualsBuilder().append(this.conflictType, req.conflictType)
 				.append(this.resourceItems, req.resourceItems).isEquals();

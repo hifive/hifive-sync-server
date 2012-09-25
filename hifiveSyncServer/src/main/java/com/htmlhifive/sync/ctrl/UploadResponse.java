@@ -14,29 +14,35 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.jsonctrl.download;
-
-import java.util.List;
-import java.util.Map;
+package com.htmlhifive.sync.ctrl;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.htmlhifive.sync.resource.ResourceQuery;
+import com.htmlhifive.sync.service.SyncStatus;
 
 /**
- * JSON形式の下り更新リクエスト内容全体を表現するデータクラス.
+ * クライアントからの上り更新リクエストに対する正常終了時のレスポンスデータ.
  *
  * @author kishigam
  */
-public class DownloadRequest {
+public class UploadResponse {
 
 	/**
-	 * 下り更新対象を表すクエリリストのMap.<br>
-	 * リソース別にクエリリストを保持します.
+	 * 上り更新処理を実行した時刻.
 	 */
-	private Map<String, List<ResourceQuery>> queries;
+	private long lastUploadTime;
+
+	/**
+	 * 同期ステータスオブジェクトから上り更新レスポンスを生成します.
+	 *
+	 * @param statusAfterDownload 同期ステータスオブジェクト
+	 */
+	public UploadResponse(SyncStatus statusAfterDownload) {
+
+		this.lastUploadTime = statusAfterDownload.getLastUploadTime();
+	}
 
 	/**
 	 * @see Object#equals(Object)
@@ -46,12 +52,13 @@ public class DownloadRequest {
 
 		if (this == obj)
 			return true;
-		if (!(obj instanceof DownloadRequest))
+
+		if (!(obj instanceof UploadResponse))
 			return false;
 
-		DownloadRequest request = (DownloadRequest) obj;
+		UploadResponse req = (UploadResponse) obj;
 
-		return new EqualsBuilder().append(this.queries, request.queries).isEquals();
+		return new EqualsBuilder().append(this.lastUploadTime, req.lastUploadTime).isEquals();
 	}
 
 	/**
@@ -60,7 +67,7 @@ public class DownloadRequest {
 	@Override
 	public int hashCode() {
 
-		return new HashCodeBuilder(17, 37).append(this.queries).hashCode();
+		return new HashCodeBuilder(17, 37).append(this.lastUploadTime).hashCode();
 	}
 
 	/**
@@ -73,16 +80,16 @@ public class DownloadRequest {
 	}
 
 	/**
-	 * @return queries
+	 * @return lastUploadTime
 	 */
-	public Map<String, List<ResourceQuery>> getQueries() {
-		return queries;
+	public long getLastUploadTime() {
+		return lastUploadTime;
 	}
 
 	/**
-	 * @param queries セットする queries
+	 * @param lastUploadTime セットする lastUploadTime
 	 */
-	public void setQueries(Map<String, List<ResourceQuery>> queries) {
-		this.queries = queries;
+	public void setLastUploadTime(long lastUploadTime) {
+		this.lastUploadTime = lastUploadTime;
 	}
 }

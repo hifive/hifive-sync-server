@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.jsonctrl;
+package com.htmlhifive.sync.ctrl;
 
 import java.util.UUID;
 
@@ -30,11 +30,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.htmlhifive.sync.exception.ConflictException;
-import com.htmlhifive.sync.jsonctrl.download.DownloadRequest;
-import com.htmlhifive.sync.jsonctrl.download.DownloadResponse;
-import com.htmlhifive.sync.jsonctrl.upload.UploadRequest;
-import com.htmlhifive.sync.jsonctrl.upload.UploadResponseOnConflict;
-import com.htmlhifive.sync.jsonctrl.upload.UploadResponseOrdinary;
 import com.htmlhifive.sync.service.SyncStatus;
 import com.htmlhifive.sync.service.Synchronizer;
 
@@ -118,12 +113,12 @@ public class JsonSyncController {
 					request.getResourceItems());
 
 			// レスポンスデータを生成し、リターン
-			return createResponseEntity(new UploadResponseOrdinary(statusAfterUpload), HttpStatus.OK);
+			return createResponseEntity(new UploadResponse(statusAfterUpload), HttpStatus.OK);
 
 		} catch (ConflictException e) {
 
 			// 競合時用のレスポンスデータを生成し、リターン
-			UploadResponseOnConflict responseBodyOnConflict = new UploadResponseOnConflict(e);
+			UploadConflictResponse responseBodyOnConflict = new UploadConflictResponse(e);
 
 			return createResponseEntity(responseBodyOnConflict, HttpStatus.CONFLICT);
 		}

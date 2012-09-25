@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.jsonctrl.download;
+package com.htmlhifive.sync.ctrl;
 
 import java.util.List;
 import java.util.Map;
