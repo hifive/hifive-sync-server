@@ -164,7 +164,7 @@ public class SynchronizerImpl implements Synchronizer {
 
 				SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
 
-				ResourceItemWrapper itemWrapper = doSyncUpload(resource, uploadingItem);
+				ResourceItemWrapper itemWrapper = doUpload(resource, uploadingItem);
 
 				// 競合でない場合のアイテムは使用しない
 				if (itemWrapper.getResultType() == SyncResultType.OK) {
@@ -220,7 +220,7 @@ public class SynchronizerImpl implements Synchronizer {
 	 * @param itemWrapper 更新するリソースアイテム
 	 * @return 更新後のリソースアイテム
 	 */
-	private ResourceItemWrapper doSyncUpload(SyncResource<?> resource, ResourceItemWrapper itemWrapper)
+	private ResourceItemWrapper doUpload(SyncResource<?> resource, ResourceItemWrapper itemWrapper)
 			throws ConflictException {
 
 		switch (itemWrapper.getAction()) {
