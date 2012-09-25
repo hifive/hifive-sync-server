@@ -55,7 +55,7 @@ public class JsonSyncController {
 	 */
 	@RequestMapping(value = "/download", method = RequestMethod.POST, params = {}, headers = {
 			"Accept=application/json", "Content-Type=application/json" })
-	public ResponseEntity<DownloadResponse> syncInit(final @RequestBody DownloadRequest request) {
+	public ResponseEntity<DownloadResponse> initialDownload(final @RequestBody DownloadRequest request) {
 
 		// ストレージIDを新規採番し、下り更新サービスを呼び出し
 		SyncStatus statusAfterDownload = synchronizer.download(generateNewStorageId(), request.getQueries());
@@ -74,7 +74,7 @@ public class JsonSyncController {
 	 */
 	@RequestMapping(value = "/download", method = RequestMethod.POST, params = { "storageid" }, headers = {
 			"Accept=application/json", "Content-Type=application/json" })
-	public ResponseEntity<DownloadResponse> syncDownload(final @RequestParam("storageid") String storageId,
+	public ResponseEntity<DownloadResponse> download(final @RequestParam("storageid") String storageId,
 			final @RequestBody DownloadRequest request) {
 
 		// ストレージIDを渡し、下り更新サービスを呼び出し
@@ -104,7 +104,7 @@ public class JsonSyncController {
 	 */
 	@RequestMapping(value = "/upload", method = RequestMethod.POST, params = { "storageid" }, headers = {
 			"Accept=application/json", "Content-Type=application/json" })
-	public ResponseEntity<?> syncUpload(final @RequestParam("storageid") String storageId,
+	public ResponseEntity<?> upload(final @RequestParam("storageid") String storageId,
 			final @RequestBody UploadRequest request) {
 
 		try {
