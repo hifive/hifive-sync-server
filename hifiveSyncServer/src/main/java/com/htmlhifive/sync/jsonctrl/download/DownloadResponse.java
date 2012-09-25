@@ -39,7 +39,8 @@ public abstract class DownloadResponse {
 	private long lastDownloadTime;
 
 	/**
-	 * 下り更新結果のリソースアイテムリスト. リソース別にリストを保持します.
+	 * 下り更新結果のリソースアイテムリスト. <br>
+	 * リソース別にリストを保持します.
 	 */
 	private Map<String, List<ResourceItemWrapper>> resourceItems;
 
@@ -47,9 +48,11 @@ public abstract class DownloadResponse {
 	 * 下り更新レスポンスを生成します.
 	 *
 	 * @param lastDownloadTime 同期時刻
+	 * @param resourceItems リソースアイテムリスト(リソース別Map)
 	 */
-	public DownloadResponse(long lastDownloadTime) {
+	public DownloadResponse(long lastDownloadTime, Map<String, List<ResourceItemWrapper>> resourceItems) {
 		this.lastDownloadTime = lastDownloadTime;
+		this.resourceItems = resourceItems;
 	}
 
 	/**

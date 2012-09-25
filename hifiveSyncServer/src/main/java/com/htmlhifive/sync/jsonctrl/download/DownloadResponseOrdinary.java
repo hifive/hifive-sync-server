@@ -32,6 +32,6 @@ public class DownloadResponseOrdinary extends DownloadResponse {
 	 */
 	public DownloadResponseOrdinary(SyncStatus statusAfterDownload) {
 
-		super(statusAfterDownload.getLastDownloadTime());
+		super(statusAfterDownload.getLastDownloadTime(), statusAfterDownload.getResourceItems());
 	}
 }

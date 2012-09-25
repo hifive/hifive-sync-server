@@ -34,7 +34,7 @@ public class DownloadResponseOnInit extends DownloadResponse {
 	 */
 	public DownloadResponseOnInit(SyncStatus statusAfterDownload) {
 
-		super(statusAfterDownload.getLastDownloadTime());
+		super(statusAfterDownload.getLastDownloadTime(), statusAfterDownload.getResourceItems());
 		this.storageId = statusAfterDownload.getStorageId();
 	}
 
