@@ -17,6 +17,9 @@
 package com.htmlhifive.sync.service;
 
 import java.util.List;
+import java.util.Map;
+
+import com.htmlhifive.sync.resource.ResourceQuery;
 
 /**
  * リソースの同期処理を実行するサービスインタフェース.
@@ -30,10 +33,10 @@ public interface Synchronizer {
 	 * リソースごとに、指定されたクエリでリソースアイテムを検索、取得します.
 	 *
 	 * @param storageId クライアントのストレージID
-	 * @param queries クエリリスト
+	 * @param queries クエリリスト(リソース別Map)
 	 * @return 下り更新結果を含む同期ステータスオブジェクト
 	 */
-	public SyncStatus download(String storageId, List<ResourceQueriesContainer> queries);
+	public SyncStatus download(String storageId, Map<String, List<ResourceQuery>> queries);
 
 	/**
 	 * 上り更新を実行します.<br>

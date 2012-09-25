@@ -17,12 +17,13 @@
 package com.htmlhifive.sync.jsonctrl.download;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.htmlhifive.sync.service.ResourceQueriesContainer;
+import com.htmlhifive.sync.resource.ResourceQuery;
 
 /**
  * JSON形式の下り更新リクエスト内容全体を表現するデータクラス.
@@ -35,7 +36,7 @@ public class DownloadRequest {
 	 * 下り更新対象を表すクエリリストのMap.<br>
 	 * リソース別にクエリリストを保持します.
 	 */
-	private List<ResourceQueriesContainer> queries;
+	private Map<String, List<ResourceQuery>> queries;
 
 	/**
 	 * @see Object#equals(Object)
@@ -74,14 +75,14 @@ public class DownloadRequest {
 	/**
 	 * @return queries
 	 */
-	public List<ResourceQueriesContainer> getQueries() {
+	public Map<String, List<ResourceQuery>> getQueries() {
 		return queries;
 	}
 
 	/**
 	 * @param queries セットする queries
 	 */
-	public void setQueries(List<ResourceQueriesContainer> queries) {
+	public void setQueries(Map<String, List<ResourceQuery>> queries) {
 		this.queries = queries;
 	}
 }

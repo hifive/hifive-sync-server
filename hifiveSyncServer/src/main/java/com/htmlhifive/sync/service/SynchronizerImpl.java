@@ -68,11 +68,11 @@ public class SynchronizerImpl implements Synchronizer {
 	 * リソースごとに、指定されたクエリでリソースアイテムを検索、取得します.
 	 *
 	 * @param storageId クライアントのストレージID
-	 * @param queries クエリリスト
+	 * @param queries クエリリスト(リソース別Map)
 	 * @return 下り更新結果を含む同期ステータスオブジェクト
 	 */
 	@Override
-	public SyncStatus download(String storageId, List<ResourceQueriesContainer> queries) {
+	public SyncStatus download(String storageId, Map<String, List<ResourceQuery>> queries) {
 
 		// クライアントごとの(前回)同期ステータスオブジェクトを取得
 		SyncStatus currentStatus = currentStatus(storageId);
@@ -84,17 +84,15 @@ public class SynchronizerImpl implements Synchronizer {
 		Map<String, ResourceItemsContainer> resultMap = new HashMap<>();
 
 		// クエリごとに処理し、結果をコンテナに格納
-		for (ResourceQueriesContainer queryContainer : queries) {
-
-			String resourceName = queryContainer.getResourceName();
+		for (String resourceName : queries.keySet()) {
 
 			// Mapにリソース名ごとのコンテナが存在しない場合は生成
 			if (!resultMap.containsKey(resourceName)) {
 				resultMap.put(resourceName, new ResourceItemsContainer(resourceName));
 			}
-
 			ResourceItemsContainer resultContainer = resultMap.get(resourceName);
-			for (ResourceQuery query : queryContainer.getQueryList()) {
+
+			for (ResourceQuery query : queries.get(resourceName)) {
 
 				// synchronizerへリクエスト発行
 				SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
