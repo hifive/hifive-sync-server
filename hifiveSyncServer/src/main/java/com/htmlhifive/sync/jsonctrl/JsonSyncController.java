@@ -31,8 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.jsonctrl.download.DownloadRequest;
-import com.htmlhifive.sync.jsonctrl.download.DownloadResponseOnInit;
-import com.htmlhifive.sync.jsonctrl.download.DownloadResponseOrdinary;
+import com.htmlhifive.sync.jsonctrl.download.DownloadResponse;
 import com.htmlhifive.sync.jsonctrl.upload.UploadRequest;
 import com.htmlhifive.sync.jsonctrl.upload.UploadResponseOnConflict;
 import com.htmlhifive.sync.jsonctrl.upload.UploadResponseOrdinary;
@@ -61,13 +60,14 @@ public class JsonSyncController {
 	 */
 	@RequestMapping(value = "/download", method = RequestMethod.POST, params = {}, headers = {
 			"Accept=application/json", "Content-Type=application/json" })
-	public ResponseEntity<DownloadResponseOnInit> syncInit(final @RequestBody DownloadRequest request) {
+	public ResponseEntity<DownloadResponse> syncInit(final @RequestBody DownloadRequest request) {
 
 		// ストレージIDを新規採番し、下り更新サービスを呼び出し
 		SyncStatus statusAfterDownload = synchronizer.download(generateNewStorageId(), request.getQueries());
 
 		// レスポンスデータ(初回用)を生成、HTTPレスポンスをリターン
-		return createResponseEntity(new DownloadResponseOnInit(statusAfterDownload), HttpStatus.OK);
+		return createResponseEntity(new DownloadResponse(statusAfterDownload.getStorageId(), statusAfterDownload),
+				HttpStatus.OK);
 	}
 
 	/**
@@ -79,14 +79,14 @@ public class JsonSyncController {
 	 */
 	@RequestMapping(value = "/download", method = RequestMethod.POST, params = { "storageid" }, headers = {
 			"Accept=application/json", "Content-Type=application/json" })
-	public ResponseEntity<DownloadResponseOrdinary> syncDownload(final @RequestParam("storageid") String storageId,
+	public ResponseEntity<DownloadResponse> syncDownload(final @RequestParam("storageid") String storageId,
 			final @RequestBody DownloadRequest request) {
 
 		// ストレージIDを渡し、下り更新サービスを呼び出し
 		SyncStatus statusAfterDownload = synchronizer.download(storageId, request.getQueries());
 
 		// レスポンスデータを生成、HTTPレスポンスをリターン
-		return createResponseEntity(new DownloadResponseOrdinary(statusAfterDownload), HttpStatus.OK);
+		return createResponseEntity(new DownloadResponse(statusAfterDownload), HttpStatus.OK);
 	}
 
 	/**
