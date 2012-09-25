@@ -16,6 +16,7 @@
  */
 package com.htmlhifive.sync.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -120,6 +121,11 @@ public class ResourceQueriesContainer {
 	 * @param item リソースアイテム
 	 */
 	public void mergeQuery(ResourceQuery query) {
+
+		if (this.queryList == null) {
+			this.queryList = new ArrayList<>();
+		}
+
 		if (!this.queryList.contains(query)) {
 			this.queryList.add(query);
 		}

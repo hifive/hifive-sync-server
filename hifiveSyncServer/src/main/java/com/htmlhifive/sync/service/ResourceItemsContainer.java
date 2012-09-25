@@ -16,6 +16,7 @@
  */
 package com.htmlhifive.sync.service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -113,6 +114,11 @@ public class ResourceItemsContainer {
 	 * @param itemWrapper リソースアイテムのラッパーオブジェクト
 	 */
 	public void mergeItem(ResourceItemWrapper itemWrapper) {
+
+		if (this.itemList == null) {
+			this.itemList = new ArrayList<>();
+		}
+
 		if (!this.itemList.contains(itemWrapper)) {
 			this.itemList.add(itemWrapper);
 		}
@@ -125,6 +131,11 @@ public class ResourceItemsContainer {
 	 * @param item リソースアイテム
 	 */
 	public void mergeItem(List<ResourceItemWrapper> items) {
+
+		if (this.itemList == null) {
+			this.itemList = new ArrayList<>();
+		}
+
 		for (ResourceItemWrapper itemWrapper : items) {
 			if (!this.itemList.contains(itemWrapper)) {
 				this.itemList.add(itemWrapper);
