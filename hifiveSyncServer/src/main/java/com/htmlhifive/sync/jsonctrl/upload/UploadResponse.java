@@ -16,13 +16,11 @@
  */
 package com.htmlhifive.sync.jsonctrl.upload;
 
-import com.htmlhifive.sync.jsonctrl.ResponseBody;
-
 /**
  * クライアントからの上り更新リクエストに対するレスポンスデータの抽象クラス.
  *
  * @author kishigam
  */
-public abstract class UploadResponse implements ResponseBody {
+public abstract class UploadResponse {
 
 }

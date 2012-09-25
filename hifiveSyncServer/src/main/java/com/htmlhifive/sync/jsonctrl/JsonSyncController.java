@@ -34,7 +34,6 @@ import com.htmlhifive.sync.jsonctrl.download.DownloadRequest;
 import com.htmlhifive.sync.jsonctrl.download.DownloadResponseOnInit;
 import com.htmlhifive.sync.jsonctrl.download.DownloadResponseOrdinary;
 import com.htmlhifive.sync.jsonctrl.upload.UploadRequest;
-import com.htmlhifive.sync.jsonctrl.upload.UploadResponse;
 import com.htmlhifive.sync.jsonctrl.upload.UploadResponseOnConflict;
 import com.htmlhifive.sync.jsonctrl.upload.UploadResponseOrdinary;
 import com.htmlhifive.sync.service.SyncStatus;
@@ -110,7 +109,7 @@ public class JsonSyncController {
 	 */
 	@RequestMapping(value = "/upload", method = RequestMethod.POST, params = { "storageid" }, headers = {
 			"Accept=application/json", "Content-Type=application/json" })
-	public ResponseEntity<? extends UploadResponse> syncUpload(final @RequestParam("storageid") String storageId,
+	public ResponseEntity<?> syncUpload(final @RequestParam("storageid") String storageId,
 			final @RequestBody UploadRequest request) {
 
 		try {
@@ -137,7 +136,7 @@ public class JsonSyncController {
 	 * @param status ステータスコードオブジェクト
 	 * @return HTTPレスポンスエンティティ
 	 */
-	private <T extends ResponseBody> ResponseEntity<T> createResponseEntity(T body, HttpStatus status) {
+	private <T> ResponseEntity<T> createResponseEntity(T body, HttpStatus status) {
 
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.add("Content-Type", "application/json;charset=utf-8");

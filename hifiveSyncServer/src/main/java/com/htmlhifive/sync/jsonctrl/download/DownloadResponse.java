@@ -23,7 +23,6 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.htmlhifive.sync.jsonctrl.ResponseBody;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 
 /**
@@ -32,7 +31,7 @@ import com.htmlhifive.sync.resource.ResourceItemWrapper;
  *
  * @author kishigam
  */
-public abstract class DownloadResponse implements ResponseBody {
+public abstract class DownloadResponse {
 
 	/**
 	 * 下り更新処理を実行した時刻.
