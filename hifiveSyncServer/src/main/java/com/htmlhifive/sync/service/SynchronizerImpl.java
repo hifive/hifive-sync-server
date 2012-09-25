@@ -81,17 +81,17 @@ public class SynchronizerImpl implements Synchronizer {
 		currentStatus.setLastDownloadTime(generateDownloadTime());
 
 		// リソース名ごとに結果をコンテナに格納する
-		Map<String, ResourceItemsContainer> resultMap = new HashMap<>();
+		Map<String, List<ResourceItemWrapper>> resultMap = new HashMap<>();
 
 		// クエリごとに処理し、結果をコンテナに格納
 		for (String resourceName : queries.keySet()) {
 
 			// Mapにリソース名ごとのコンテナが存在しない場合は生成
 			if (!resultMap.containsKey(resourceName)) {
-				resultMap.put(resourceName, new ResourceItemsContainer(resourceName));
+				resultMap.put(resourceName, new ArrayList<ResourceItemWrapper>());
 			}
-			ResourceItemsContainer resultContainer = resultMap.get(resourceName);
 
+			List<ResourceItemWrapper> resultList = resultMap.get(resourceName);
 			for (ResourceQuery query : queries.get(resourceName)) {
 
 				// synchronizerへリクエスト発行
@@ -99,12 +99,15 @@ public class SynchronizerImpl implements Synchronizer {
 				List<ResourceItemWrapper> resultItemList = resource.readByQuery(query);
 
 				// 結果をマージする(同じリソースアイテムは1件のみとなる)
-				resultContainer.mergeItem(resultItemList);
+				for (ResourceItemWrapper itemWrapper : resultItemList) {
+					if (resultList.contains(itemWrapper)) {
+						resultList.add(itemWrapper);
+					}
+				}
 			}
-
-			resultMap.put(resourceName, resultContainer);
+			resultMap.put(resourceName, resultList);
 		}
-		currentStatus.setResourceItems(new ArrayList<>(resultMap.values()));
+		currentStatus.setResourceItems(resultMap);
 
 		// 下り更新では同期ステータスを更新しない
 		return currentStatus;
@@ -145,8 +148,8 @@ public class SynchronizerImpl implements Synchronizer {
 		// 上り更新時刻の設定
 		currentStatus.setLastUploadTime(generateUploadTime());
 
-		// リソース名ごとに結果をコンテナに格納する
-		Map<String, ResourceItemsContainer> resultMap = new HashMap<>();
+		// リソース名ごとに結果をリソースアイテムのリストに格納する
+		Map<String, List<ResourceItemWrapper>> resultMap = new HashMap<>();
 
 		// リソースごとに処理(1リソースが複数回出現する可能性もある)
 		for (ResourceItemsContainer uploadingItemContainer : resourceItems) {
@@ -171,17 +174,14 @@ public class SynchronizerImpl implements Synchronizer {
 				// Mapにリソース名ごとのコンテナが存在しない場合は生成
 				if (!resultMap.containsKey(resourceName)) {
 
-					ResourceItemsContainer container = new ResourceItemsContainer(resourceName);
-					container.setItemsLIst(new ArrayList<ResourceItemWrapper>());
-
-					resultMap.put(resourceName, container);
+					List<ResourceItemWrapper> itemList = new ArrayList<>();
+					resultMap.put(resourceName, itemList);
 				}
 
-				ResourceItemsContainer resultContainer = resultMap.get(resource);
-
 				// 競合しているアイテムをItemMapにマージ(同じリソースアイテムは1件のみとなる)
-				resultContainer.mergeItem(itemWrapper);
-				resultMap.put(resourceName, resultContainer);
+				if (!resultMap.get(resource).contains(itemWrapper)) {
+					resultMap.get(resource).add(itemWrapper);
+				}
 
 				// 競合タイプを判断し、ConflictExceptionのスローまたは続行
 				if (itemWrapper.getResultType() == SyncResultType.DUPLICATEDID) {
@@ -242,14 +242,10 @@ public class SynchronizerImpl implements Synchronizer {
 	 * @param conflictType 競合タイプ
 	 * @param conflictItemMap 競合したリソースアイテムの情報を保持しているMap
 	 */
-	private void throwConflictException(SyncResultType conflictType, Map<String, ResourceItemsContainer> conflictItemMap) {
+	private void throwConflictException(SyncResultType conflictType,
+			Map<String, List<ResourceItemWrapper>> conflictItemMap) {
 
-		List<ResourceItemsContainer> containerList = new ArrayList<>();
-		for (String resourceName : conflictItemMap.keySet()) {
-
-			containerList.add(conflictItemMap.get(resourceName));
-		}
-		throw new ConflictException(conflictType, containerList);
+		throw new ConflictException(conflictType, conflictItemMap);
 	}
 
 	/**

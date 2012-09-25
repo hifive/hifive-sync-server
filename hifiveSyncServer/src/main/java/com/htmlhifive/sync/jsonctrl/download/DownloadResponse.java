@@ -17,13 +17,14 @@
 package com.htmlhifive.sync.jsonctrl.download;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import com.htmlhifive.sync.jsonctrl.ResponseBody;
-import com.htmlhifive.sync.service.ResourceItemsContainer;
+import com.htmlhifive.sync.resource.ResourceItemWrapper;
 
 /**
  * クライアントからの下り更新リクエストに対する結果データの抽象クラス.<br>
@@ -39,9 +40,9 @@ public abstract class DownloadResponse implements ResponseBody {
 	private long lastDownloadTime;
 
 	/**
-	 * 下り更新結果のリソースアイテムリスト
+	 * 下り更新結果のリソースアイテムリスト. リソース別にリストを保持します.
 	 */
-	private List<ResourceItemsContainer> resourceItems;
+	private Map<String, List<ResourceItemWrapper>> resourceItems;
 
 	/**
 	 * 下り更新レスポンスを生成します.
@@ -105,14 +106,14 @@ public abstract class DownloadResponse implements ResponseBody {
 	/**
 	 * @return resourceItems
 	 */
-	public List<ResourceItemsContainer> getResourceItems() {
+	public Map<String, List<ResourceItemWrapper>> getResourceItems() {
 		return resourceItems;
 	}
 
 	/**
 	 * @param resourceItems セットする resourceItems
 	 */
-	public void setResourceItems(List<ResourceItemsContainer> resourceItems) {
+	public void setResourceItems(Map<String, List<ResourceItemWrapper>> resourceItems) {
 		this.resourceItems = resourceItems;
 	}
 }

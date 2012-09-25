@@ -17,16 +17,17 @@
 package com.htmlhifive.sync.exception;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
+import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.SyncResultType;
-import com.htmlhifive.sync.service.ResourceItemsContainer;
 
 /**
  * 同期(上り更新)において競合が発生したことを示す例外.<br>
- * サーバ側で管理しているリソースアイテムの内容を含む同期レスポンスオブジェクトを保持しており、クライアントに返す情報の生成に使用することができます.
+ * サーバ側で管理しているリソースアイテムを保持しており、クライアントに返す情報の生成に使用することができます.
  *
  * @author kishigam
  */
@@ -44,18 +45,18 @@ public class ConflictException extends RuntimeException {
 	private SyncResultType conflictType;
 
 	/**
-	 * 競合データのリソースアイテムリスト
+	 * 競合データのリソースアイテムリスト(リソース別Map).
 	 */
-	private List<ResourceItemsContainer> resourceItems;
+	private Map<String, List<ResourceItemWrapper>> resourceItems;
 
 	/**
 	 * 指定された情報をもとに例外オブジェクトを生成します.
 	 *
 	 * @param conflictType 競合タイプ
-	 * @param resourceItems 競合したリソースアイテムリスト(コンテナ)
+	 * @param resourceItems 競合したリソースアイテムリスト(リソース別Map)
 	 * @see RuntimeException
 	 */
-	public ConflictException(SyncResultType conflictType, List<ResourceItemsContainer> resourceItems) {
+	public ConflictException(SyncResultType conflictType, Map<String, List<ResourceItemWrapper>> resourceItems) {
 		super();
 		this.conflictType = conflictType;
 		this.resourceItems = resourceItems;
@@ -69,11 +70,11 @@ public class ConflictException extends RuntimeException {
 	 * @param enableSuppression
 	 * @param writableStackTrace
 	 * @param conflictType 競合タイプ
-	 * @param resourceItems 競合したリソースアイテムリスト(コンテナ)
+	 * @param resourceItems 競合したリソースアイテムリスト(リソース別Map)
 	 * @see RuntimeException
 	 */
 	public ConflictException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace,
-			SyncResultType conflictType, List<ResourceItemsContainer> resourceItems) {
+			SyncResultType conflictType, Map<String, List<ResourceItemWrapper>> resourceItems) {
 		super(message, cause, enableSuppression, writableStackTrace);
 		this.conflictType = conflictType;
 		this.resourceItems = resourceItems;
@@ -85,11 +86,11 @@ public class ConflictException extends RuntimeException {
 	 * @param message
 	 * @param cause
 	 * @param conflictType 競合タイプ
-	 * @param resourceItems 競合したリソースアイテムリスト(コンテナ)
+	 * @param resourceItems 競合したリソースアイテムリスト(リソース別Map)
 	 * @see RuntimeException
 	 */
 	public ConflictException(String message, Throwable cause, SyncResultType conflictType,
-			List<ResourceItemsContainer> resourceItems) {
+			Map<String, List<ResourceItemWrapper>> resourceItems) {
 		super(message, cause);
 		this.conflictType = conflictType;
 		this.resourceItems = resourceItems;
@@ -100,10 +101,11 @@ public class ConflictException extends RuntimeException {
 	 *
 	 * @param message
 	 * @param conflictType 競合タイプ
-	 * @param resourceItems 競合したリソースアイテムリスト(コンテナ)
+	 * @param resourceItems 競合したリソースアイテムリスト(リソース別Map)
 	 * @see RuntimeException
 	 */
-	public ConflictException(String message, SyncResultType conflictType, List<ResourceItemsContainer> resourceItems) {
+	public ConflictException(String message, SyncResultType conflictType,
+			Map<String, List<ResourceItemWrapper>> resourceItems) {
 		super(message);
 		this.conflictType = conflictType;
 		this.resourceItems = resourceItems;
@@ -114,10 +116,11 @@ public class ConflictException extends RuntimeException {
 	 *
 	 * @param cause
 	 * @param conflictType 競合タイプ
-	 * @param resourceItems 競合したリソースアイテムリスト(コンテナ)
+	 * @param resourceItems 競合したリソースアイテムリスト(リソース別Map)
 	 * @see RuntimeException
 	 */
-	public ConflictException(Throwable cause, SyncResultType conflictType, List<ResourceItemsContainer> resourceItems) {
+	public ConflictException(Throwable cause, SyncResultType conflictType,
+			Map<String, List<ResourceItemWrapper>> resourceItems) {
 		super(cause);
 		this.conflictType = conflictType;
 		this.resourceItems = resourceItems;
@@ -133,7 +136,7 @@ public class ConflictException extends RuntimeException {
 	/**
 	 * @return resourceItems
 	 */
-	public List<ResourceItemsContainer> getResourceItems() {
+	public Map<String, List<ResourceItemWrapper>> getResourceItems() {
 		return resourceItems;
 	}
 }

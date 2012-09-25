@@ -67,13 +67,6 @@ public class ResourceItemWrapper {
 		return resourceItemId;
 	}
 
-	//	/**
-	//	 * @param resourceItemId セットする resourceItemId
-	//	 */
-	//	public void setResourceItemId(String resourceItemId) {
-	//		this.resourceItemId = resourceItemId;
-	//	}
-
 	/**
 	 * @return action
 	 */

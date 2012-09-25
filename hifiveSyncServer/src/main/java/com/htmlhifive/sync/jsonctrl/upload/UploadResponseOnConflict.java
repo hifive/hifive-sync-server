@@ -17,14 +17,15 @@
 package com.htmlhifive.sync.jsonctrl.upload;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 import com.htmlhifive.sync.exception.ConflictException;
+import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.SyncResultType;
-import com.htmlhifive.sync.service.ResourceItemsContainer;
 
 /**
  * クライアントからの上り更新リクエストに対する競合発生時のレスポンスデータ.<br>
@@ -40,9 +41,10 @@ public class UploadResponseOnConflict extends UploadResponse {
 	private SyncResultType conflictType;
 
 	/**
-	 * 競合データのリソースアイテムリスト
+	 * 競合したリソースアイテムのリスト.<br>
+	 * リソース別にリストを保持します.
 	 */
-	private List<ResourceItemsContainer> resourceItems;
+	private Map<String, List<ResourceItemWrapper>> resourceItems;
 
 	/**
 	 * ConflictExceptionの情報から上り更新レスポンスを生成します.
@@ -108,14 +110,14 @@ public class UploadResponseOnConflict extends UploadResponse {
 	/**
 	 * @return resourceItems
 	 */
-	public List<ResourceItemsContainer> getResourceItems() {
+	public Map<String, List<ResourceItemWrapper>> getResourceItems() {
 		return resourceItems;
 	}
 
 	/**
 	 * @param resourceItems セットする resourceItems
 	 */
-	public void setResourceItems(List<ResourceItemsContainer> resourceItems) {
+	public void setResourceItems(Map<String, List<ResourceItemWrapper>> resourceItems) {
 		this.resourceItems = resourceItems;
 	}
 }

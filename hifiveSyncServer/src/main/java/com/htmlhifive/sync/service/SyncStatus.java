@@ -17,6 +17,7 @@
 package com.htmlhifive.sync.service;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -27,6 +28,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.SyncResultType;
 
 /**
@@ -63,11 +65,10 @@ public class SyncStatus {
 
 	/**
 	 * 同期データのリソースアイテムリスト.<br>
-	 * 下り更新時に同期時点のサーバデータを保持します.<br>
-	 * 上り更新ではデータは保持されません.
+	 * リソース別に下り更新結果を保持します.<br>
 	 */
 	@Transient
-	private List<ResourceItemsContainer> resourceItems;
+	private Map<String, List<ResourceItemWrapper>> resourceItems;
 
 	/**
 	 * プライベートのデフォルトコンストラクタ. <br>
@@ -175,14 +176,14 @@ public class SyncStatus {
 	/**
 	 * @return resourceItems
 	 */
-	public List<ResourceItemsContainer> getResourceItems() {
+	public Map<String, List<ResourceItemWrapper>> getResourceItems() {
 		return resourceItems;
 	}
 
 	/**
 	 * @param resourceItems セットする resourceItems
 	 */
-	public void setResourceItems(List<ResourceItemsContainer> resourceItems) {
+	public void setResourceItems(Map<String, List<ResourceItemWrapper>> resourceItems) {
 		this.resourceItems = resourceItems;
 	}
 }
