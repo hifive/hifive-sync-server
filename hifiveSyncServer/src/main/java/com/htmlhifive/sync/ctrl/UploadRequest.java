@@ -22,7 +22,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.htmlhifive.sync.service.ResourceItemsContainer;
+import com.htmlhifive.sync.resource.ResourceItemWrapper;
 
 /**
  * JSON形式の上り更新リクエスト内容全体を表現するデータクラス.<br>
@@ -40,9 +40,10 @@ public class UploadRequest {
 	private long lastUploadTime;
 
 	/**
-	 * 上り更新対象のリソースアイテムリスト
+	 * 上り更新対象のリソースアイテムリスト.<br>
+	 * 上り更新リクエストデータでは、リソースアイテムのラッパーオブジェクトにリソース名を持ちます.
 	 */
-	private List<ResourceItemsContainer> resourceItems;
+	private List<ResourceItemWrapper> resourceItems;
 
 	/**
 	 * @see Object#equals(Object)
@@ -97,14 +98,14 @@ public class UploadRequest {
 	/**
 	 * @return resourceItems
 	 */
-	public List<ResourceItemsContainer> getResourceItems() {
+	public List<ResourceItemWrapper> getResourceItems() {
 		return resourceItems;
 	}
 
 	/**
 	 * @param resourceItems セットする resourceItems
 	 */
-	public void setResourceItems(List<ResourceItemsContainer> resourceItems) {
+	public void setResourceItems(List<ResourceItemWrapper> resourceItems) {
 		this.resourceItems = resourceItems;
 	}
 }

@@ -19,6 +19,7 @@ package com.htmlhifive.sync.service;
 import java.util.List;
 import java.util.Map;
 
+import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.ResourceQuery;
 
 /**
@@ -47,5 +48,5 @@ public interface Synchronizer {
 	 * @param resourceItems リソースアイテムリスト
 	 * @return 上り更新結果を含む同期ステータスオブジェクト
 	 */
-	public SyncStatus upload(String storageId, long lastUploadTime, List<ResourceItemsContainer> resourceItems);
+	public SyncStatus upload(String storageId, long lastUploadTime, List<ResourceItemWrapper> resourceItems);
 }

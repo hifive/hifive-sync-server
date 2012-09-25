@@ -17,6 +17,8 @@
 package com.htmlhifive.sync.resource;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
 /**
  * リソースアイテム1件の情報を保持するデータラッパー.<br>
@@ -25,6 +27,13 @@ import org.codehaus.jackson.annotate.JsonIgnore;
  * @author kishigam
  */
 public class ResourceItemWrapper {
+
+	/**
+	 * リソース名.<br>
+	 * 上り更新時にクライアントから受け取るデータのためのフィールドです.<br>
+	 * クライアントに返すデータとしては対象外であるため、このフィールドのgetterメソッドに{@link JsonSerialize}が設定されています.
+	 */
+	private String resourceName;
 
 	/**
 	 * リソースアイテムID.
@@ -58,6 +67,23 @@ public class ResourceItemWrapper {
 	public ResourceItemWrapper(String resourceItemId) {
 
 		this.resourceItemId = resourceItemId;
+	}
+
+	/**
+	 * nullでない場合のみレスポンスに含むため、{@link JsonSerialize}を設定しています.
+	 *
+	 * @return resourceName
+	 */
+	@JsonSerialize(include = Inclusion.NON_NULL)
+	public String getResourceName() {
+		return resourceName;
+	}
+
+	/**
+	 * @param resourceName セットする resourceName
+	 */
+	public void setResourceName(String resourceName) {
+		this.resourceName = resourceName;
 	}
 
 	/**
@@ -110,6 +136,8 @@ public class ResourceItemWrapper {
 	}
 
 	/**
+	 * サーバ内でのみ管理するデータのため、{@link @JsonIgnore}を設定しています.<br>
+	 *
 	 * @return resultType
 	 */
 	@JsonIgnore

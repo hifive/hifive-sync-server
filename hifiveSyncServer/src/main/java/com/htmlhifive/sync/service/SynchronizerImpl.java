@@ -134,7 +134,7 @@ public class SynchronizerImpl implements Synchronizer {
 	 * @return 上り更新結果を含む同期ステータスオブジェクト
 	 */
 	@Override
-	public SyncStatus upload(String storageId, long lastUploadTime, List<ResourceItemsContainer> resourceItems) {
+	public SyncStatus upload(String storageId, long lastUploadTime, List<ResourceItemWrapper> resourceItems) {
 
 		// クライアントごとの(前回)同期ステータスオブジェクトを取得
 		SyncStatus currentStatus = currentStatus(storageId);
@@ -148,64 +148,69 @@ public class SynchronizerImpl implements Synchronizer {
 		// 上り更新時刻の設定
 		currentStatus.setLastUploadTime(generateUploadTime());
 
-		// リソース名ごとに結果をリソースアイテムのリストに格納する
-		Map<String, List<ResourceItemWrapper>> resultMap = new HashMap<>();
+		// 競合の種類ごとに、競合データリソースのアイテムリスト(リソース別Map)に格納する
+		Map<SyncResultType, Map<String, List<ResourceItemWrapper>>> resultMapHolder = new HashMap<>();
+		resultMapHolder.put(SyncResultType.DUPLICATEDID, new HashMap<String, List<ResourceItemWrapper>>());
+		resultMapHolder.put(SyncResultType.UPDATED, new HashMap<String, List<ResourceItemWrapper>>());
 
-		// リソースごとに処理(1リソースが複数回出現する可能性もある)
-		for (ResourceItemsContainer uploadingItemContainer : resourceItems) {
+		// リソースアイテムごとに処理(上り更新リクエストデータのみ、ResourceItemWrapperにリソース名を持つ)
+		for (ResourceItemWrapper uploadingItemWrapper : resourceItems) {
 
-			String resourceName = uploadingItemContainer.getResourceName();
+			// 更新時刻を設定
+			uploadingItemWrapper.setLastModified(currentStatus.getLastUploadTime());
 
-			// アイテムごとに処理
-			for (ResourceItemWrapper uploadingItem : uploadingItemContainer.getItemsList()) {
+			SyncResource<?> resource = resourceManager.locateSyncResource(uploadingItemWrapper.getResourceName());
 
-				// 更新時刻を各リソースアイテムに設定
-				uploadingItem.setLastModified(currentStatus.getLastUploadTime());
+			ResourceItemWrapper itemWrapperAfterUpload = doUpload(resource, uploadingItemWrapper);
 
-				SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-
-				ResourceItemWrapper itemWrapper = doUpload(resource, uploadingItem);
-
-				// 競合でない場合のアイテムは使用しない
-				if (itemWrapper.getResultType() == SyncResultType.OK) {
-					continue;
-				}
-
-				// Mapにリソース名ごとのコンテナが存在しない場合は生成
-				if (!resultMap.containsKey(resourceName)) {
-
-					List<ResourceItemWrapper> itemList = new ArrayList<>();
-					resultMap.put(resourceName, itemList);
-				}
-
-				// 競合しているアイテムをItemMapにマージ(同じリソースアイテムは1件のみとなる)
-				if (!resultMap.get(resource).contains(itemWrapper)) {
-					resultMap.get(resource).add(itemWrapper);
-				}
-
-				// 競合タイプを判断し、ConflictExceptionのスローまたは続行
-				if (itemWrapper.getResultType() == SyncResultType.DUPLICATEDID) {
-					throwConflictException(SyncResultType.DUPLICATEDID, resultMap);
-				} else {
-					currentStatus.setResultType(SyncResultType.UPDATED);
-				}
+			// 競合でない場合は次のリソースアイテムの更新へ(更新後のアイテムは使用しない)
+			if (itemWrapperAfterUpload.getResultType() == SyncResultType.OK) {
+				continue;
 			}
+
+			Map<String, List<ResourceItemWrapper>> resultMap = resultMapHolder.get(itemWrapperAfterUpload
+					.getResultType());
+
+			// Mapにリソース名ごとのコンテナが存在しない場合は生成
+			if (!resultMap.containsKey(uploadingItemWrapper.getResourceName())) {
+
+				List<ResourceItemWrapper> itemList = new ArrayList<>();
+				resultMap.put(uploadingItemWrapper.getResourceName(), itemList);
+			}
+
+			// 競合しているアイテムをItemMapにマージ(同じリソースアイテムは1件のみとなる)
+			if (!resultMap.get(resource).contains(itemWrapperAfterUpload)) {
+				resultMap.get(resource).add(itemWrapperAfterUpload);
+			}
+
+			// 競合時の処理継続判断(競合のタイプごとに)
+			if (!continueOnConflict(itemWrapperAfterUpload.getResultType())) {
+
+				// 継続しない場合はConflictExceptionをスロー
+				throwConflictException(itemWrapperAfterUpload.getResultType(), resultMap);
+			}
+
+			// ステータスに設定し、次のリソースアイテムの更新へ
+			currentStatus.setResultType(itemWrapperAfterUpload.getResultType());
 		}
 
+		// 以下の優先順で複数の競合データをConflictExceptionでスロー
+		if (currentStatus.getResultType() == SyncResultType.DUPLICATEDID) {
+			throwConflictException(SyncResultType.DUPLICATEDID, resultMapHolder.get(SyncResultType.DUPLICATEDID));
+		}
 		if (currentStatus.getResultType() == SyncResultType.UPDATED) {
-			throwConflictException(SyncResultType.UPDATED, resultMap);
+			throwConflictException(SyncResultType.UPDATED, resultMapHolder.get(SyncResultType.UPDATED));
 		}
 
-		repository.save(currentStatus);
-
-		return currentStatus;
+		// 競合がない場合はステータスを更新し、リターン
+		return repository.save(currentStatus);
 	}
 
 	/**
 	 * 上り更新時刻を決定します.<br>
 	 * 現在時刻を使用します.
 	 *
-	 * @return
+	 * @return 上り更新時刻
 	 */
 	private long generateUploadTime() {
 
@@ -234,6 +239,18 @@ public class SynchronizerImpl implements Synchronizer {
 				throw new BadRequestException("undefined action has called.");
 		}
 
+	}
+
+	/**
+	 * 更新結果ごとに、次のリソースアイテムの更新を継続するかどうかを判断し、返します.
+	 *
+	 * @param resultType 上り更新結果のタイプ
+	 * @return 継続する場合true
+	 */
+	private boolean continueOnConflict(SyncResultType resultType) {
+
+		// TODO:コンフィグ化
+		return resultType != SyncResultType.DUPLICATEDID && resultType != SyncResultType.UPDATED;
 	}
 
 	/**
