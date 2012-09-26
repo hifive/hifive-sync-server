@@ -39,7 +39,7 @@ import com.htmlhifive.sync.resource.SyncResourceService;
  */
 @SyncResourceService(resourceName = "person", lockManager = OptimisticLockManager.class, updateStrategy = ClientResolvingStrategy.class)
 @Transactional(propagation = Propagation.MANDATORY)
-public class PersonResource extends AbstractSyncResource<PersonResourceItem> {
+public class PersonResource extends AbstractSyncResource<Person> {
 
 	/**
 	 * エンティティの永続化を担うリポジトリ.
@@ -55,15 +55,9 @@ public class PersonResource extends AbstractSyncResource<PersonResourceItem> {
 	 * @return リソースアイテム
 	 */
 	@Override
-	protected PersonResourceItem doRead(String targetItemId) {
+	protected Person doRead(String targetItemId) {
 
-		Person gotBean = findPerson(targetItemId);
-
-		PersonResourceItem item = new PersonResourceItem(gotBean.getPersonId());
-		item.setName(gotBean.getName());
-		item.setAge(gotBean.getAge());
-		item.setOrganization(gotBean.getOrganization());
-		return item;
+		return findPerson(targetItemId);
 	}
 
 	/**
@@ -75,13 +69,13 @@ public class PersonResource extends AbstractSyncResource<PersonResourceItem> {
 	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
 	 */
 	@Override
-	protected Map<PersonResourceItem, ResourceItemCommonData> doReadByQuery(List<ResourceItemCommonData> commonDataList,
+	protected Map<Person, ResourceItemCommonData> doReadByQuery(List<ResourceItemCommonData> commonDataList,
 			Map<String, String[]> conditions) {
 
-		Map<PersonResourceItem, ResourceItemCommonData> itemMap = new HashMap<>();
+		Map<Person, ResourceItemCommonData> itemMap = new HashMap<>();
 		for (ResourceItemCommonData common : commonDataList) {
 
-			PersonResourceItem item = doRead(common.getTargetItemId());
+			Person item = doRead(common.getTargetItemId());
 
 			// TODO: queryの適用
 
@@ -99,22 +93,16 @@ public class PersonResource extends AbstractSyncResource<PersonResourceItem> {
 	 * @return 採番されたリソースアイテムのID
 	 */
 	@Override
-	protected String doCreate(PersonResourceItem newItem) throws DuplicateIdException {
+	protected String doCreate(Person newItem) throws DuplicateIdException {
 
 		if (repository.exists(newItem.getPersonId())) {
 
 			throw new DuplicateIdException(newItem.getPersonId(), doRead(newItem.getPersonId()));
 		}
 
-		Person newEntity = new Person();
-		newEntity.setPersonId(newItem.getPersonId());
-		newEntity.setName(newItem.getName());
-		newEntity.setAge(newItem.getAge());
-		newEntity.setOrganization(newItem.getOrganization());
+		repository.save(newItem);
 
-		repository.save(newEntity);
-
-		return newEntity.getPersonId();
+		return newItem.getPersonId();
 	}
 
 	/**
@@ -123,10 +111,11 @@ public class PersonResource extends AbstractSyncResource<PersonResourceItem> {
 	 * @param item 更新内容を含むリソースアイテム
 	 */
 	@Override
-	protected void doUpdate(PersonResourceItem item) {
+	protected void doUpdate(Person item) {
+
+		// itemはDTOとしてのPersonなので、永続データにアタッチするために取得、コピーする
 
 		Person updatingEntity = findPerson(item.getPersonId());
-
 		updatingEntity.setName(item.getName());
 		updatingEntity.setAge(item.getAge());
 		updatingEntity.setOrganization(item.getOrganization());
