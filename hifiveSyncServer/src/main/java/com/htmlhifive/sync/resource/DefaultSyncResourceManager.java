@@ -38,7 +38,7 @@ import com.htmlhifive.sync.exception.SyncException;
  * @author kishigam
  */
 @Service
-public class SyncResourceManagerImpl implements SyncResourceManager {
+public class DefaultSyncResourceManager implements SyncResourceManager {
 
 	/**
 	 * リソース検索対象のコンテキスト.
@@ -64,7 +64,7 @@ public class SyncResourceManagerImpl implements SyncResourceManager {
 	/**
 	 * インスタンスを生成し、Mapフィールドのセットアップを行います.
 	 */
-	public SyncResourceManagerImpl() {
+	public DefaultSyncResourceManager() {
 
 		this.resourceMap = new HashMap<>();
 		this.lockManagerMap = new HashMap<>();

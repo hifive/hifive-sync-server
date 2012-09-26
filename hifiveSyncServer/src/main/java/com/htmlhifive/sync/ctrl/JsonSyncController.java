@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.htmlhifive.sync.exception.ConflictException;
+import com.htmlhifive.sync.service.DefaultSynchronizer;
 import com.htmlhifive.sync.service.SyncStatus;
 import com.htmlhifive.sync.service.Synchronizer;
 
@@ -44,7 +45,7 @@ public class JsonSyncController {
 	/**
 	 * 同期処理を実行するシンクロナイザー.
 	 */
-	@Resource
+	@Resource(type = DefaultSynchronizer.class)
 	private Synchronizer synchronizer;
 
 	/**

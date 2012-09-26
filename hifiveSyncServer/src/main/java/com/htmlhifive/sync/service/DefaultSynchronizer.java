@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.ConflictException;
+import com.htmlhifive.sync.resource.DefaultSyncResourceManager;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.ResourceQuery;
 import com.htmlhifive.sync.resource.SyncResource;
@@ -43,12 +44,12 @@ import com.htmlhifive.sync.resource.SyncResultType;
  */
 @Transactional
 @Service
-public class SynchronizerImpl implements Synchronizer {
+public class DefaultSynchronizer implements Synchronizer {
 
 	/**
 	 * リソースへのインターフェースを取得するためのマネージャ.
 	 */
-	@Resource
+	@Resource(type = DefaultSyncResourceManager.class)
 	private SyncResourceManager resourceManager;
 
 	/**
