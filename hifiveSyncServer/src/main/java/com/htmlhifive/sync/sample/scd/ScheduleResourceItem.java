@@ -75,6 +75,11 @@ public class ScheduleResourceItem {
 	private String place;
 
 	/**
+	 * このアイテムが示す予定の作成者氏名.
+	 */
+	private String createUserName;
+
+	/**
 	 * デフォルトコンストラクタ.<br>
 	 * アプリケーションからの使用は想定されないため、privateとする.
 	 */
@@ -255,5 +260,19 @@ public class ScheduleResourceItem {
 	 */
 	public void setPlace(String place) {
 		this.place = place;
+	}
+
+	/**
+	 * @return createUserName
+	 */
+	public String getCreateUserName() {
+		return createUserName;
+	}
+
+	/**
+	 * @param createUserName セットする createUserName
+	 */
+	public void setCreateUserName(String createUserName) {
+		this.createUserName = createUserName;
 	}
 }

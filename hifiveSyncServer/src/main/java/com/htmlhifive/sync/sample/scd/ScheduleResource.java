@@ -23,6 +23,8 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,6 +81,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		item.setFinishTime(bean.getFinishTime());
 		item.setDetail(bean.getDetail());
 		item.setPlace(bean.getPlace());
+		item.setCreateUserName(bean.getCreateUser().getName());
 
 		return item;
 	}
@@ -92,8 +95,8 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
 	 */
 	@Override
-	protected Map<ScheduleResourceItem, ResourceItemCommonData> doReadByQuery(List<ResourceItemCommonData> commonDataList,
-			Map<String, String[]> conditions) {
+	protected Map<ScheduleResourceItem, ResourceItemCommonData> doReadByQuery(
+			List<ResourceItemCommonData> commonDataList, Map<String, String[]> conditions) {
 
 		Map<ScheduleResourceItem, ResourceItemCommonData> itemMap = new HashMap<>();
 		for (ResourceItemCommonData common : commonDataList) {
@@ -141,6 +144,9 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		newEntity.setFinishTime(newItem.getFinishTime());
 		newEntity.setDetail(newItem.getDetail());
 		newEntity.setPlace(newItem.getPlace());
+
+		// 作成者にログインユーザーであるPersonをセット
+		newEntity.setCreateUser(loginUser());
 
 		repository.save(newEntity);
 
@@ -205,5 +211,24 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 			throw new NotFoundException("entity not found :" + scheduleId);
 		}
 		return found;
+	}
+
+	/**
+	 * 認証情報からログインユーザーIDを取得します.
+	 *
+	 * @return ログインユーザーID.
+	 */
+	private Person loginUser() {
+
+		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+		String username;
+		if (principal instanceof UserDetails) {
+			username = ((UserDetails) principal).getUsername();
+		} else {
+			username = principal.toString();
+		}
+
+		return personRepository.findOne(username);
 	}
 }

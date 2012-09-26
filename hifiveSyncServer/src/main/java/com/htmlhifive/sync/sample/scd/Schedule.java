@@ -26,6 +26,7 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
@@ -94,6 +95,12 @@ public class Schedule {
 	 * 予定されている場所を表す文字列.
 	 */
 	private String place;
+
+	/**
+	 * 予定を作成した人.
+	 */
+	@ManyToOne
+	private Person createUser;
 
 	/**
 	 * 予定インスタンスを生成します.
@@ -340,5 +347,19 @@ public class Schedule {
 	 */
 	public void setPlace(String place) {
 		this.place = place;
+	}
+
+	/**
+	 * @return createUser
+	 */
+	public Person getCreateUser() {
+		return createUser;
+	}
+
+	/**
+	 * @param createUser セットする createUser
+	 */
+	public void setCreateUser(Person createUser) {
+		this.createUser = createUser;
 	}
 }
