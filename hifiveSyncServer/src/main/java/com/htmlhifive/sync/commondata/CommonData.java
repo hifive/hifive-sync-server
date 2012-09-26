@@ -121,7 +121,7 @@ public class CommonData {
 	public void modifiy(ResourceItemWrapper itemWrapper) {
 
 		this.action = itemWrapper.getAction();
-		this.lastModified = itemWrapper.getLastModified();
+		this.lastModified = itemWrapper.getUploadTime();
 	}
 
 	/**
