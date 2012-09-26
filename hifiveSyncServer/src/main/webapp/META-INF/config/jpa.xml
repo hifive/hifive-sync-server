@@ -14,7 +14,7 @@
 	<context:component-scan base-package="com.htmlhifive.sync" />
 	<jpa:repositories base-package="com.htmlhifive.sync.service"
 		transaction-manager-ref="txManager" />
-	<jpa:repositories base-package="com.htmlhifive.sync.commondata"
+	<jpa:repositories base-package="com.htmlhifive.sync.common"
 		transaction-manager-ref="txManager" />
 	<jpa:repositories base-package="com.htmlhifive.sync.sample"
 		transaction-manager-ref="txManager" />
