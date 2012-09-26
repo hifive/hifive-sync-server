@@ -25,6 +25,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
  *
  * @author kishigam
  */
-public interface SyncStatusRepository extends JpaRepository<SyncStatus, String> {
+public interface UploadCommonDataRepository extends JpaRepository<UploadCommonData, String> {
 
 }

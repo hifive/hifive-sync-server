@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.ctrl;
+package com.htmlhifive.sync.service;
 
 import java.util.List;
 import java.util.Map;
@@ -22,39 +22,39 @@ import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
-import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
-import com.htmlhifive.sync.resource.SyncResultType;
 
 /**
- * クライアントからの上り更新リクエストに対する競合発生時のレスポンスデータ.<br>
- * このクラスが保持するリソースアイテムリスト内には、リソースの重複およびリソースアイテムの重複はありません.
+ * クライアントからの上り更新リクエストに対するレスポンスデータ.
  *
  * @author kishigam
  */
-public class UploadConflictResponse {
+public class UploadResponse {
 
 	/**
-	 * 競合タイプ.
+	 * 上り更新共通データ.<br>
+	 * このレスポンスにおいてクライアントへ返す情報を保持しています.
 	 */
-	private SyncResultType conflictType;
+	private UploadCommonData uploadCommonData;
 
 	/**
-	 * 競合したリソースアイテムのリスト.<br>
-	 * リソース別にリストを保持します.
+	 * 競合リソースアイテムのリスト.<br>
+	 * リソース別にリストを保持します.<br>
+	 * このフィールドは競合発生時のみ、競合データとしてクライアントへのレスポンスに含みます.<br>
+	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています)
 	 */
 	private Map<String, List<ResourceItemWrapper>> resourceItems;
 
 	/**
-	 * ConflictExceptionの情報から上り更新レスポンスを生成します.
+	 * 上り更新共通データを指定して上り更新レスポンスを生成します.
 	 *
-	 * @param e ConflictExceptionインスタンス
+	 * @param downloadCommonData 下り更新共通データ
 	 */
-	public UploadConflictResponse(ConflictException e) {
-
-		this.conflictType = e.getConflictType();
-		this.resourceItems = e.getResourceItems();
+	public UploadResponse(UploadCommonData uploadCommonData) {
+		this.uploadCommonData = uploadCommonData;
 	}
 
 	/**
@@ -66,12 +66,12 @@ public class UploadConflictResponse {
 		if (this == obj)
 			return true;
 
-		if (!(obj instanceof UploadConflictResponse))
+		if (!(obj instanceof UploadResponse))
 			return false;
 
-		UploadConflictResponse req = (UploadConflictResponse) obj;
+		UploadResponse req = (UploadResponse) obj;
 
-		return new EqualsBuilder().append(this.conflictType, req.conflictType)
+		return new EqualsBuilder().append(this.uploadCommonData, req.uploadCommonData)
 				.append(this.resourceItems, req.resourceItems).isEquals();
 	}
 
@@ -81,7 +81,7 @@ public class UploadConflictResponse {
 	@Override
 	public int hashCode() {
 
-		return new HashCodeBuilder(17, 37).append(this.conflictType).append(this.resourceItems).hashCode();
+		return new HashCodeBuilder(17, 37).append(this.uploadCommonData).append(this.resourceItems).hashCode();
 	}
 
 	/**
@@ -94,22 +94,25 @@ public class UploadConflictResponse {
 	}
 
 	/**
-	 * @return conflictType
+	 * @return uploadCommonData
 	 */
-	public SyncResultType getConflictType() {
-		return conflictType;
+	public UploadCommonData getUploadCommonData() {
+		return uploadCommonData;
 	}
 
 	/**
-	 * @param conflictType セットする conflictType
+	 * @param uploadCommonData セットする uploadCommonData
 	 */
-	public void setConflictType(SyncResultType conflictType) {
-		this.conflictType = conflictType;
+	public void setUploadCommonData(UploadCommonData uploadCommonData) {
+		this.uploadCommonData = uploadCommonData;
 	}
 
 	/**
+	 * nullのときレスポンスから除外するため、{@link JsonSerialize}を追加しています).
+	 *
 	 * @return resourceItems
 	 */
+	@JsonSerialize(include = Inclusion.NON_NULL)
 	public Map<String, List<ResourceItemWrapper>> getResourceItems() {
 		return resourceItems;
 	}

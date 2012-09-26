@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.ctrl;
+package com.htmlhifive.sync.service;
 
 import java.util.List;
 import java.util.Map;
@@ -23,20 +23,26 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.htmlhifive.sync.resource.ResourceQuery;
+import com.htmlhifive.sync.resource.ResourceQueryConditions;
 
 /**
- * JSON形式の下り更新リクエスト内容全体を表現するデータクラス.
+ * 下り更新リクエスト内容全体を表現するデータクラス.
  *
  * @author kishigam
  */
 public class DownloadRequest {
 
 	/**
+	 * 下り更新共通データ.<br>
+	 * このリクエストにおいてクライアントから渡される情報を保持しています.
+	 */
+	private DownloadCommonData downloadCommonData;
+
+	/**
 	 * 下り更新対象を表すクエリリストのMap.<br>
 	 * リソース別にクエリリストを保持します.
 	 */
-	private Map<String, List<ResourceQuery>> queries;
+	private Map<String, List<ResourceQueryConditions>> queries;
 
 	/**
 	 * @see Object#equals(Object)
@@ -51,7 +57,8 @@ public class DownloadRequest {
 
 		DownloadRequest request = (DownloadRequest) obj;
 
-		return new EqualsBuilder().append(this.queries, request.queries).isEquals();
+		return new EqualsBuilder().append(this.downloadCommonData, request.downloadCommonData)
+				.append(this.queries, request.queries).isEquals();
 	}
 
 	/**
@@ -60,7 +67,7 @@ public class DownloadRequest {
 	@Override
 	public int hashCode() {
 
-		return new HashCodeBuilder(17, 37).append(this.queries).hashCode();
+		return new HashCodeBuilder(17, 37).append(this.downloadCommonData).append(this.queries).hashCode();
 	}
 
 	/**
@@ -73,16 +80,30 @@ public class DownloadRequest {
 	}
 
 	/**
+	 * @return downloadCommonData
+	 */
+	public DownloadCommonData getDownloadCommonData() {
+		return downloadCommonData;
+	}
+
+	/**
+	 * @param downloadCommonData セットする downloadCommonData
+	 */
+	public void setDownloadCommonData(DownloadCommonData downloadCommonData) {
+		this.downloadCommonData = downloadCommonData;
+	}
+
+	/**
 	 * @return queries
 	 */
-	public Map<String, List<ResourceQuery>> getQueries() {
+	public Map<String, List<ResourceQueryConditions>> getQueries() {
 		return queries;
 	}
 
 	/**
 	 * @param queries セットする queries
 	 */
-	public void setQueries(Map<String, List<ResourceQuery>> queries) {
+	public void setQueries(Map<String, List<ResourceQueryConditions>> queries) {
 		this.queries = queries;
 	}
 }

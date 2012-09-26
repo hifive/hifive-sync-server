@@ -31,7 +31,7 @@ import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.resource.DefaultSyncResourceManager;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
-import com.htmlhifive.sync.resource.ResourceQuery;
+import com.htmlhifive.sync.resource.ResourceQueryConditions;
 import com.htmlhifive.sync.resource.SyncResource;
 import com.htmlhifive.sync.resource.SyncResourceManager;
 import com.htmlhifive.sync.resource.SyncResultType;
@@ -47,6 +47,12 @@ import com.htmlhifive.sync.resource.SyncResultType;
 public class DefaultSynchronizer implements Synchronizer {
 
 	/**
+	 * クライアントに返す今回の同期時刻を、実際の同期実行時刻の何ミリ秒前とするかを設定します.<br>
+	 * (現在の設定は60,000ミリ秒＝1分)
+	 */
+	private static final long BUFFER_TIME_FOR_DOWNLOAD = 1L * 60L * 1_000L;
+
+	/**
 	 * リソースへのインターフェースを取得するためのマネージャ.
 	 */
 	@Resource(type = DefaultSyncResourceManager.class)
@@ -56,36 +62,23 @@ public class DefaultSynchronizer implements Synchronizer {
 	 * 同期ステータスのリポジトリ.
 	 */
 	@Resource
-	private SyncStatusRepository repository;
-
-	/**
-	 * クライアントに返す今回の同期時刻を、実際の同期実行時刻の何ミリ秒前とするかを設定します.<br>
-	 * (現在の設定は60,000ミリ秒＝1分)
-	 */
-	private static final long BUFFER_TIME_FOR_DOWNLOAD = 1L * 60L * 1_000L;
+	private UploadCommonDataRepository repository;
 
 	/**
 	 * 下り更新を実行します.<br>
 	 * リソースごとに、指定されたクエリでリソースアイテムを検索、取得します.
 	 *
-	 * @param storageId クライアントのストレージID
-	 * @param queries クエリリスト(リソース別Map)
-	 * @return 下り更新結果を含む同期ステータスオブジェクト
+	 * @param request 下り更新リクエストデータ
+	 * @return 下り更新レスポンスデータ
 	 */
 	@Override
-	public SyncStatus download(String storageId, Map<String, List<ResourceQuery>> queries) {
-
-		// クライアントごとの(前回)同期ステータスオブジェクトを取得
-		SyncStatus currentStatus = currentStatus(storageId);
-
-		// 下り更新時刻の設定
-		currentStatus.setLastDownloadTime(generateDownloadTime());
+	public DownloadResponse download(DownloadRequest request) {
 
 		// リソース名ごとに結果をコンテナに格納する
 		Map<String, List<ResourceItemWrapper>> resultMap = new HashMap<>();
 
 		// クエリごとに処理し、結果をコンテナに格納
-		for (String resourceName : queries.keySet()) {
+		for (String resourceName : request.getQueries().keySet()) {
 
 			// Mapにリソース名ごとのコンテナが存在しない場合は生成
 			if (!resultMap.containsKey(resourceName)) {
@@ -93,11 +86,11 @@ public class DefaultSynchronizer implements Synchronizer {
 			}
 
 			List<ResourceItemWrapper> resultList = resultMap.get(resourceName);
-			for (ResourceQuery query : queries.get(resourceName)) {
+			for (ResourceQueryConditions queryConditions : request.getQueries().get(resourceName)) {
 
-				// synchronizerへリクエスト発行
+				// リソースへリクエスト発行
 				SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-				List<ResourceItemWrapper> resultItemList = resource.readByQuery(query);
+				List<ResourceItemWrapper> resultItemList = resource.readByQuery(queryConditions);
 
 				// 結果をマージする(同じリソースアイテムは1件のみとなる)
 				for (ResourceItemWrapper itemWrapper : resultItemList) {
@@ -108,10 +101,20 @@ public class DefaultSynchronizer implements Synchronizer {
 			}
 			resultMap.put(resourceName, resultList);
 		}
-		currentStatus.setResourceItems(resultMap);
+
+		// レスポンス用共通データ
+		DownloadCommonData responseCommon = new DownloadCommonData();
+		responseCommon.setStorageId(request.getDownloadCommonData().getStorageId());
+
+		// 下り更新時刻を算出(バッファ考慮)し、レスポンスに設定
+		responseCommon.setLastDownloadTime(generateDownloadTime());
+
+		// 下り更新レスポンスに結果を設定
+		DownloadResponse response = new DownloadResponse(responseCommon);
+		response.setResourceItems(resultMap);
 
 		// 下り更新では同期ステータスを更新しない
-		return currentStatus;
+		return response;
 	}
 
 	/**
@@ -129,25 +132,23 @@ public class DefaultSynchronizer implements Synchronizer {
 	 * 上り更新を実行します.<br>
 	 * 対象のリソースを判断し、リソースアイテムの更新内容に応じた更新処理を呼び出します.
 	 *
-	 * @param storageId クライアントのストレージID
-	 * @param lastUploadTime クライアントごとの前回上り更新時刻
-	 * @param resourceItems リソースアイテムリスト
-	 * @return 上り更新結果を含む同期ステータスオブジェクト
+	 * @param request 上り更新リクエストデータ
+	 * @return 上り更新レスポンスデータ
 	 */
 	@Override
-	public SyncStatus upload(String storageId, long lastUploadTime, List<ResourceItemWrapper> resourceItems) {
+	public UploadResponse upload(UploadRequest request) {
 
-		// クライアントごとの(前回)同期ステータスオブジェクトを取得
-		SyncStatus currentStatus = currentStatus(storageId);
+		// リクエストの上り更新共通データ
+		UploadCommonData requestCommon = request.getUploadCommonData();
+
+		// 保存していた、前回までの上り更新共通データを取得し、レスポンスの共通データとして初期設定
+		UploadCommonData responseCommon = lastUploadCommonData(requestCommon.getStorageId());
 
 		// 二重送信判定
-		// サーバ側で管理されている前回上り更新時刻より前の場合、二重送信と判断し、現在の同期ステータスをそのまま返します.
-		if (currentStatus.isNewerStatusThanClient(lastUploadTime)) {
-			return currentStatus;
+		// サーバ側で管理されている前回上り更新時刻より前の場合、二重送信等で処理済みと判断し、をそのまま返します.
+		if (responseCommon.isLaterUploadThan(requestCommon)) {
+			return new UploadResponse(responseCommon);
 		}
-
-		// 上り更新時刻の設定
-		currentStatus.setLastUploadTime(generateUploadTime());
 
 		// 競合の種類ごとに、競合データリソースのアイテムリスト(リソース別Map)に格納する
 		Map<SyncResultType, Map<String, List<ResourceItemWrapper>>> resultMapHolder = new HashMap<>();
@@ -155,11 +156,10 @@ public class DefaultSynchronizer implements Synchronizer {
 		resultMapHolder.put(SyncResultType.UPDATED, new HashMap<String, List<ResourceItemWrapper>>());
 
 		// リソースアイテムごとに処理(上り更新リクエストデータのみ、ResourceItemWrapperにリソース名を持つ)
-		for (ResourceItemWrapper uploadingItemWrapper : resourceItems) {
+		for (ResourceItemWrapper uploadingItemWrapper : request.getResourceItems()) {
 
 			// 更新時刻を設定
-			// TODO:lastModifiedフィールドを使用してはいけない
-			uploadingItemWrapper.setUploadTime(currentStatus.getLastUploadTime());
+			uploadingItemWrapper.setUploadTime(requestCommon.getLastUploadTime());
 
 			SyncResource<?> resource = resourceManager.locateSyncResource(uploadingItemWrapper.getResourceName());
 
@@ -193,19 +193,23 @@ public class DefaultSynchronizer implements Synchronizer {
 			}
 
 			// ステータスに設定し、次のリソースアイテムの更新へ
-			currentStatus.setResultType(itemWrapperAfterUpload.getResultType());
+			responseCommon.setConflictType(itemWrapperAfterUpload.getResultType());
 		}
 
 		// 以下の優先順で複数の競合データをConflictExceptionでスロー
-		if (currentStatus.getResultType() == SyncResultType.DUPLICATEDID) {
+		if (responseCommon.getConflictType() == SyncResultType.DUPLICATEDID) {
 			throwConflictException(SyncResultType.DUPLICATEDID, resultMapHolder.get(SyncResultType.DUPLICATEDID));
 		}
-		if (currentStatus.getResultType() == SyncResultType.UPDATED) {
+		if (responseCommon.getConflictType() == SyncResultType.UPDATED) {
 			throwConflictException(SyncResultType.UPDATED, resultMapHolder.get(SyncResultType.UPDATED));
 		}
 
-		// 競合がない場合はステータスを更新し、リターン
-		return repository.save(currentStatus);
+		// 競合がない場合、上り更新時刻をレスポンスの共通データに設定し、更新する
+		responseCommon.setLastUploadTime(generateUploadTime());
+		repository.save(responseCommon);
+
+		// レスポンスの生成とリターン(アイテムリストはセットしない)
+		return new UploadResponse(responseCommon);
 	}
 
 	/**
@@ -256,7 +260,7 @@ public class DefaultSynchronizer implements Synchronizer {
 	}
 
 	/**
-	 * 競合したリソースアイテムのリストを生成し、競合発生時の例外をスローします.
+	 * 上り更新レスポンスを競合発生時の例外に設定し、スローします.
 	 *
 	 * @param conflictType 競合タイプ
 	 * @param conflictItemMap 競合したリソースアイテムの情報を保持しているMap
@@ -264,22 +268,30 @@ public class DefaultSynchronizer implements Synchronizer {
 	private void throwConflictException(SyncResultType conflictType,
 			Map<String, List<ResourceItemWrapper>> conflictItemMap) {
 
-		throw new ConflictException(conflictType, conflictItemMap);
+		UploadCommonData conflictCommon = new UploadCommonData();
+		conflictCommon.setConflictType(conflictType);
+
+		UploadResponse response = new UploadResponse(conflictCommon);
+		response.setResourceItems(conflictItemMap);
+
+		throw new ConflictException(response);
 	}
 
 	/**
-	 * リポジトリを検索し、前回の同期ステータスを取得します.<br>
+	 * リポジトリを検索し、前回の上り更新共通データを取得します.<br>
 	 * 存在しない場合は新規生成します.
 	 *
 	 * @param storageId クライアントのストレージID
 	 * @return 同期ステータスオブジェクト
 	 */
-	private SyncStatus currentStatus(String storageId) {
+	private UploadCommonData lastUploadCommonData(String storageId) {
 
-		SyncStatus status = repository.findOne(storageId);
-		if (status == null) {
-			status = new SyncStatus(storageId);
+		UploadCommonData lastCommon = repository.findOne(storageId);
+		if (lastCommon == null) {
+			lastCommon = new UploadCommonData();
+			lastCommon.setStorageId(storageId);
+			// 最終上り更新時刻は初期値のため、isLaterUploadThan()は必ずfalseになる状態となっている
 		}
-		return status;
+		return lastCommon;
 	}
 }

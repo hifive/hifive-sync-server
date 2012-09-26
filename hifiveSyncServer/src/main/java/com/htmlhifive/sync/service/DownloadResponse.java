@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.ctrl;
+package com.htmlhifive.sync.service;
 
 import java.util.List;
 import java.util.Map;
@@ -22,11 +22,8 @@ import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
-import com.htmlhifive.sync.service.SyncStatus;
 
 /**
  * クライアントからの下り更新リクエストに対するレスポンスデータクラス.<br>
@@ -37,16 +34,10 @@ import com.htmlhifive.sync.service.SyncStatus;
 public class DownloadResponse {
 
 	/**
-	 * レスポンスに含むストレージID.<br>
-	 * このフィールドは初回下り更新のときのみレスポンスに含みます.<br>
-	 * これを実現するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています)
+	 * 下り更新共通データ.<br>
+	 * このレスポンスにおいてクライアントへ返す情報を保持しています.
 	 */
-	private String storageId;
-
-	/**
-	 * 下り更新処理を実行した時刻.
-	 */
-	private long lastDownloadTime;
+	private DownloadCommonData downloadCommonData;
 
 	/**
 	 * 下り更新結果のリソースアイテムリスト. <br>
@@ -55,25 +46,12 @@ public class DownloadResponse {
 	private Map<String, List<ResourceItemWrapper>> resourceItems;
 
 	/**
-	 * 同期ステータスオブジェクトから下り更新レスポンスを生成します.
+	 * 下り更新共通データを指定して下り更新レスポンスを生成します.
 	 *
-	 * @param statusAfterDownload 同期ステータスオブジェクト
+	 * @param downloadCommonData 下り更新共通データ
 	 */
-	public DownloadResponse(SyncStatus statusAfterDownload) {
-		this.lastDownloadTime = statusAfterDownload.getLastDownloadTime();
-		this.resourceItems = statusAfterDownload.getResourceItems();
-	}
-
-	/**
-	 * 同期ステータスオブジェクト、およびストレージIDから下り更新レスポンスを生成します.<br>
-	 *
-	 * @param storageId ストレージID(初回下り更新時)
-	 * @param statusAfterDownload 同期ステータスオブジェクト
-	 */
-	public DownloadResponse(String storageId, SyncStatus statusAfterDownload) {
-
-		this(statusAfterDownload);
-		this.storageId = storageId;
+	public DownloadResponse(DownloadCommonData downloadCommonData) {
+		this.downloadCommonData = downloadCommonData;
 	}
 
 	/**
@@ -90,7 +68,7 @@ public class DownloadResponse {
 
 		DownloadResponse req = (DownloadResponse) obj;
 
-		return new EqualsBuilder().append(this.lastDownloadTime, req.lastDownloadTime)
+		return new EqualsBuilder().append(this.downloadCommonData, req.downloadCommonData)
 				.append(this.resourceItems, req.resourceItems).isEquals();
 	}
 
@@ -100,7 +78,7 @@ public class DownloadResponse {
 	@Override
 	public int hashCode() {
 
-		return new HashCodeBuilder(17, 37).append(this.lastDownloadTime).append(this.resourceItems).hashCode();
+		return new HashCodeBuilder(17, 37).append(this.downloadCommonData).append(this.resourceItems).hashCode();
 	}
 
 	/**
@@ -113,27 +91,10 @@ public class DownloadResponse {
 	}
 
 	/**
-	 * nullでない場合のみレスポンスに含むため、{@link JsonSerialize}を設定しています.
-	 *
-	 * @return storageId
+	 * @return downloadCommonData
 	 */
-	@JsonSerialize(include = Inclusion.NON_NULL)
-	public String getStorageId() {
-		return storageId;
-	}
-
-	/**
-	 * @return syncTime
-	 */
-	public long getSyncTime() {
-		return lastDownloadTime;
-	}
-
-	/**
-	 * @param syncTime セットする syncTime
-	 */
-	public void setSyncTime(long syncTime) {
-		this.lastDownloadTime = syncTime;
+	public DownloadCommonData getDownloadCommonData() {
+		return downloadCommonData;
 	}
 
 	/**

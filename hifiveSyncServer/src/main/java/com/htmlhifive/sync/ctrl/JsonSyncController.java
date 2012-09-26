@@ -27,12 +27,14 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.service.DefaultSynchronizer;
-import com.htmlhifive.sync.service.SyncStatus;
+import com.htmlhifive.sync.service.DownloadRequest;
+import com.htmlhifive.sync.service.DownloadResponse;
 import com.htmlhifive.sync.service.Synchronizer;
+import com.htmlhifive.sync.service.UploadRequest;
+import com.htmlhifive.sync.service.UploadResponse;
 
 /**
  * JSON形式の同期リクエストを処理するコントローラクラス.
@@ -49,40 +51,32 @@ public class JsonSyncController {
 	private Synchronizer synchronizer;
 
 	/**
-	 * 初めて同期処理を行うクライアントからのリクエストを受け付け、下り更新処理のレスポンスを返します.<br>
+	 * 下り更新処理を行うクライアントからのリクエストを処理し、結果をレスポンスとして返します.<br>
 	 *
-	 * @param request JSON形式の同期リクエストデータ(初回下り更新用)
-	 * @return JSON形式の同期レスポンスデータ(初回下り更新用)
+	 * @param request 下り更新リクエストデータ
+	 * @return 下り更新レスポンスデータ
 	 */
 	@RequestMapping(value = "/download", method = RequestMethod.POST, params = {}, headers = {
 			"Accept=application/json", "Content-Type=application/json" })
-	public ResponseEntity<DownloadResponse> initialDownload(final @RequestBody DownloadRequest request) {
+	public ResponseEntity<DownloadResponse> download(@RequestBody DownloadRequest request) {
 
-		// ストレージIDを新規採番し、下り更新サービスを呼び出し
-		SyncStatus statusAfterDownload = synchronizer.download(generateNewStorageId(), request.getQueries());
+		boolean isInitialDownload = false;
+		// ストレージIDが含まれていない場合、初回アクセスなのでストレージIDを生成、リクエストの下り更新共通データにセット
+		if (request.getDownloadCommonData().getStorageId() == null) {
+			isInitialDownload = true;
+			request.getDownloadCommonData().setStorageId(generateNewStorageId());
+		}
 
-		// レスポンスデータ(初回用)を生成、HTTPレスポンスをリターン
-		return createResponseEntity(new DownloadResponse(statusAfterDownload.getStorageId(), statusAfterDownload),
-				HttpStatus.OK);
-	}
+		// 下り更新サービスを呼び出し
+		DownloadResponse response = synchronizer.download(request);
 
-	/**
-	 * 同期処理を行うクライアントからのリクエストを受け付け、下り更新処理のレスポンスを返します.<br>
-	 * クエリパラメータとして、クライアントのストレージIDが指定されています.
-	 *
-	 * @param request JSON形式の同期リクエストデータ(下り更新用)
-	 * @return JSON形式の同期レスポンスデータ(下り更新用)
-	 */
-	@RequestMapping(value = "/download", method = RequestMethod.POST, params = { "storageid" }, headers = {
-			"Accept=application/json", "Content-Type=application/json" })
-	public ResponseEntity<DownloadResponse> download(final @RequestParam("storageid") String storageId,
-			final @RequestBody DownloadRequest request) {
+		// 初回アクセス以外はストレージIDをレスポンスから除外するためnullをセット
+		if (!isInitialDownload) {
+			response.getDownloadCommonData().setStorageId(null);
+		}
 
-		// ストレージIDを渡し、下り更新サービスを呼び出し
-		SyncStatus statusAfterDownload = synchronizer.download(storageId, request.getQueries());
-
-		// レスポンスデータを生成、HTTPレスポンスをリターン
-		return createResponseEntity(new DownloadResponse(statusAfterDownload), HttpStatus.OK);
+		// HTTPレスポンスをリターン
+		return createHttpResponseEntity(response, HttpStatus.OK);
 	}
 
 	/**
@@ -97,31 +91,25 @@ public class JsonSyncController {
 	}
 
 	/**
-	 * 同期処理を行うクライアントからのリクエストを受け付け、上り更新処理のレスポンスを返します.<br>
-	 * クエリパラメータとして、クライアントのストレージIDが指定されています.
+	 * 上り更新処理を行うクライアントからのリクエストを処理し、結果をレスポンスとして返します.<br>
 	 *
-	 * @param request JSON形式の同期リクエストデータ(上り更新用)
-	 * @return JSON形式の同期レスポンスデータ(上り更新用)
+	 * @param request 上り更新リクエストデータ
+	 * @return 上り更新レスポンスデータ
 	 */
-	@RequestMapping(value = "/upload", method = RequestMethod.POST, params = { "storageid" }, headers = {
-			"Accept=application/json", "Content-Type=application/json" })
-	public ResponseEntity<?> upload(final @RequestParam("storageid") String storageId,
-			final @RequestBody UploadRequest request) {
+	@RequestMapping(value = "/upload", method = RequestMethod.POST, params = {}, headers = { "Accept=application/json",
+			"Content-Type=application/json" })
+	public ResponseEntity<UploadResponse> upload(@RequestBody UploadRequest request) {
 
 		try {
-			// ストレージIDを渡し、下り更新サービスを呼び出し
-			SyncStatus statusAfterUpload = synchronizer.upload(storageId, request.getLastUploadTime(),
-					request.getResourceItems());
+			// 上り更新サービスを呼び出し
+			UploadResponse response = synchronizer.upload(request);
 
 			// レスポンスデータを生成し、リターン
-			return createResponseEntity(new UploadResponse(statusAfterUpload), HttpStatus.OK);
+			return createHttpResponseEntity(response, HttpStatus.OK);
 
 		} catch (ConflictException e) {
 
-			// 競合時用のレスポンスデータを生成し、リターン
-			UploadConflictResponse responseBodyOnConflict = new UploadConflictResponse(e);
-
-			return createResponseEntity(responseBodyOnConflict, HttpStatus.CONFLICT);
+			return createHttpResponseEntity(e.getResponse(), HttpStatus.CONFLICT);
 		}
 	}
 
@@ -132,7 +120,7 @@ public class JsonSyncController {
 	 * @param status ステータスコードオブジェクト
 	 * @return HTTPレスポンスエンティティ
 	 */
-	private <T> ResponseEntity<T> createResponseEntity(T body, HttpStatus status) {
+	private <T> ResponseEntity<T> createHttpResponseEntity(T body, HttpStatus status) {
 
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.add("Content-Type", "application/json;charset=utf-8");

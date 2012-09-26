@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.ctrl;
+package com.htmlhifive.sync.service;
 
 import java.util.List;
 
@@ -25,23 +25,20 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 
 /**
- * JSON形式の上り更新リクエスト内容全体を表現するデータクラス.<br>
- * 上り更新データには、同じリソース、および同じリソースアイテムが複数個存在します. <br>
- * また、これらは順序を守って処理されなければなりません. そのため、MultiMapオブジェクトでリソース別のリストを保持します.<br>
- * リソース別のリソースアイテムをSetで保持することや、それをリソース名をキーとするHashMap等に保持することはできません.
+ * 上り更新リクエスト内容全体を表現するデータクラス.
  *
  * @author kishigam
  */
 public class UploadRequest {
 
 	/**
-	 * 最終上り更新時刻.
+	 * 上り更新共通データ.<br>
+	 * このリクエストにおいてクライアントから渡される情報を保持しています.
 	 */
-	private long lastUploadTime;
+	private UploadCommonData uploadCommonData;
 
 	/**
-	 * 上り更新対象のリソースアイテムリスト.<br>
-	 * 上り更新リクエストデータでは、リソースアイテムのラッパーオブジェクトにリソース名を持ちます.
+	 * 上り更新対象を表すリソースアイテムリストのMap.<br>
 	 */
 	private List<ResourceItemWrapper> resourceItems;
 
@@ -59,7 +56,7 @@ public class UploadRequest {
 
 		UploadRequest req = (UploadRequest) obj;
 
-		return new EqualsBuilder().append(this.lastUploadTime, req.lastUploadTime)
+		return new EqualsBuilder().append(this.uploadCommonData, req.uploadCommonData)
 				.append(this.resourceItems, req.resourceItems).isEquals();
 	}
 
@@ -69,7 +66,7 @@ public class UploadRequest {
 	@Override
 	public int hashCode() {
 
-		return new HashCodeBuilder(17, 37).append(this.lastUploadTime).append(this.resourceItems).hashCode();
+		return new HashCodeBuilder(17, 37).append(this.uploadCommonData).append(this.resourceItems).hashCode();
 	}
 
 	/**
@@ -82,17 +79,17 @@ public class UploadRequest {
 	}
 
 	/**
-	 * @return lastUploadTime
+	 * @return uploadCommonData
 	 */
-	public long getLastUploadTime() {
-		return lastUploadTime;
+	public UploadCommonData getUploadCommonData() {
+		return uploadCommonData;
 	}
 
 	/**
-	 * @param lastUploadTime セットする lastUploadTime
+	 * @param uploadCommonData セットする uploadCommonData
 	 */
-	public void setLastUploadTime(long lastUploadTime) {
-		this.lastUploadTime = lastUploadTime;
+	public void setUploadCommonData(UploadCommonData uploadCommonData) {
+		this.uploadCommonData = uploadCommonData;
 	}
 
 	/**
