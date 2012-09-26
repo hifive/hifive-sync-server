@@ -14,33 +14,51 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.resource;
+package com.htmlhifive.sync.common;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.Serializable;
+
+import javax.persistence.Embeddable;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
 /**
- * リソースに更新アイテムを要求するクエリ(問い合わせ)情報クラス.
+ * {@link ResourceItemCommonData 共通データクラス}のIDクラス.
  *
  * @author kishigam
  */
-public class ResourceQuery {
+@Embeddable
+public class ResourceItemCommonDataId implements Serializable {
 
 	/**
-	 * リソースごとにダウンロード対象アイテムを絞り込む条件. <br>
-	 * 対象項目と条件(配列形式)のMapで表現されます.
+	 * シリアルバージョンUID.
 	 */
-	private Map<String, String[]> conditions = new HashMap<>();
+	private static final long serialVersionUID = -3582140249142802398L;
 
 	/**
-	 * 前回ダウンロード時刻.<br>
-	 * この時刻以降の更新データが取得対象になります.
+	 * リソース名.<br>
 	 */
-	private long lastDownloadTime = 0L;
+	private String resourceName;
+
+	/**
+	 * リソースアイテムのID.
+	 */
+	private String resourceItemId;
+
+	/**
+	 * アプリケーションからは使用できないプライベートデフォルトコンストラクタ.<br>
+	 * 永続化マネージャが使用します.
+	 */
+	@SuppressWarnings("unused")
+	private ResourceItemCommonDataId() {
+	}
+
+	public ResourceItemCommonDataId(String resourceName, String resourceItemId) {
+		this.resourceName = resourceName;
+		this.resourceItemId = resourceItemId;
+	}
 
 	/**
 	 * @see Object#equals(Object)
@@ -50,13 +68,10 @@ public class ResourceQuery {
 
 		if (this == obj)
 			return true;
-
-		if (!(obj instanceof ResourceQuery))
+		if (!(obj instanceof ResourceItemCommonDataId))
 			return false;
 
-		ResourceQuery msg = (ResourceQuery) obj;
-
-		return EqualsBuilder.reflectionEquals(this, msg);
+		return EqualsBuilder.reflectionEquals(this, ((ResourceItemCommonDataId) obj));
 	}
 
 	/**
@@ -78,30 +93,16 @@ public class ResourceQuery {
 	}
 
 	/**
-	 * @return conditions
+	 * @return resourceName
 	 */
-	public Map<String, String[]> getConditions() {
-		return conditions;
+	public String getResourceName() {
+		return resourceName;
 	}
 
 	/**
-	 * @param conditions セットする conditions
+	 * @return resourceItemId
 	 */
-	public void setConditions(Map<String, String[]> conditions) {
-		this.conditions = conditions;
-	}
-
-	/**
-	 * @return lastDownloadTime
-	 */
-	public long getLastDownloadTime() {
-		return lastDownloadTime;
-	}
-
-	/**
-	 * @param lastDownloadTime セットする lastDownloadTime
-	 */
-	public void setLastDownloadTime(long lastDownloadTime) {
-		this.lastDownloadTime = lastDownloadTime;
+	public String getResourceItemId() {
+		return resourceItemId;
 	}
 }

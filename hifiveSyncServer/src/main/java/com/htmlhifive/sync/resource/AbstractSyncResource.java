@@ -24,9 +24,9 @@ import java.util.Map;
 import javax.annotation.Resource;
 import javax.persistence.EntityExistsException;
 
-import com.htmlhifive.sync.commondata.CommonData;
-import com.htmlhifive.sync.commondata.CommonDataId;
-import com.htmlhifive.sync.commondata.CommonDataRepository;
+import com.htmlhifive.sync.common.ResourceItemCommonData;
+import com.htmlhifive.sync.common.ResourceItemCommonDataId;
+import com.htmlhifive.sync.common.ResourceItemCommonDataRepository;
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.ItemUpdatedException;
@@ -46,7 +46,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * 共通データのリポジトリ.
 	 */
 	@Resource
-	private CommonDataRepository repository;
+	private ResourceItemCommonDataRepository repository;
 
 	/**
 	 * リソースごとに決まるロック方式のマネージャオブジェクト.<br>
@@ -67,7 +67,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	@Override
 	public ResourceItemWrapper read(String resourceItemId) {
 
-		CommonData common = currentCommonData(resourceItemId);
+		ResourceItemCommonData common = currentCommonData(resourceItemId);
 
 		T item = doRead(common.getTargetItemId());
 
@@ -87,16 +87,16 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @return 条件に合致するリソースアイテムのリスト
 	 */
 	@Override
-	public List<ResourceItemWrapper> readByQuery(ResourceQuery query) {
+	public List<ResourceItemWrapper> readByQuery(ResourceQueryConditions query) {
 
-		List<CommonData> commonDataList = repository.findModified(getResourceName(), query.getLastDownloadTime());
+		List<ResourceItemCommonData> commonDataList = repository.findModified(getResourceName(), query.getLastDownloadTime());
 
-		Map<T, CommonData> items = doReadByQuery(commonDataList, query.getConditions());
+		Map<T, ResourceItemCommonData> items = doReadByQuery(commonDataList, query.getConditions());
 
 		List<ResourceItemWrapper> resultList = new ArrayList<>();
 		for (T item : items.keySet()) {
 
-			CommonData common = items.get(item);
+			ResourceItemCommonData common = items.get(item);
 
 			ResourceItemWrapper itemWrapper = new ResourceItemWrapper(common.getId().getResourceItemId());
 			itemWrapper.setAction(common.getAction());
@@ -125,7 +125,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 			// 成功すると共通データで管理する各リソースアイテムのIDが返され、登録を行ったアイテムがサーバで管理される
 			String targetItemId = doCreate(createItem);
 
-			CommonData newCommon = saveNewCommonData(itemWrapper, targetItemId);
+			ResourceItemCommonData newCommon = saveNewCommonData(itemWrapper, targetItemId);
 
 			resultItemWrapper = newCommon.generateItemWrapper();
 			resultItemWrapper.setItem(createItem);
@@ -133,7 +133,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 		} catch (DuplicateIdException e) {
 
 			// キー重複の場合、共通データ、リソースアイテムには現在サーバで管理されているものを設定する
-			CommonData existingCommon = currentCommonData(itemWrapper.getResourceItemId());
+			ResourceItemCommonData existingCommon = currentCommonData(itemWrapper.getResourceItemId());
 
 			resultItemWrapper = existingCommon.generateItemWrapper();
 			resultItemWrapper.setResultType(SyncResultType.DUPLICATEDID);
@@ -153,7 +153,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	public ResourceItemWrapper update(ResourceItemWrapper itemWrapper) {
 
 		T updateItem = itemConverter().convert(itemWrapper.getItem(), getItemType());
-		CommonData commonBeforUpdate = currentCommonData(itemWrapper.getResourceItemId());
+		ResourceItemCommonData commonBeforUpdate = currentCommonData(itemWrapper.getResourceItemId());
 		// ロックエラー判定
 		if (!lockManager.canUpdate(itemWrapper, commonBeforUpdate)) {
 
@@ -176,7 +176,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 		}
 
 		doUpdate(updateItem);
-		CommonData commonAfterUpdate = saveUpdatedCommonData(itemWrapper);
+		ResourceItemCommonData commonAfterUpdate = saveUpdatedCommonData(itemWrapper);
 
 		lockManager.release(commonAfterUpdate);
 
@@ -197,7 +197,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 
 		T updateItem = null;
 
-		CommonData commonBeforUpdate = currentCommonData(itemWrapper.getResourceItemId());
+		ResourceItemCommonData commonBeforUpdate = currentCommonData(itemWrapper.getResourceItemId());
 		// ロックエラー判定
 		if (!lockManager.canUpdate(itemWrapper, commonBeforUpdate)) {
 
@@ -229,7 +229,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 			doDelete(commonBeforUpdate.getTargetItemId());
 		}
 
-		CommonData commonAfterUpdate = saveUpdatedCommonData(itemWrapper);
+		ResourceItemCommonData commonAfterUpdate = saveUpdatedCommonData(itemWrapper);
 
 		lockManager.release(commonAfterUpdate);
 
@@ -256,7 +256,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @param conditions 条件Map(データ項目名,データ項目の条件)
 	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
 	 */
-	protected abstract Map<T, CommonData> doReadByQuery(List<CommonData> commonDataList,
+	protected abstract Map<T, ResourceItemCommonData> doReadByQuery(List<ResourceItemCommonData> commonDataList,
 			Map<String, String[]> conditions);
 
 	/**
@@ -358,9 +358,9 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @return 共通データエンティティ
 	 * @throws NotFoundException IDからエンティティが取得できなかったとき
 	 */
-	private CommonData currentCommonData(String resourceItemId) {
+	private ResourceItemCommonData currentCommonData(String resourceItemId) {
 
-		CommonData common = repository.findOne(new CommonDataId(getResourceName(), resourceItemId));
+		ResourceItemCommonData common = repository.findOne(new ResourceItemCommonDataId(getResourceName(), resourceItemId));
 
 		if (common == null) {
 			throw new NotFoundException("entity not found");
@@ -375,9 +375,9 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @param targetItemId 各リソースアイテムのID
 	 * @return 保存された共通データ
 	 */
-	private CommonData saveNewCommonData(ResourceItemWrapper itemWrapper, String targetItemId) {
+	private ResourceItemCommonData saveNewCommonData(ResourceItemWrapper itemWrapper, String targetItemId) {
 
-		CommonData newCommon = new CommonData(new CommonDataId(getResourceName(), itemWrapper.getResourceItemId()),
+		ResourceItemCommonData newCommon = new ResourceItemCommonData(new ResourceItemCommonDataId(getResourceName(), itemWrapper.getResourceItemId()),
 				targetItemId);
 		newCommon.modifiy(itemWrapper);
 
@@ -398,9 +398,9 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @param requestHeader リソースへのリクエストヘッダ
 	 * @return リソースからのレスポンスヘッダ
 	 */
-	private CommonData saveUpdatedCommonData(ResourceItemWrapper itemWrapper) {
+	private ResourceItemCommonData saveUpdatedCommonData(ResourceItemWrapper itemWrapper) {
 
-		CommonData updatingCommon = currentCommonData(itemWrapper.getResourceItemId());
+		ResourceItemCommonData updatingCommon = currentCommonData(itemWrapper.getResourceItemId());
 
 		updatingCommon.modifiy(itemWrapper);
 
@@ -416,9 +416,9 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @param lockKey ロックキー
 	 * @return 共通データ
 	 */
-	private CommonData getLock(String resourceItemId, String lockKey) {
+	private ResourceItemCommonData getLock(String resourceItemId, String lockKey) {
 
-		CommonData existingCommon = currentCommonData(resourceItemId);
+		ResourceItemCommonData existingCommon = currentCommonData(resourceItemId);
 
 		// TODO: ロックエラー判定→LockManager？
 		existingCommon.setLockKey(lockKey);
@@ -435,7 +435,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 */
 	private void releaseLock(String resourceItemId, String lockKey) {
 
-		CommonData existingCommon = currentCommonData(resourceItemId);
+		ResourceItemCommonData existingCommon = currentCommonData(resourceItemId);
 		existingCommon.setLockKey(null);
 		repository.save(existingCommon);
 	}

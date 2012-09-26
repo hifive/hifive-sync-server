@@ -25,7 +25,7 @@ import javax.annotation.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htmlhifive.sync.commondata.CommonData;
+import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
@@ -75,11 +75,11 @@ public class PersonResource extends AbstractSyncResource<PersonResourceItem> {
 	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
 	 */
 	@Override
-	protected Map<PersonResourceItem, CommonData> doReadByQuery(List<CommonData> commonDataList,
+	protected Map<PersonResourceItem, ResourceItemCommonData> doReadByQuery(List<ResourceItemCommonData> commonDataList,
 			Map<String, String[]> conditions) {
 
-		Map<PersonResourceItem, CommonData> itemMap = new HashMap<>();
-		for (CommonData common : commonDataList) {
+		Map<PersonResourceItem, ResourceItemCommonData> itemMap = new HashMap<>();
+		for (ResourceItemCommonData common : commonDataList) {
 
 			PersonResourceItem item = doRead(common.getTargetItemId());
 

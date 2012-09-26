@@ -26,7 +26,7 @@ import javax.annotation.Resource;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htmlhifive.sync.commondata.CommonData;
+import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
@@ -92,11 +92,11 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
 	 */
 	@Override
-	protected Map<ScheduleResourceItem, CommonData> doReadByQuery(List<CommonData> commonDataList,
+	protected Map<ScheduleResourceItem, ResourceItemCommonData> doReadByQuery(List<ResourceItemCommonData> commonDataList,
 			Map<String, String[]> conditions) {
 
-		Map<ScheduleResourceItem, CommonData> itemMap = new HashMap<>();
-		for (CommonData common : commonDataList) {
+		Map<ScheduleResourceItem, ResourceItemCommonData> itemMap = new HashMap<>();
+		for (ResourceItemCommonData common : commonDataList) {
 
 			ScheduleResourceItem item = doRead(common.getTargetItemId());
 

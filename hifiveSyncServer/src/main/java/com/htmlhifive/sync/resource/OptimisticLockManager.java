@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htmlhifive.sync.commondata.CommonData;
+import com.htmlhifive.sync.common.ResourceItemCommonData;
 
 /**
  * リソース対する楽観的ロック方式での制御ロジッククラス.<br>
@@ -39,7 +39,7 @@ public class OptimisticLockManager implements LockManager {
 	 * @param commonData 共通データ
 	 * @return ロックを取得できた場合true.
 	 */
-	public boolean lock(CommonData commonData) {
+	public boolean lock(ResourceItemCommonData commonData) {
 
 		return true;
 	}
@@ -53,7 +53,7 @@ public class OptimisticLockManager implements LockManager {
 	 * @param commonBeforUpdate 同期レスポンスヘッダ
 	 * @return update(/delete)できる場合true.
 	 */
-	public boolean canUpdate(ResourceItemWrapper updateItem, CommonData commonBeforUpdate) {
+	public boolean canUpdate(ResourceItemWrapper updateItem, ResourceItemCommonData commonBeforUpdate) {
 
 		return updateItem.getLastModified() >= commonBeforUpdate.getLastModified();
 	}
@@ -64,7 +64,7 @@ public class OptimisticLockManager implements LockManager {
 	 *
 	 * @param commonData 共通データ
 	 */
-	public void release(CommonData commonData) {
+	public void release(ResourceItemCommonData commonData) {
 		// ロジックなし
 	}
 }

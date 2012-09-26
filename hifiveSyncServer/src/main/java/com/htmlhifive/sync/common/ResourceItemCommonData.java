@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.commondata;
+package com.htmlhifive.sync.common;
 
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -34,14 +34,14 @@ import com.htmlhifive.sync.resource.SyncAction;
  * @author kishigam
  */
 @Entity
-@Table(name = "COMMON_DATA")
-public class CommonData {
+@Table(name = "RESOURCE_ITEM_COMMON_DATA")
+public class ResourceItemCommonData {
 
 	/**
 	 * IDオブジェクト.<br>
 	 */
 	@EmbeddedId
-	private CommonDataId id;
+	private ResourceItemCommonDataId id;
 
 	/**
 	 * この共通データが対象とするリソースアイテムのID.<br>
@@ -75,7 +75,7 @@ public class CommonData {
 	 * @param requestHeader リソースへのリクエストヘッダ
 	 * @param targetResourceIdStr リソースID文字列
 	 */
-	public CommonData(CommonDataId id, String targetItemId) {
+	public ResourceItemCommonData(ResourceItemCommonDataId id, String targetItemId) {
 
 		this.id = id;
 		this.targetItemId = targetItemId;
@@ -89,10 +89,10 @@ public class CommonData {
 
 		if (this == obj)
 			return true;
-		if (!(obj instanceof CommonData))
+		if (!(obj instanceof ResourceItemCommonData))
 			return false;
 
-		return EqualsBuilder.reflectionEquals(this, ((CommonData) obj));
+		return EqualsBuilder.reflectionEquals(this, ((ResourceItemCommonData) obj));
 	}
 
 	/**
@@ -139,7 +139,7 @@ public class CommonData {
 	/**
 	 * @return id
 	 */
-	public CommonDataId getId() {
+	public ResourceItemCommonDataId getId() {
 		return id;
 	}
 

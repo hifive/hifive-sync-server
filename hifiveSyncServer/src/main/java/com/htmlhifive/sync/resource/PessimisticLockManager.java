@@ -20,7 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.htmlhifive.sync.commondata.CommonData;
+import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.LockException;
 
 /**
@@ -42,7 +42,7 @@ public class PessimisticLockManager implements LockManager {
 	 * @param commonData 共通データ
 	 * @return ロックを取得できた場合true.
 	 */
-	public boolean lock(CommonData commonData) throws LockException {
+	public boolean lock(ResourceItemCommonData commonData) throws LockException {
 
 		throw new LockException();
 	}
@@ -55,7 +55,7 @@ public class PessimisticLockManager implements LockManager {
 	 * @param commonBeforUpdate 同期レスポンスヘッダ
 	 * @return update(/delete)できる場合true.
 	 */
-	public boolean canUpdate(ResourceItemWrapper updateItem, CommonData commonBeforUpdate) {
+	public boolean canUpdate(ResourceItemWrapper updateItem, ResourceItemCommonData commonBeforUpdate) {
 
 		return false;
 	}
@@ -65,7 +65,7 @@ public class PessimisticLockManager implements LockManager {
 	 *
 	 * @param commonData 共通データ
 	 */
-	public void release(CommonData commonData) {
+	public void release(ResourceItemCommonData commonData) {
 
 	}
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.commondata;
+package com.htmlhifive.sync.common;
 
 import java.util.List;
 
@@ -27,7 +27,8 @@ import org.springframework.data.repository.query.Param;
  *
  * @author kishigam
  */
-public interface CommonDataRepository extends JpaRepository<CommonData, CommonDataId> {
+public interface ResourceItemCommonDataRepository extends
+		JpaRepository<ResourceItemCommonData, ResourceItemCommonDataId> {
 
 	/**
 	 * リソース名が合致し、ある時刻以降に更新されたリソースの共通データを返します.<br>
@@ -36,6 +37,6 @@ public interface CommonDataRepository extends JpaRepository<CommonData, CommonDa
 	 * @param since データを検索する時刻(指定時刻以降の更新データを検索)
 	 * @return 検索した共通データエンティティのList
 	 */
-	@Query("SELECT d FROM CommonData d WHERE d.id.resourceName = :resourceName AND d.lastModified > :since AND d.action <> 'DELETE'")
-	List<CommonData> findModified(@Param("resourceName") String resourceName, @Param("since") long since);
+	@Query("SELECT d FROM ResourceItemCommonData d WHERE d.id.resourceName = :resourceName AND d.lastModified > :since AND d.action <> 'DELETE'")
+	List<ResourceItemCommonData> findModified(@Param("resourceName") String resourceName, @Param("since") long since);
 }

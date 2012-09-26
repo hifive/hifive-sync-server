@@ -42,7 +42,7 @@ public interface SyncResource<T> {
 	 * @param query クエリオブジェクト
 	 * @return 条件に合致するリソースアイテムのリスト
 	 */
-	List<ResourceItemWrapper> readByQuery(ResourceQuery query);
+	List<ResourceItemWrapper> readByQuery(ResourceQueryConditions query);
 
 	/**
 	 * リソースアイテムを新規追加登録します.
