@@ -27,7 +27,7 @@ import com.htmlhifive.sync.exception.BadRequestException;
  * @author kishigam
  */
 @Service
-public class JsonResourceItemConvertor<T> implements ResourceItemConvertor<T> {
+public class JsonResourceItemConverter<T> implements ResourceItemConverter<T> {
 
 	/**
 	 * JSON形式のアイテムデータをアイテム型に変換して返します.

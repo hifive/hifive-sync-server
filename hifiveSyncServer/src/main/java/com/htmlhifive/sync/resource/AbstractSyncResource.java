@@ -120,7 +120,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 
 		ResourceItemWrapper resultItemWrapper;
 		try {
-			T createItem = itemConvertor().convert(itemWrapper.getItem(), getItemType());
+			T createItem = itemConverter().convert(itemWrapper.getItem(), getItemType());
 
 			// 成功すると共通データで管理する各リソースアイテムのIDが返され、登録を行ったアイテムがサーバで管理される
 			String targetItemId = doCreate(createItem);
@@ -152,7 +152,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	@Override
 	public ResourceItemWrapper update(ResourceItemWrapper itemWrapper) {
 
-		T updateItem = itemConvertor().convert(itemWrapper.getItem(), getItemType());
+		T updateItem = itemConverter().convert(itemWrapper.getItem(), getItemType());
 		CommonData commonBeforUpdate = currentCommonData(itemWrapper.getResourceItemId());
 		// ロックエラー判定
 		if (!lockManager.canUpdate(itemWrapper, commonBeforUpdate)) {
@@ -290,10 +290,10 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 *
 	 * @return コンバータ
 	 */
-	protected ResourceItemConvertor<T> itemConvertor() {
+	protected ResourceItemConverter<T> itemConverter() {
 
 		// TODO: コンフィグ化
-		return new JsonResourceItemConvertor<>();
+		return new JsonResourceItemConverter<>();
 	}
 
 	/**
@@ -359,9 +359,9 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @throws NotFoundException IDからエンティティが取得できなかったとき
 	 */
 	private CommonData currentCommonData(String resourceItemId) {
-	
+
 		CommonData common = repository.findOne(new CommonDataId(getResourceName(), resourceItemId));
-	
+
 		if (common == null) {
 			throw new NotFoundException("entity not found");
 		}
@@ -376,18 +376,18 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @return 保存された共通データ
 	 */
 	private CommonData saveNewCommonData(ResourceItemWrapper itemWrapper, String targetItemId) {
-	
+
 		CommonData newCommon = new CommonData(new CommonDataId(getResourceName(), itemWrapper.getResourceItemId()),
 				targetItemId);
 		newCommon.modifiy(itemWrapper);
-	
+
 		if (repository.exists(newCommon.getId())) {
-	
+
 			EntityExistsException cause = new EntityExistsException("duplicated common data : id = "
 					+ newCommon.getId());
 			throw new BadRequestException("inconsistent data exists", cause);
 		}
-	
+
 		return repository.save(newCommon);
 	}
 
@@ -399,13 +399,13 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @return リソースからのレスポンスヘッダ
 	 */
 	private CommonData saveUpdatedCommonData(ResourceItemWrapper itemWrapper) {
-	
+
 		CommonData updatingCommon = currentCommonData(itemWrapper.getResourceItemId());
-	
+
 		updatingCommon.modifiy(itemWrapper);
-	
+
 		repository.save(updatingCommon);
-	
+
 		return updatingCommon;
 	}
 

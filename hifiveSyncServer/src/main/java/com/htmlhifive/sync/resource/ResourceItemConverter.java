@@ -22,7 +22,7 @@ package com.htmlhifive.sync.resource;
  * @param <T> リソースアイテムの型
  * @author kishigam
  */
-public interface ResourceItemConvertor<T> {
+public interface ResourceItemConverter<T> {
 
 	/**
 	 * オブジェクトをリソースアイテムの型に変換します.
