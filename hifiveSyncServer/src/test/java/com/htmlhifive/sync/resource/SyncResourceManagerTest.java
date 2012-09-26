@@ -33,18 +33,18 @@ public class SyncResourceManagerTest {
 	/**
 	 * コンストラクタ以外のテストに使用するターゲットクラスインスタンス.
 	 */
-	private final SyncResourceManager target = new SyncResourceManagerImpl();
+	private final SyncResourceManager target = new DefaultSyncResourceManager();
 
 	/**
 	 * typeテストメソッド.
 	 */
 	@Test
 	public void testType() {
-		assertThat(SyncResourceManagerImpl.class, notNullValue());
+		assertThat(DefaultSyncResourceManager.class, notNullValue());
 	}
 
 	/**
-	 * {@link SyncResourceManagerImpl#locateSyncResource()}用テストメソッド.
+	 * {@link DefaultSyncResourceManager#locateSyncResource()}用テストメソッド.
 	 */
 	@Test
 	public void testLocateSyncResource() {
@@ -102,7 +102,7 @@ public class SyncResourceManagerTest {
 	}
 
 	/**
-	 * {@link SyncResourceManagerImpl#locateSyncResource()}用テストメソッド.<br>
+	 * {@link DefaultSyncResourceManager#locateSyncResource()}用テストメソッド.<br>
 	 * データモデルに対するリソースが見つからない場合nullを返す.
 	 */
 	@Test
@@ -129,7 +129,7 @@ public class SyncResourceManagerTest {
 	}
 
 	/**
-	 * {@link SyncResourceManagerImpl#locateSyncResource()}用テストメソッド.<br>
+	 * {@link DefaultSyncResourceManager#locateSyncResource()}用テストメソッド.<br>
 	 * nullが与えられた場合nullを返す.
 	 */
 	public void testCannotLocateSyncResourceBecauseNullInput() {
