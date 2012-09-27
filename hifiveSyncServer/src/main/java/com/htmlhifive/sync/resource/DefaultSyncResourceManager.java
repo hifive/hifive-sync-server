@@ -85,7 +85,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 		Set<BeanDefinition> candidates = scanner.findCandidateComponents("");
 		for (BeanDefinition def : candidates) {
 
-			Class<? extends AbstractSyncResource<?>> resourceClass = selectResource(def);
+			Class<? extends SyncResource<?>> resourceClass = selectResource(def);
 			if (resourceClass == null) {
 				continue;
 			}
@@ -116,19 +116,19 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	 * @return クラスオブジェクト
 	 */
 	@SuppressWarnings("unchecked")
-	private Class<? extends AbstractSyncResource<?>> selectResource(BeanDefinition def) {
+	private Class<? extends SyncResource<?>> selectResource(BeanDefinition def) {
 
 		try {
 			// null,interface,SeparatedSyncResourceのサブタイプ以外,abstractのクラスを除外
 			Class<?> found = Class.forName(def.getBeanClassName());
-			if (found == null || found.isInterface() || !AbstractSyncResource.class.isAssignableFrom(found)
+			if (found == null || found.isInterface() || !SyncResource.class.isAssignableFrom(found)
 					|| Modifier.isAbstract(found.getModifiers())) {
 				return null;
 			} else {
-				return (Class<? extends AbstractSyncResource<?>>) found;
+				return (Class<? extends SyncResource<?>>) found;
 			}
 		} catch (ClassNotFoundException e) {
-			throw new SyncException("An Exception thrown by SyncResourceLocator", e);
+			throw new SyncException("An Exception thrown by SyncResourceManager", e);
 		}
 	}
 
