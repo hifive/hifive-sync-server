@@ -30,7 +30,6 @@ import com.htmlhifive.sync.common.ResourceItemCommonDataRepository;
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.ItemUpdatedException;
-import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.exception.SyncException;
 import com.htmlhifive.sync.service.UploadCommonData;
 
@@ -337,37 +336,34 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 
 	/**
 	 * リソースアイテム共通データのIDオブジェクトで共通データエンティティを検索し、返します.<br>
-	 * 取得できない場合、{@link NotFoundException}をスローします.
 	 *
 	 * @param id リソースアイテム共通データID
 	 * @return 共通データエンティティ
-	 * @throws NotFoundException IDからエンティティが取得できなかったとき
 	 */
 	private ResourceItemCommonData currentCommonData(ResourceItemCommonDataId id) {
 
 		ResourceItemCommonData common = repository.findOne(id);
 
 		if (common == null) {
-			throw new NotFoundException("entity not found");
+			throw new BadRequestException("itemCommonData not found : " + id.getResourceName() + "-"
+					+ id.getResourceItemId());
 		}
 		return common;
 	}
 
 	/**
-	 * リソース名、そのリソースごとのアイテムにおけるIDで共通データエンティティを検索し、返します.<br>
-	 * 取得できない場合、{@link NotFoundException}をスローします.
+	 * リソース名、そのリソースごとのアイテムにおけるIDで共通データエンティティを検索し、返します.
 	 *
 	 * @param resourceName リソース名
 	 * @param targetItemId 対象リソースアイテムのID
 	 * @return 共通データエンティティ
-	 * @throws NotFoundException IDからエンティティが取得できなかったとき
 	 */
 	private ResourceItemCommonData currentCommonData(String resourceName, String targetItemId) {
 
 		ResourceItemCommonData common = repository.findByTargetItemId(resourceName, targetItemId);
 
 		if (common == null) {
-			throw new NotFoundException("entity not found");
+			throw new BadRequestException("itemCommonData not found : " + resourceName + "-" + targetItemId);
 		}
 		return common;
 	}

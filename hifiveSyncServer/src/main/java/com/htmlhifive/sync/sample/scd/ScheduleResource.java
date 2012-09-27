@@ -29,8 +29,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htmlhifive.sync.common.ResourceItemCommonData;
+import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
-import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
 import com.htmlhifive.sync.resource.ClientResolvingStrategy;
 import com.htmlhifive.sync.resource.SyncResourceService;
@@ -198,7 +198,6 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 	/**
 	 * このリソースのリソースアイテムのIDから1件のエンティティをリポジトリを検索して取得します. <br>
-	 * 取得できない場合、{@link NotFoundException}をスローします.
 	 *
 	 * @param scheduleId リソースアイテムのID
 	 * @return Scheduleエンティティ
@@ -207,7 +206,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 		Schedule found = repository.findOne(scheduleId);
 		if (found == null) {
-			throw new NotFoundException("entity not found :" + scheduleId);
+			throw new BadRequestException("entity not found :" + scheduleId);
 		}
 		return found;
 	}

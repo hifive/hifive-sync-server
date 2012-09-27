@@ -26,8 +26,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.htmlhifive.sync.common.ResourceItemCommonData;
+import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
-import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
 import com.htmlhifive.sync.resource.ClientResolvingStrategy;
 import com.htmlhifive.sync.resource.SyncResourceService;
@@ -138,7 +138,6 @@ public class PersonResource extends AbstractSyncResource<Person> {
 
 	/**
 	 * このリソースのリソースアイテムのIDから1件のエンティティをリポジトリを検索して取得します. <br>
-	 * 取得できない場合、{@link NotFoundException}をスローします.
 	 *
 	 * @param personId リソースアイテムのID
 	 * @return Personエンティティ
@@ -146,7 +145,7 @@ public class PersonResource extends AbstractSyncResource<Person> {
 	private Person findPerson(String personId) {
 		Person found = repository.findOne(personId);
 		if (found == null) {
-			throw new NotFoundException("entity not found :" + personId);
+			throw new BadRequestException("entity not found :" + personId);
 		}
 		return found;
 	}
