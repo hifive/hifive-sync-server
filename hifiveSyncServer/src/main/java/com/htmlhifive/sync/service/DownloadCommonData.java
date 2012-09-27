@@ -20,6 +20,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
@@ -28,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
  *
  * @author kishigam
  */
-public class DownloadCommonData {
+public class DownloadCommonData implements SyncCommonData {
 
 	/**
 	 * クライアントのストレージID.<br>
@@ -41,6 +42,13 @@ public class DownloadCommonData {
 	 * 最終下り更新時刻.
 	 */
 	private long lastDownloadTime;
+
+	/**
+	 * この更新リクエストが実行される時刻.<br>
+	 * このフィールドはクライアントへのレスポンスに含みません.<br>
+	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています)
+	 */
+	private long syncTime;
 
 	/**
 	 * @see Object#equals(Object)
@@ -73,6 +81,7 @@ public class DownloadCommonData {
 	 *
 	 * @return storageId
 	 */
+	@Override
 	@JsonInclude(Include.NON_NULL)
 	public String getStorageId() {
 		return storageId;
@@ -97,5 +106,23 @@ public class DownloadCommonData {
 	 */
 	public void setLastDownloadTime(long lastDownloadTime) {
 		this.lastDownloadTime = lastDownloadTime;
+	}
+
+	/**
+	 * クライアントへのレスポンスから除外するため、{@link JsonIgnore}を追加しています)
+	 *
+	 * @return syncTime
+	 */
+	@Override
+	@JsonIgnore
+	public long getSyncTime() {
+		return syncTime;
+	}
+
+	/**
+	 * @param syncTime セットする syncTime
+	 */
+	public void setSyncTime(long syncTime) {
+		this.syncTime = syncTime;
 	}
 }

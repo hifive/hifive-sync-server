@@ -110,7 +110,7 @@ public class PersonResource extends AbstractSyncResource<Person> {
 	 * @param item 更新内容を含むリソースアイテム
 	 */
 	@Override
-	protected void doUpdate(Person item) {
+	protected Person doUpdate(Person item) {
 
 		// itemはDTOとしてのPersonなので、永続データにアタッチするために取得、コピーする
 
@@ -119,7 +119,7 @@ public class PersonResource extends AbstractSyncResource<Person> {
 		updatingEntity.setAge(item.getAge());
 		updatingEntity.setOrganization(item.getOrganization());
 
-		repository.save(updatingEntity);
+		return repository.save(updatingEntity);
 	}
 
 	/**
@@ -129,11 +129,13 @@ public class PersonResource extends AbstractSyncResource<Person> {
 	 * @param targetItemId リソースアイテムのID
 	 */
 	@Override
-	protected void doDelete(String targetItemId) {
+	protected Person doDelete(String targetItemId) {
 
 		Person removingEntity = findPerson(targetItemId);
 
 		repository.delete(removingEntity);
+
+		return Person.emptyPerson(targetItemId);
 	}
 
 	/**

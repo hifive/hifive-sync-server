@@ -151,7 +151,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 		SyncResource<?> sr = context.getBean(resourceClass);
 
 		// LockManager,UpdateStrategyのセット
-		sr.setLockManager(context.getBean(lockManagerMap.get(resourceName)));
+		sr.setLockStrategy(context.getBean(lockManagerMap.get(resourceName)));
 		sr.setUpdateStrategy(context.getBean(updateStrategyMap.get(resourceName)));
 
 		return sr;

@@ -45,7 +45,7 @@ public @interface SyncResourceService {
 	 *
 	 * @return LockManagerのクラスオブジェクト
 	 */
-	Class<? extends LockStrategy> lockStrategy() default DefaultLockStrategy.class;
+	Class<? extends LockStrategy> lockStrategy() default ResourceItemCommonLockStrategy.class;
 
 	/**
 	 * リソースが使用する競合発生時のリソースアイテム更新戦略の実装クラス.<br>

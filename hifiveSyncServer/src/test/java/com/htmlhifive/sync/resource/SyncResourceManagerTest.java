@@ -53,14 +53,14 @@ public class SyncResourceManagerTest {
 		final String dataModelName = "person";
 		final Class<PersonResource> expectedResourceClass = PersonResource.class;
 
-		final Class<? extends LockStrategy> expectedLockManagerClass = DefaultLockStrategy.class;
-		final LockStrategy expectedLockManager = new DefaultLockStrategy();
+		final Class<? extends LockStrategy> expectedLockManagerClass = ResourceItemCommonLockStrategy.class;
+		final LockStrategy expectedLockManager = new ResourceItemCommonLockStrategy();
 
 		final Class<? extends UpdateStrategy> expectedUpdateStrategyClass = ClientResolvingStrategy.class;
 		final UpdateStrategy expectedUpdateStrategy = new ClientResolvingStrategy();
 
 		final PersonResource expectedResource = new PersonResource();
-		expectedResource.setLockManager(expectedLockManager);
+		expectedResource.setLockStrategy(expectedLockManager);
 		expectedResource.setUpdateStrategy(expectedUpdateStrategy);
 
 		new Expectations() {

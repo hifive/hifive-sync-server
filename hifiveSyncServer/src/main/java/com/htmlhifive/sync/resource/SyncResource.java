@@ -19,6 +19,7 @@ package com.htmlhifive.sync.resource;
 import java.util.List;
 
 import com.htmlhifive.sync.common.ResourceItemCommonData;
+import com.htmlhifive.sync.service.DownloadCommonData;
 import com.htmlhifive.sync.service.UploadCommonData;
 
 /**
@@ -48,6 +49,27 @@ public interface SyncResource<T> {
 	 * @return 条件に合致するリソースアイテムのリスト
 	 */
 	List<ResourceItemWrapper<T>> executeQuery(ResourceQueryConditions query);
+
+	/**
+	 * 指定されたリソースアイテム共通データに対応するリソースアイテムをロックし、取得します.<br>
+	 * 渡される共通データには、リソース名が含まれていない可能性があります.<br>
+	 * リソース名は各リソース実装において{@link SyncResourceService}を参照し、設定する必要があります.
+	 *
+	 * @param downloadCommon 下り更新共通データ
+	 * @param itemCommonData リソースアイテム共通データ
+	 * @return リソースアイテムのラッパーオブジェクト
+	 */
+	ResourceItemWrapper<T> getResourceItemWithLock(DownloadCommonData downloadCommon,
+			ResourceItemCommonData itemCommonData);
+
+	/**
+	 * クエリの条件に合致する全リソースアイテムをロックし、取得します.
+	 *
+	 * @param downloadCommon 下り更新共通データ
+	 * @param query クエリオブジェクト
+	 * @return 条件に合致するリソースアイテムのリスト
+	 */
+	List<ResourceItemWrapper<T>> executeQueryWithLock(DownloadCommonData downloadCommon, ResourceQueryConditions query);
 
 	/**
 	 * リソースアイテムを新規登録します.
@@ -106,7 +128,7 @@ public interface SyncResource<T> {
 	 *
 	 * @param lockManager セットする lockManager
 	 */
-	void setLockManager(LockStrategy lockManager);
+	void setLockStrategy(LockStrategy lockManager);
 
 	/**
 	 * ロックエラー発生時の更新方法を指定するストラテジーオブジェクトを設定します.<br>

@@ -37,7 +37,7 @@ import com.htmlhifive.sync.resource.SyncConflictType;
  */
 @Entity
 @Table(name = "UPLOAD_COMMON_DATA")
-public class UploadCommonData {
+public class UploadCommonData implements SyncCommonData {
 
 	/**
 	 * クライアントのストレージID.<br>
@@ -53,6 +53,13 @@ public class UploadCommonData {
 	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonInclude}を追加しています)
 	 */
 	private long lastUploadTime;
+
+	/**
+	 * この更新リクエストが実行される時刻.<br>
+	 * このフィールドはクライアントへのレスポンスに含みません.<br>
+	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています)
+	 */
+	private long syncTime;
 
 	/**
 	 * 競合発生時の同期結果タイプ.<br>
@@ -104,6 +111,7 @@ public class UploadCommonData {
 	 *
 	 * @return storageId
 	 */
+	@Override
 	@JsonIgnore
 	public String getStorageId() {
 		return storageId;
@@ -121,7 +129,7 @@ public class UploadCommonData {
 	 *
 	 * @return lastUploadTime
 	 */
-	@JsonInclude(Include.NON_NULL)
+	@JsonInclude(Include.NON_DEFAULT)
 	public long getLastUploadTime() {
 		return lastUploadTime;
 	}
@@ -131,6 +139,24 @@ public class UploadCommonData {
 	 */
 	public void setLastUploadTime(long lastUploadTime) {
 		this.lastUploadTime = lastUploadTime;
+	}
+
+	/**
+	 * クライアントへのレスポンスから除外するため、{@link JsonIgnore}を追加しています)
+	 *
+	 * @return syncTime
+	 */
+	@Override
+	@JsonIgnore
+	public long getSyncTime() {
+		return syncTime;
+	}
+
+	/**
+	 * @param syncTime セットする syncTime
+	 */
+	public void setSyncTime(long syncTime) {
+		this.syncTime = syncTime;
 	}
 
 	/**

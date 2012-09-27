@@ -34,6 +34,20 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 public class Person {
 
 	/**
+	 * IDのみ設定されたインスタンスを返します.
+	 *
+	 * @param personId
+	 * @return インスタンス
+	 */
+	public static Person emptyPerson(String personId) {
+
+		Person empty = new Person();
+		empty.setPersonId(personId);
+
+		return empty;
+	}
+
+	/**
 	 * このエンティティのID.<br>
 	 */
 	@Id
@@ -47,7 +61,7 @@ public class Person {
 	/**
 	 * この人の年齢.
 	 */
-	private int age;
+	private Integer age;
 
 	/**
 	 * この人の所属組織
@@ -125,14 +139,14 @@ public class Person {
 	/**
 	 * @return age
 	 */
-	public int getAge() {
+	public Integer getAge() {
 		return age;
 	}
 
 	/**
 	 * @param age セットする age
 	 */
-	public void setAge(int age) {
+	public void setAge(Integer age) {
 		this.age = age;
 	}
 
@@ -149,5 +163,4 @@ public class Person {
 	public void setOrganization(String organization) {
 		this.organization = organization;
 	}
-
 }

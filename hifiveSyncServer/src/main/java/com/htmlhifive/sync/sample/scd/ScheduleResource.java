@@ -158,7 +158,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	 * @param item 更新内容を含むリソースアイテム
 	 */
 	@Override
-	protected void doUpdate(ScheduleResourceItem item) {
+	protected ScheduleResourceItem doUpdate(ScheduleResourceItem item) {
 
 		Schedule updatingEntity = findSchedule(item.getScheduleId());
 
@@ -180,6 +180,9 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		updatingEntity.setPlace(item.getPlace());
 
 		repository.save(updatingEntity);
+
+		item.setCreateUserName(updatingEntity.getCreateUser().getName());
+		return item;
 	}
 
 	/**
@@ -189,11 +192,13 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	 * @param targetItemId リソースアイテムのID
 	 */
 	@Override
-	protected void doDelete(String targetItemId) {
+	protected ScheduleResourceItem doDelete(String targetItemId) {
 
 		Schedule removingEntity = findSchedule(targetItemId);
 
 		repository.delete(removingEntity);
+
+		return ScheduleResourceItem.emptyItem(targetItemId);
 	}
 
 	/**

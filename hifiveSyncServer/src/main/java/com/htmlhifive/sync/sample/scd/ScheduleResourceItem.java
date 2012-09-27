@@ -30,6 +30,17 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 public class ScheduleResourceItem {
 
 	/**
+	 * IDのみ設定されたインスタンスを返します.
+	 *
+	 * @param scheduleId
+	 * @return インスタンス
+	 */
+	public static ScheduleResourceItem emptyItem(String scheduleId) {
+
+		return new ScheduleResourceItem(scheduleId);
+	}
+
+	/**
 	 * このアイテムが示す予定のID.
 	 */
 	private String scheduleId;

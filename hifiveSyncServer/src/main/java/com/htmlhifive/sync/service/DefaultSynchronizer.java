@@ -24,6 +24,7 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
+import org.springframework.security.authentication.LockedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -60,6 +61,12 @@ public class DefaultSynchronizer implements Synchronizer {
 	private SyncResourceManager resourceManager;
 
 	/**
+	 * 上り更新対象のリソースアイテムに対するロック取得方法.
+	 */
+	@Resource
+	private UploadLockModeType uploadLockMode = UploadLockModeType.NOT_PREPARE;
+
+	/**
 	 * 同期ステータスのリポジトリ.
 	 */
 	@Resource
@@ -70,10 +77,15 @@ public class DefaultSynchronizer implements Synchronizer {
 	 * リソースごとに、指定されたクエリでリソースアイテムを検索、取得します.
 	 *
 	 * @param request 下り更新リクエストデータ
+	 * @param withLock ロックを取得するときtrue
 	 * @return 下り更新レスポンスデータ
 	 */
 	@Override
-	public DownloadResponse download(DownloadRequest request) {
+	public DownloadResponse download(DownloadRequest request, boolean lock) {
+
+		// 今回の下り更新実行時刻の算出と共通データへのセット
+		long downloadTime = generateDownloadTime();
+		request.getDownloadCommonData().setSyncTime(downloadTime);
 
 		// リソース名ごとに結果をコンテナに格納する
 		Map<String, List<ResourceItemWrapper<?>>> resultMap = new HashMap<>();
@@ -91,7 +103,8 @@ public class DefaultSynchronizer implements Synchronizer {
 
 				// リソースへリクエスト発行
 				SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-				List<? extends ResourceItemWrapper<?>> resultItemList = resource.executeQuery(queryConditions);
+				List<? extends ResourceItemWrapper<?>> resultItemList = lock ? resource.executeQueryWithLock(
+						request.getDownloadCommonData(), queryConditions) : resource.executeQuery(queryConditions);
 
 				// 結果をマージする(同じリソースアイテムは1件のみとなる)
 				for (ResourceItemWrapper<?> itemWrapper : resultItemList) {
@@ -107,8 +120,8 @@ public class DefaultSynchronizer implements Synchronizer {
 		DownloadCommonData responseCommon = new DownloadCommonData();
 		responseCommon.setStorageId(request.getDownloadCommonData().getStorageId());
 
-		// 下り更新時刻を算出(バッファ考慮)し、レスポンスに設定
-		responseCommon.setLastDownloadTime(generateDownloadTime());
+		// リクエストの処理時刻でレスポンスの最終下り更新時刻を更新
+		responseCommon.setLastDownloadTime(request.getDownloadCommonData().getSyncTime());
 
 		// 下り更新レスポンスに結果を設定
 		DownloadResponse response = new DownloadResponse(responseCommon);
@@ -139,8 +152,9 @@ public class DefaultSynchronizer implements Synchronizer {
 	@Override
 	public UploadResponse upload(UploadRequest request) {
 
-		// リクエストの上り更新共通データ
+		// リクエストの上り更新共通データに今回の上り更新処理時刻を設定
 		UploadCommonData requestCommon = request.getUploadCommonData();
+		requestCommon.setSyncTime(generateUploadTime());
 
 		// 保存していた、前回までの上り更新共通データを取得し、レスポンスの共通データとして初期設定
 		UploadCommonData responseCommon = lastUploadCommonData(requestCommon.getStorageId());
@@ -151,66 +165,80 @@ public class DefaultSynchronizer implements Synchronizer {
 			return new UploadResponse(responseCommon);
 		}
 
-		// 競合の種類ごとに、競合データリソースのアイテムリスト(リソース別Map)に格納する
-		Map<SyncConflictType, Map<String, List<ResourceItemWrapper<?>>>> resultMapHolder = new HashMap<>();
-		resultMapHolder.put(SyncConflictType.DUPLICATEDID, new HashMap<String, List<ResourceItemWrapper<?>>>());
-		resultMapHolder.put(SyncConflictType.UPDATED, new HashMap<String, List<ResourceItemWrapper<?>>>());
-
-		// リソースアイテムごとに処理(上り更新リクエストデータのみ、ResourceItemWrapperにリソース名を持つ)
-		for (ResourceItemWrapper<? extends Map<String, Object>> uploadingItemWrapper : request.getResourceItems()) {
-
-			String resourceName = uploadingItemWrapper.getItemCommonData().getId().getResourceName();
-
-			SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-
-			ResourceItemWrapper<?> itemWrapperAfterUpload = doUpload(resource, requestCommon, uploadingItemWrapper);
-
-			SyncConflictType conflictType = itemWrapperAfterUpload.getItemCommonData().getConflictType();
-
-			// 競合でない場合は次のリソースアイテムの更新へ(更新後のアイテムは使用しない)
-			if (conflictType == null) {
-				continue;
+		try {
+			// 事前ロックが必要であれば取得
+			if (uploadLockMode == UploadLockModeType.PREPARE) {
+				prepareLock(request);
 			}
 
-			Map<String, List<ResourceItemWrapper<?>>> resultMap = resultMapHolder.get(conflictType);
+			// 競合の種類ごとに、競合データリソースのアイテムリスト(リソース別Map)に格納する
+			Map<SyncConflictType, Map<String, List<ResourceItemWrapper<?>>>> resultMapHolder = new HashMap<>();
+			resultMapHolder.put(SyncConflictType.DUPLICATEDID, new HashMap<String, List<ResourceItemWrapper<?>>>());
+			resultMapHolder.put(SyncConflictType.UPDATED, new HashMap<String, List<ResourceItemWrapper<?>>>());
 
-			// Mapにリソース名ごとのコンテナが存在しない場合は生成
-			if (!resultMap.containsKey(resourceName)) {
+			// リソースアイテムごとに処理(上り更新リクエストデータでは、ResourceItemWrapperにリソース名を持つ)
+			for (ResourceItemWrapper<? extends Map<String, Object>> uploadingItemWrapper : request.getResourceItems()) {
 
-				List<ResourceItemWrapper<?>> itemList = new ArrayList<>();
-				resultMap.put(resourceName, itemList);
+				String resourceName = uploadingItemWrapper.getItemCommonData().getId().getResourceName();
+
+				SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
+
+				ResourceItemWrapper<?> itemWrapperAfterUpload = doUpload(resource, requestCommon, uploadingItemWrapper);
+
+				SyncConflictType conflictType = itemWrapperAfterUpload.getItemCommonData().getConflictType();
+
+				// 競合でない場合は次のリソースアイテムの更新へ(更新後のアイテムは使用しない)
+				if (conflictType == null) {
+					continue;
+				}
+
+				Map<String, List<ResourceItemWrapper<?>>> resultMap = resultMapHolder.get(conflictType);
+
+				// Mapにリソース名ごとのコンテナが存在しない場合は生成
+				if (!resultMap.containsKey(resourceName)) {
+
+					List<ResourceItemWrapper<?>> itemList = new ArrayList<>();
+					resultMap.put(resourceName, itemList);
+				}
+
+				// 競合しているアイテムをItemMapにマージ(同じリソースアイテムは1件のみとなる)
+				if (!resultMap.get(resourceName).contains(itemWrapperAfterUpload)) {
+					resultMap.get(resourceName).add(itemWrapperAfterUpload);
+				}
+
+				// 競合時の処理継続判断(競合のタイプごとに)
+				if (!continueOnConflict(conflictType)) {
+
+					// 継続しない場合はConflictExceptionをスロー
+					throwConflictException(conflictType, resultMap);
+				}
+
+				// ステータスに設定し、次のリソースアイテムの更新へ
+				responseCommon.setConflictType(conflictType);
 			}
 
-			// 競合しているアイテムをItemMapにマージ(同じリソースアイテムは1件のみとなる)
-			if (!resultMap.get(resourceName).contains(itemWrapperAfterUpload)) {
-				resultMap.get(resourceName).add(itemWrapperAfterUpload);
+			// 以下の優先順で複数の競合データをConflictExceptionでスロー
+			if (responseCommon.getConflictType() == SyncConflictType.DUPLICATEDID) {
+				throwConflictException(SyncConflictType.DUPLICATEDID,
+						resultMapHolder.get(SyncConflictType.DUPLICATEDID));
+			}
+			if (responseCommon.getConflictType() == SyncConflictType.UPDATED) {
+				throwConflictException(SyncConflictType.UPDATED, resultMapHolder.get(SyncConflictType.UPDATED));
 			}
 
-			// 競合時の処理継続判断(競合のタイプごとに)
-			if (!continueOnConflict(conflictType)) {
+			// リクエストの処理時刻でレスポンスの最終下り更新時刻を更新し、保存
+			responseCommon.setLastUploadTime(requestCommon.getSyncTime());
+			repository.save(responseCommon);
 
-				// 継続しない場合はConflictExceptionをスロー
-				throwConflictException(conflictType, resultMap);
-			}
+			// レスポンスの生成とリターン(アイテムリストはセットしない)
+			return new UploadResponse(responseCommon);
 
-			// ステータスに設定し、次のリソースアイテムの更新へ
-			responseCommon.setConflictType(conflictType);
+		} catch (LockedException e) {
+			// TODO:ここまでスローする？
+			return null;
+		} finally {
+			// TODO: リリースしなくてもロールバックされるのでアンロック不要。ほんと・・？
 		}
-
-		// 以下の優先順で複数の競合データをConflictExceptionでスロー
-		if (responseCommon.getConflictType() == SyncConflictType.DUPLICATEDID) {
-			throwConflictException(SyncConflictType.DUPLICATEDID, resultMapHolder.get(SyncConflictType.DUPLICATEDID));
-		}
-		if (responseCommon.getConflictType() == SyncConflictType.UPDATED) {
-			throwConflictException(SyncConflictType.UPDATED, resultMapHolder.get(SyncConflictType.UPDATED));
-		}
-
-		// 競合がない場合、上り更新時刻をレスポンスの共通データに設定し、更新する
-		responseCommon.setLastUploadTime(generateUploadTime());
-		repository.save(responseCommon);
-
-		// レスポンスの生成とリターン(アイテムリストはセットしない)
-		return new UploadResponse(responseCommon);
 	}
 
 	/**
@@ -225,11 +253,24 @@ public class DefaultSynchronizer implements Synchronizer {
 	}
 
 	/**
+	 * 上り更新前に、全更新対象リソースアイテムのロックを取得します.
+	 *
+	 * @param request
+	 */
+	private void prepareLock(UploadRequest request) {
+		// TODO 自動生成されたメソッド・スタブ
+
+		// アイテムをリソース名順、その中でリソースアイテムID順でソート(Stringの順序づけ)
+
+		// getResourceItemWithLockをよぶ
+	}
+
+	/**
 	 * リソースに対してアクションに応じたリクエストメソッドを呼び出すヘルパー.<br>
 	 * エレメント型を固定することで、JSONからの型変換を行ったエレメントをリソースに渡すことができます.
 	 *
 	 * @param resource リソース
-	 * @param requestCommon
+	 * @param requestCommon 上り更新共通データ
 	 * @param itemWrapper 更新するリソースアイテム
 	 * @return 更新後のリソースアイテム
 	 */
