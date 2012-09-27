@@ -23,7 +23,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 /**
- * 共通データエンティティを永続化するためのリポジトリ.<br>
+ * リソースアイテム共通データエンティティを永続化するためのリポジトリ.<br>
  *
  * @author kishigam
  */
@@ -39,4 +39,15 @@ public interface ResourceItemCommonDataRepository extends
 	 */
 	@Query("SELECT d FROM ResourceItemCommonData d WHERE d.id.resourceName = :resourceName AND d.lastModified > :since AND d.action <> 'DELETE'")
 	List<ResourceItemCommonData> findModified(@Param("resourceName") String resourceName, @Param("since") long since);
+
+	/**
+	 * リソース名が合致し、そのリソースでのIDが合致する共通データを返します.<br>
+	 *
+	 * @param resourceName リソース名
+	 * @param targetItemId 共通データの対象リソースアイテムにおけるID
+	 * @return 検索した共通データエンティティ
+	 */
+	@Query("SELECT d FROM ResourceItemCommonData d WHERE d.id.resourceName = :resourceName AND d.targetItemId= :targetItemId")
+	ResourceItemCommonData findByTargetItemId(@Param("resourceName") String resourceName,
+			@Param("targetItemId") String targetItemId);
 }

@@ -43,7 +43,7 @@ public class DownloadResponse {
 	 * 下り更新結果のリソースアイテムリスト. <br>
 	 * リソース別にリストを保持します.
 	 */
-	private Map<String, List<ResourceItemWrapper>> resourceItems;
+	private Map<String, List<ResourceItemWrapper<?>>> resourceItems;
 
 	/**
 	 * 下り更新共通データを指定して下り更新レスポンスを生成します.
@@ -100,14 +100,14 @@ public class DownloadResponse {
 	/**
 	 * @return resourceItems
 	 */
-	public Map<String, List<ResourceItemWrapper>> getResourceItems() {
+	public Map<String, List<ResourceItemWrapper<?>>> getResourceItems() {
 		return resourceItems;
 	}
 
 	/**
 	 * @param resourceItems セットする resourceItems
 	 */
-	public void setResourceItems(Map<String, List<ResourceItemWrapper>> resourceItems) {
+	public void setResourceItems(Map<String, List<ResourceItemWrapper<?>>> resourceItems) {
 		this.resourceItems = resourceItems;
 	}
 }

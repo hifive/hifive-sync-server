@@ -21,12 +21,7 @@ package com.htmlhifive.sync.resource;
  *
  * @author kishigam
  */
-public enum SyncResultType {
-
-	/**
-	 * 同期が成功したことを表します.
-	 */
-	OK,
+public enum SyncConflictType {
 
 	/**
 	 * 一部のリソースアイテムに対して他のクライアントが更新を行っていたため、同期が失敗したことを表します.

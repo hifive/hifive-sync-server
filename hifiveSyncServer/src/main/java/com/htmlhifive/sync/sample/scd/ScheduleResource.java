@@ -33,7 +33,6 @@ import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
 import com.htmlhifive.sync.resource.ClientResolvingStrategy;
-import com.htmlhifive.sync.resource.OptimisticLockManager;
 import com.htmlhifive.sync.resource.SyncResourceService;
 import com.htmlhifive.sync.sample.person.Person;
 import com.htmlhifive.sync.sample.person.PersonRepository;
@@ -44,7 +43,7 @@ import com.htmlhifive.sync.sample.person.PersonRepository;
  *
  * @author kishigam
  */
-@SyncResourceService(resourceName = "schedule", lockManager = OptimisticLockManager.class, updateStrategy = ClientResolvingStrategy.class)
+@SyncResourceService(resourceName = "schedule", updateStrategy = ClientResolvingStrategy.class)
 @Transactional(propagation = Propagation.MANDATORY)
 public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem> {
 
@@ -68,7 +67,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	 * @return リソースアイテム
 	 */
 	@Override
-	protected ScheduleResourceItem doRead(String targetItemId) {
+	protected ScheduleResourceItem doGetResourceItem(String targetItemId) {
 
 		Schedule bean = findSchedule(targetItemId);
 
@@ -95,13 +94,13 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
 	 */
 	@Override
-	protected Map<ScheduleResourceItem, ResourceItemCommonData> doReadByQuery(
+	protected Map<ScheduleResourceItem, ResourceItemCommonData> doExecuteQuery(
 			List<ResourceItemCommonData> commonDataList, Map<String, String[]> conditions) {
 
 		Map<ScheduleResourceItem, ResourceItemCommonData> itemMap = new HashMap<>();
 		for (ResourceItemCommonData common : commonDataList) {
 
-			ScheduleResourceItem item = doRead(common.getTargetItemId());
+			ScheduleResourceItem item = doGetResourceItem(common.getTargetItemId());
 
 			// TODO: queryの適用
 
@@ -123,7 +122,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 		if (repository.exists(newItem.getScheduleId())) {
 
-			throw new DuplicateIdException(newItem.getScheduleId(), doRead(newItem.getScheduleId()));
+			throw new DuplicateIdException(newItem.getScheduleId(), doGetResourceItem(newItem.getScheduleId()));
 		}
 
 		Schedule newEntity = new Schedule();

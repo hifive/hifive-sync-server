@@ -19,13 +19,16 @@ package com.htmlhifive.sync.common;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.htmlhifive.sync.resource.ResourceItemWrapper;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.htmlhifive.sync.resource.SyncAction;
+import com.htmlhifive.sync.resource.SyncConflictType;
 
 /**
  * リソースを同期するために必要な共通データを管理するエンティティ.<br>
@@ -39,19 +42,17 @@ public class ResourceItemCommonData {
 
 	/**
 	 * IDオブジェクト.<br>
+	 * このオブジェクトのプロパティを展開して使用するため、getterメソッドに@JsonUnwrappedを付加しています.
 	 */
 	@EmbeddedId
 	private ResourceItemCommonDataId id;
 
 	/**
 	 * この共通データが対象とするリソースアイテムのID.<br>
+	 * このフィールドはクライアントへのレスポンスに含みません.<br>
+	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
 	 */
 	private String targetItemId;
-
-	/**
-	 * クライアント(ストレージ)のID.<br>
-	 */
-	private String storageId;
 
 	/**
 	 * このリソースアイテムを現在の状態に登録したアクション.<br>
@@ -59,14 +60,17 @@ public class ResourceItemCommonData {
 	private SyncAction action;
 
 	/**
+	 * このリソースアイテムの競合状態.<br>
+	 * このフィールドはクライアントへのレスポンスに含みません.<br>
+	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
+	 */
+	@Transient
+	private SyncConflictType conflictType;
+
+	/**
 	 * リソースアイテムの最終更新時刻(ミリ秒)
 	 */
 	private long lastModified;
-
-	/**
-	 * 悲観ロック時のロックキー(将来の実装のため).
-	 */
-	private String lockKey;
 
 	/**
 	 * IDオブジェクト、対象リソースアイテムのIDを指定して共通データを生成します.
@@ -116,52 +120,53 @@ public class ResourceItemCommonData {
 	/**
 	 * リソースアイテムの更新内容をこのオブジェクトに反映します.
 	 *
-	 * @param itemWrapper リソースアイテムのラッパー
+	 * @param action 更新アクション
+	 * @param uploadTime 更新時刻
 	 */
-	public void modifiy(ResourceItemWrapper itemWrapper) {
+	public void modify(SyncAction actionToModify, long uploadTime) {
 
-		this.action = itemWrapper.getAction();
-		this.lastModified = itemWrapper.getUploadTime();
+		this.action = actionToModify;
+		this.lastModified = uploadTime;
 	}
 
+	//	/**
+	//	 * このオブジェクトの内容を設定してリソースアイテムのラッパーオブジェクトを生成します.
+	//	 */
+	//	public ResourceItemWrapper generateItemWrapper() {
+	//
+	//		ResourceItemWrapper wrapper = new ResourceItemWrapper(this.id.getResourceItemId());
+	//		wrapper.setAction(this.action);
+	//		wrapper.setLastModified(lastModified);
+	//
+	//		return wrapper;
+	//	}
+
 	/**
-	 * このオブジェクトの内容を設定してリソースアイテムのラッパーオブジェクトを生成します.
-	 */
-	public ResourceItemWrapper generateItemWrapper() {
-
-		ResourceItemWrapper wrapper = new ResourceItemWrapper(this.id.getResourceItemId());
-		wrapper.setAction(this.action);
-		wrapper.setLastModified(lastModified);
-
-		return wrapper;
-	}
-
-	/**
+	 * このオブジェクトのプロパティを展開して使用するため、@JsonUnwrappedを付加しています.
+	 *
 	 * @return id
 	 */
+	@JsonUnwrapped
 	public ResourceItemCommonDataId getId() {
 		return id;
 	}
 
 	/**
+	 * このフィールドはクライアントへのレスポンスに含みません.<br>
+	 * レスポンスから除外するため、{@link JsonIgnore}を追加しています.
+	 *
 	 * @return targetItemId
 	 */
+	@JsonIgnore
 	public String getTargetItemId() {
 		return targetItemId;
 	}
 
 	/**
-	 * @return storageId
+	 * @param targetItemId セットする targetItemId
 	 */
-	public String getStorageId() {
-		return storageId;
-	}
-
-	/**
-	 * @param storageId セットする storageId
-	 */
-	public void setStorageId(String storageId) {
-		this.storageId = storageId;
+	public void setTargetItemId(String targetItemId) {
+		this.targetItemId = targetItemId;
 	}
 
 	/**
@@ -179,6 +184,24 @@ public class ResourceItemCommonData {
 	}
 
 	/**
+	 * このフィールドはクライアントへのレスポンスに含みません.<br>
+	 * レスポンスから除外するため、{@link JsonIgnore}を追加しています.
+	 *
+	 * @return conflictType
+	 */
+	@JsonIgnore
+	public SyncConflictType getConflictType() {
+		return conflictType;
+	}
+
+	/**
+	 * @param conflictType セットする conflictType
+	 */
+	public void setConflictType(SyncConflictType conflictType) {
+		this.conflictType = conflictType;
+	}
+
+	/**
 	 * @return lastModified
 	 */
 	public long getLastModified() {
@@ -191,19 +214,4 @@ public class ResourceItemCommonData {
 	public void setLastModified(long lastModified) {
 		this.lastModified = lastModified;
 	}
-
-	/**
-	 * @return lockKey
-	 */
-	public String getLockKey() {
-		return lockKey;
-	}
-
-	/**
-	 * @param lockKey セットする lockKey
-	 */
-	public void setLockKey(String lockKey) {
-		this.lockKey = lockKey;
-	}
-
 }

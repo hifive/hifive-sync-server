@@ -30,14 +30,13 @@ import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
 import com.htmlhifive.sync.resource.ClientResolvingStrategy;
-import com.htmlhifive.sync.resource.OptimisticLockManager;
 import com.htmlhifive.sync.resource.SyncResourceService;
 
 /**
  * personリソースの情報を同期リソースとして公開するためのリソースクラス.<br>
  * 同期データを専用サービスで管理する抽象リソースクラスをこのリソース用に実装します.
  */
-@SyncResourceService(resourceName = "person", lockManager = OptimisticLockManager.class, updateStrategy = ClientResolvingStrategy.class)
+@SyncResourceService(resourceName = "person", updateStrategy = ClientResolvingStrategy.class)
 @Transactional(propagation = Propagation.MANDATORY)
 public class PersonResource extends AbstractSyncResource<Person> {
 
@@ -55,7 +54,7 @@ public class PersonResource extends AbstractSyncResource<Person> {
 	 * @return リソースアイテム
 	 */
 	@Override
-	protected Person doRead(String targetItemId) {
+	protected Person doGetResourceItem(String targetItemId) {
 
 		return findPerson(targetItemId);
 	}
@@ -69,13 +68,13 @@ public class PersonResource extends AbstractSyncResource<Person> {
 	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
 	 */
 	@Override
-	protected Map<Person, ResourceItemCommonData> doReadByQuery(List<ResourceItemCommonData> commonDataList,
+	protected Map<Person, ResourceItemCommonData> doExecuteQuery(List<ResourceItemCommonData> commonDataList,
 			Map<String, String[]> conditions) {
 
 		Map<Person, ResourceItemCommonData> itemMap = new HashMap<>();
 		for (ResourceItemCommonData common : commonDataList) {
 
-			Person item = doRead(common.getTargetItemId());
+			Person item = doGetResourceItem(common.getTargetItemId());
 
 			// TODO: queryの適用
 
@@ -97,7 +96,7 @@ public class PersonResource extends AbstractSyncResource<Person> {
 
 		if (repository.exists(newItem.getPersonId())) {
 
-			throw new DuplicateIdException(newItem.getPersonId(), doRead(newItem.getPersonId()));
+			throw new DuplicateIdException(newItem.getPersonId(), doGetResourceItem(newItem.getPersonId()));
 		}
 
 		repository.save(newItem);

@@ -16,28 +16,27 @@
  */
 package com.htmlhifive.sync.resource;
 
+import org.springframework.stereotype.Service;
+
 import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.ItemUpdatedException;
 
 /**
- * リソースアイテムの競合解決ロジッククラスのインターフェース.<br>
+ * サーバー側の更新を強制的に上書きし、今回の更新を有効にする更新戦略実装クラス.<br>
  *
  * @author kishigam
  */
-public interface UpdateStrategy {
+@Service
+public class ForceUpdateStrategy implements UpdateStrategy {
 
 	/**
-	 * 競合しているリソースアイテムから戦略に従って解決を行います.<br>
-	 * 競合が解決できた場合、更新を行うリソースアイテムを返します.<br>
-	 * 競合が解決できない場合、ItemUpdatedExceptionをスローします.
-	 *
-	 * @param itemCommon 更新しようとしているリソースアイテムの共通データ
-	 * @param item 更新しようとしているリソースアイテム
-	 * @param serverCommon サーバで保持しているリソースアイテムの共通データ
-	 * @param serverItem サーバで保持しているリソースアイテム
-	 * @return 競合解決済リソースアイテム
-	 * @throws ItemUpdatedException 競合が解決できない場合
+	 * 競合を解決せず、ItemUpdateExceptionをスローします.
 	 */
+	@Override
 	public <T> T resolveConflict(ResourceItemCommonData itemCommon, T item, ResourceItemCommonData serverCommon,
-			T serverItem) throws ItemUpdatedException;
+			T serverItem) throws ItemUpdatedException {
+
+		return serverItem;
+	}
+
 }

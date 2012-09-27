@@ -16,9 +16,7 @@
  */
 package com.htmlhifive.sync.resource;
 
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+import com.htmlhifive.sync.common.ResourceItemCommonData;
 
 /**
  * リソースアイテム1件の情報を保持するデータラッパー.<br>
@@ -26,151 +24,54 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
  *
  * @author kishigam
  */
-public class ResourceItemWrapper {
+public class ResourceItemWrapper<T> {
 
 	/**
-	 * リソース名.<br>
-	 * 上り更新時にクライアントから受け取るデータのためのフィールドです.<br>
-	 * クライアントに返すデータとしては対象外であるため、このフィールドのgetterメソッドに{@link JsonSerialize}が設定されています.
+	 * リソースアイテム共通データ.
 	 */
-	private String resourceName;
-
-	/**
-	 * リソースアイテムID.
-	 */
-	private String resourceItemId;
-
-	/**
-	 * リソースアイテムの最終更新アクション.
-	 */
-	private SyncAction action;
-
-	/**
-	 * このデータの最終更新時刻
-	 */
-	private long lastModified;
+	private ResourceItemCommonData itemCommonData;
 
 	/**
 	 * このデータが表現するリソースアイテムの本体.
 	 */
-	private Object item;
+	private T item;
 
 	/**
-	 * このデータの更新時刻に使用される値. サーバ内でのみ管理するデータのため、getterメソッドに{@link @JsonIgnore}が設定されています.<br>
-	 */
-	private long uploadTime;
-
-	/**
-	 * リソースアイテムの同期結果.<br>
-	 * サーバ内でのみ管理するデータのため、getterメソッドに{@link @JsonIgnore}が設定されています.<br>
-	 */
-	private SyncResultType resultType;
-
-	/**
-	 * IDを指定してリソースアイテムを生成します.
-	 */
-	public ResourceItemWrapper(String resourceItemId) {
-
-		this.resourceItemId = resourceItemId;
-	}
-
-	/**
-	 * nullでない場合のみレスポンスに含むため、{@link JsonSerialize}を設定しています.
+	 * アイテム共通データとアイテムを指定してデータラッパーを生成します.
 	 *
-	 * @return resourceName
+	 * @param itemCommonData リソースアイテム共通データ
+	 * @param item リソースアイテムオブジェクト
 	 */
-	@JsonSerialize(include = Inclusion.NON_NULL)
-	public String getResourceName() {
-		return resourceName;
+	public ResourceItemWrapper(ResourceItemCommonData itemCommonData, T item) {
+		this.itemCommonData = itemCommonData;
+		this.item = item;
 	}
 
 	/**
-	 * @param resourceName セットする resourceName
+	 * @return itemCommonData
 	 */
-	public void setResourceName(String resourceName) {
-		this.resourceName = resourceName;
+	public ResourceItemCommonData getItemCommonData() {
+		return itemCommonData;
 	}
 
 	/**
-	 * @return resourceItemId
+	 * @param itemCommonData セットする itemCommonData
 	 */
-	public String getResourceItemId() {
-		return resourceItemId;
-	}
-
-	/**
-	 * @return action
-	 */
-	public SyncAction getAction() {
-		return action;
-	}
-
-	/**
-	 * @param action セットする action
-	 */
-	public void setAction(SyncAction action) {
-		this.action = action;
-	}
-
-	/**
-	 * @return lastModified
-	 */
-	public long getLastModified() {
-		return lastModified;
-	}
-
-	/**
-	 * @param lastModified セットする lastModified
-	 */
-	public void setLastModified(long lastModified) {
-		this.lastModified = lastModified;
+	public void setItemCommonData(ResourceItemCommonData itemCommonData) {
+		this.itemCommonData = itemCommonData;
 	}
 
 	/**
 	 * @return item
 	 */
-	public Object getItem() {
+	public T getItem() {
 		return item;
 	}
 
 	/**
 	 * @param item セットする item
 	 */
-	public void setItem(Object item) {
+	public void setItem(T item) {
 		this.item = item;
-	}
-
-	/**
-	 * サーバ内でのみ管理するデータのため、{@link @JsonIgnore}を設定しています.<br>
-	 *
-	 * @return uploadTime
-	 */
-	@JsonIgnore
-	public long getUploadTime() {
-		return uploadTime;
-	}
-
-	/**
-	 * @param uploadTime セットする uploadTime
-	 */
-	public void setUploadTime(long uploadTime) {
-		this.uploadTime = uploadTime;
-	}
-
-	/**
-	 * サーバ内でのみ管理するデータのため、{@link @JsonIgnore}を設定しています.<br>
-	 *
-	 * @return resultType
-	 */
-	@JsonIgnore
-	public SyncResultType getResultType() {
-		return resultType;
-	}
-
-	/**
-	 * @param resultType セットする resultType
-	 */
-	public void setResultType(SyncResultType resultType) {
-		this.resultType = resultType;
 	}
 }

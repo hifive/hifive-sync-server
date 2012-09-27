@@ -19,8 +19,9 @@ package com.htmlhifive.sync.service;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
 /**
  * 下り更新に関する共通情報を保持するデータクラス(エンティティ).
@@ -32,7 +33,7 @@ public class DownloadCommonData {
 	/**
 	 * クライアントのストレージID.<br>
 	 * このフィールドはクライアントの初回アクセス時のみクライアントへのレスポンスに含みます.<br>
-	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています)
+	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonInclude}を追加しています)
 	 */
 	private String storageId;
 
@@ -68,11 +69,11 @@ public class DownloadCommonData {
 	}
 
 	/**
-	 * nullのときクライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています).
+	 * nullのときクライアントへのレスポンスから除外するため、{@link JsonInclude}を追加しています).
 	 *
 	 * @return storageId
 	 */
-	@JsonSerialize(include = Inclusion.NON_NULL)
+	@JsonInclude(Include.NON_NULL)
 	public String getStorageId() {
 		return storageId;
 	}

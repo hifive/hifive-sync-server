@@ -54,7 +54,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	/**
 	 * リソースごとのロックマネージャを保持するMap
 	 */
-	private Map<String, Class<? extends LockManager>> lockManagerMap;
+	private Map<String, Class<? extends LockStrategy>> lockManagerMap;
 
 	/**
 	 * リソースごとの更新戦略オブジェクトを保持するMap.<br>
@@ -101,7 +101,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 			resourceMap.put(resourceName, resourceClass);
 
 			// ロックマネージャを特定する
-			lockManagerMap.put(resourceName, resourceAnnotation.lockManager());
+			lockManagerMap.put(resourceName, resourceAnnotation.lockStrategy());
 
 			// 更新戦略オブジェクトを特定する
 			updateStrategyMap.put(resourceName, resourceAnnotation.updateStrategy());

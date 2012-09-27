@@ -32,6 +32,7 @@ import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.ItemUpdatedException;
 import com.htmlhifive.sync.exception.NotFoundException;
 import com.htmlhifive.sync.exception.SyncException;
+import com.htmlhifive.sync.service.UploadCommonData;
 
 /**
  * リソースの抽象実装クラス.<br>
@@ -43,6 +44,12 @@ import com.htmlhifive.sync.exception.SyncException;
 public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 
 	/**
+	 * このリソースが受け付けるアイテム型への変換を行うコンバータ.
+	 */
+	@Resource(type = JsonResourceItemConverter.class)
+	private ResourceItemConverter<T> itemConverter;
+
+	/**
 	 * 共通データのリポジトリ.
 	 */
 	@Resource
@@ -51,7 +58,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	/**
 	 * リソースごとに決まるロック方式のマネージャオブジェクト.<br>
 	 */
-	private LockManager lockManager;
+	private LockStrategy lockManager;
 
 	/**
 	 * ロックエラー発生時の競合解決を行う更新戦略オブジェクト.
@@ -59,49 +66,47 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	private UpdateStrategy updateStrategy;
 
 	/**
-	 * 指定されたリソースアイテムIDを持つリソースアイテムを取得します.<br>
+	 * 指定されたリソースアイテム共通データに対応するリソースアイテムを取得します.<br>
+	 * 渡される共通データには、リソース名が含まれていない可能性があります.<br>
+	 * リソース名は各リソース実装において{@link SyncResourceService}を参照し、設定する必要があります.
 	 *
-	 * @param resourceItemId リソースアイテムID
+	 * @param itemCommonData リソースアイテム共通データ
 	 * @return リソースアイテムのラッパーオブジェクト
 	 */
 	@Override
-	public ResourceItemWrapper read(String resourceItemId) {
+	public ResourceItemWrapper<T> getResourceItem(ResourceItemCommonData itemCommonData) {
 
-		ResourceItemCommonData common = currentCommonData(resourceItemId);
+		// 引数の共通データにはリソース名が含まれていない可能性があるため、ここでIDを再生成
+		ResourceItemCommonDataId id = new ResourceItemCommonDataId(getResourceName(), itemCommonData.getId()
+				.getResourceItemId());
 
-		T item = doRead(common.getTargetItemId());
+		ResourceItemCommonData common = currentCommonData(id);
 
-		ResourceItemWrapper itemWrapper = new ResourceItemWrapper(common.getId().getResourceItemId());
-		itemWrapper.setAction(common.getAction());
-		itemWrapper.setLastModified(common.getLastModified());
-		itemWrapper.setItem(item);
+		T item = doGetResourceItem(common.getTargetItemId());
 
-		return itemWrapper;
+		return new ResourceItemWrapper<>(common, item);
 	}
 
 	/**
-	 * クエリの条件に合致する全リソースアイテムを取得します.<br>
-	 * ロックは考慮しません.
+	 * クエリの条件に合致する全リソースアイテムを取得します.
 	 *
 	 * @param query クエリオブジェクト
 	 * @return 条件に合致するリソースアイテムのリスト
 	 */
 	@Override
-	public List<ResourceItemWrapper> readByQuery(ResourceQueryConditions query) {
+	public List<ResourceItemWrapper<T>> executeQuery(ResourceQueryConditions query) {
 
-		List<ResourceItemCommonData> commonDataList = repository.findModified(getResourceName(), query.getLastDownloadTime());
+		List<ResourceItemCommonData> commonDataList = repository.findModified(getResourceName(),
+				query.getLastDownloadTime());
 
-		Map<T, ResourceItemCommonData> items = doReadByQuery(commonDataList, query.getConditions());
+		Map<T, ResourceItemCommonData> items = doExecuteQuery(commonDataList, query.getConditions());
 
-		List<ResourceItemWrapper> resultList = new ArrayList<>();
+		List<ResourceItemWrapper<T>> resultList = new ArrayList<>();
 		for (T item : items.keySet()) {
 
 			ResourceItemCommonData common = items.get(item);
 
-			ResourceItemWrapper itemWrapper = new ResourceItemWrapper(common.getId().getResourceItemId());
-			itemWrapper.setAction(common.getAction());
-			itemWrapper.setLastModified(common.getLastModified());
-			itemWrapper.setItem(item);
+			ResourceItemWrapper<T> itemWrapper = new ResourceItemWrapper<>(common, item);
 
 			resultList.add(itemWrapper);
 		}
@@ -110,133 +115,124 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	}
 
 	/**
-	 * リソースアイテムを新規追加登録します.
+	 * リソースアイテムを新規登録します.
 	 *
-	 * @param itemWrapper 登録リソースアイテムのラッパーオブジェクト
-	 * @return 登録されたリソースアイテムのラッパーオブジェクト
+	 * @param uploadCommon 上り更新共通データ
+	 * @param itemCommon リソースアイテム共通データ
+	 * @param item アイテム
+	 * @return 新規登録されたアイテムの情報を含むラッパーオブジェクト
 	 */
 	@Override
-	public ResourceItemWrapper create(ResourceItemWrapper itemWrapper) {
+	public ResourceItemWrapper<T> create(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon, T item) {
 
-		ResourceItemWrapper resultItemWrapper;
 		try {
-			T createItem = itemConverter().convert(itemWrapper.getItem(), getItemType());
 
 			// 成功すると共通データで管理する各リソースアイテムのIDが返され、登録を行ったアイテムがサーバで管理される
-			String targetItemId = doCreate(createItem);
+			String targetItemId = doCreate(item);
 
-			ResourceItemCommonData newCommon = saveNewCommonData(itemWrapper, targetItemId);
+			// 対象リソースアイテムのID、更新時刻を設定し、リソースアイテム共通データを新規保存
+			itemCommon.setTargetItemId(targetItemId);
+			itemCommon.setLastModified(uploadCommon.getLastUploadTime());
+			saveNewCommonData(itemCommon);
 
-			resultItemWrapper = newCommon.generateItemWrapper();
-			resultItemWrapper.setItem(createItem);
+			// 登録されたリソースアイテム共通データ、
+			return new ResourceItemWrapper<>(itemCommon, item);
 
 		} catch (DuplicateIdException e) {
 
 			// キー重複の場合、共通データ、リソースアイテムには現在サーバで管理されているものを設定する
-			ResourceItemCommonData existingCommon = currentCommonData(itemWrapper.getResourceItemId());
+			ResourceItemCommonData currentCommon = currentCommonData(itemCommon.getId().getResourceName(),
+					e.getDuplicatedTargetItemId());
 
-			resultItemWrapper = existingCommon.generateItemWrapper();
-			resultItemWrapper.setResultType(SyncResultType.DUPLICATEDID);
-			resultItemWrapper.setItem(e.getCurrentItem());
+			currentCommon.setConflictType(SyncConflictType.DUPLICATEDID);
+
+			return new ResourceItemWrapper<>(currentCommon, getItemType().cast(e.getCurrentItem()));
 		}
-
-		return resultItemWrapper;
 	}
 
 	/**
-	 * リソースアイテムを更新します.
+	 * リソースアイテムを指定されたアイテムの内容で更新します.
 	 *
-	 * @param itemWrapper 更新リソースアイテムのラッパーオブジェクト
-	 * @return 更新されたリソースアイテムのラッパーオブジェクト
+	 * @param uploadCommon 上り更新共通データ
+	 * @param itemCommon リソースアイテム共通データ
+	 * @param item アイテム
+	 * @return 更新されたアイテムの情報を含むラッパーオブジェクト
 	 */
 	@Override
-	public ResourceItemWrapper update(ResourceItemWrapper itemWrapper) {
+	public ResourceItemWrapper<T> update(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon, T item) {
 
-		T updateItem = itemConverter().convert(itemWrapper.getItem(), getItemType());
-		ResourceItemCommonData commonBeforUpdate = currentCommonData(itemWrapper.getResourceItemId());
-		// ロックエラー判定
-		if (!lockManager.canUpdate(itemWrapper, commonBeforUpdate)) {
-
-			// サーバで保持しているアイテムを取得
-			T serverItem = commonBeforUpdate.getAction() == SyncAction.DELETE ? null : doRead(commonBeforUpdate
-					.getTargetItemId());
-
-			ResourceItemWrapper conflictedItemWrapper = commonBeforUpdate.generateItemWrapper();
-			conflictedItemWrapper.setItem(serverItem);
-
-			try {
-				// 競合解決、更新アイテムを決定し、更新対象のリソースアイテムを上書き
-				updateItem = updateStrategy.resolveConflict(itemWrapper, conflictedItemWrapper, getItemType());
-
-			} catch (ItemUpdatedException e) {
-				// 更新を行わずリターン
-				conflictedItemWrapper.setResultType(SyncResultType.UPDATED);
-				return conflictedItemWrapper;
-			}
-		}
-
-		doUpdate(updateItem);
-		ResourceItemCommonData commonAfterUpdate = saveUpdatedCommonData(itemWrapper);
-
-		lockManager.release(commonAfterUpdate);
-
-		ResourceItemWrapper resultItemWrapper = commonAfterUpdate.generateItemWrapper();
-		resultItemWrapper.setItem(updateItem);
-
-		return resultItemWrapper;
+		return updateOrDelete(uploadCommon, itemCommon, item);
 	}
 
 	/**
-	 * リソースアイテムを削除します.
+	 * リクエストヘッダが指定するリソースアイテムを削除します.<br>
+	 * 競合の解決方法によって、実際にはアイテムが更新される可能性があります.
 	 *
-	 * @param itemWrapper 削除リソースアイテムのラッパーオブジェクト
-	 * @return 更新されたリソースアイテムのラッパーオブジェクト
+	 * @param uploadCommon 上り更新共通データ
+	 * @param itemCommon リソースアイテム共通データ
+	 * @return 削除、あるいは更新されたアイテムの情報を含むラッパーオブジェクト
 	 */
 	@Override
-	public ResourceItemWrapper delete(ResourceItemWrapper itemWrapper) {
+	public ResourceItemWrapper<T> delete(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon) {
 
-		T updateItem = null;
+		return updateOrDelete(uploadCommon, itemCommon, null);
+	}
 
-		ResourceItemCommonData commonBeforUpdate = currentCommonData(itemWrapper.getResourceItemId());
-		// ロックエラー判定
-		if (!lockManager.canUpdate(itemWrapper, commonBeforUpdate)) {
+	/**
+	 * 更新、削除共通のデータ更新ロジックを実行します.<br>
+	 * 更新および削除は、競合が発生した際の解決結果によって実際に行う更新処理が変わります.<br>
+	 * (更新が実行される中で実際には削除処理が実行される、あるいはその逆)
+	 *
+	 * @param uploadCommon 上り更新共通データ
+	 * @param itemCommon リソースアイテム共通データ
+	 * @param item アイテム
+	 * @return 更新されたアイテムの情報を含むラッパーオブジェクト
+	 */
+	private ResourceItemWrapper<T> updateOrDelete(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon,
+			T item) {
+
+		// 更新前共通データの取得
+		ResourceItemCommonData currentCommon = currentCommonData(itemCommon.getId());
+
+		// 競合判定
+		// 競合がなければ、更新対象は渡されたitemとなる
+		T updateItem = item;
+		if (conflict(itemCommon, currentCommon)) {
 
 			// サーバで保持しているアイテムを取得
-			T serverItem = commonBeforUpdate.getAction() == SyncAction.DELETE ? null : doRead(commonBeforUpdate
+			T currentItem = currentCommon.getAction() == SyncAction.DELETE ? null : doGetResourceItem(currentCommon
 					.getTargetItemId());
-
-			ResourceItemWrapper conflictedItemWrapper = commonBeforUpdate.generateItemWrapper();
-			conflictedItemWrapper.setItem(serverItem);
 
 			try {
 				// 競合解決、更新アイテムを決定し、更新対象のリソースアイテムを上書き
-				updateItem = updateStrategy.resolveConflict(itemWrapper, conflictedItemWrapper, getItemType());
+				updateItem = updateStrategy.resolveConflict(itemCommon, item, currentCommon, currentItem);
 
 			} catch (ItemUpdatedException e) {
-				// 更新を行わずリターン
-				conflictedItemWrapper.setResultType(SyncResultType.UPDATED);
-				return conflictedItemWrapper;
+
+				// 更新を行わず、競合タイプ設定してリターン
+				currentCommon.setConflictType(SyncConflictType.UPDATED);
+				return new ResourceItemWrapper<>(currentCommon, currentItem);
 			}
 		}
 
-		if (updateItem != null) {
-
-			doUpdate(updateItem);
-
-			// アクションを切り替える
-			itemWrapper.setAction(SyncAction.UPDATE);
+		if (updateItem == null) {
+			itemCommon.setAction(SyncAction.DELETE);
+			doDelete(itemCommon.getTargetItemId());
 		} else {
-			doDelete(commonBeforUpdate.getTargetItemId());
+			itemCommon.setAction(SyncAction.UPDATE);
+			doUpdate(updateItem);
 		}
 
-		ResourceItemCommonData commonAfterUpdate = saveUpdatedCommonData(itemWrapper);
+		currentCommon.modify(itemCommon.getAction(), uploadCommon.getLastUploadTime());
+		ResourceItemCommonData commonAfterUpdate = saveUpdatedCommonData(currentCommon);
 
-		lockManager.release(commonAfterUpdate);
+		return new ResourceItemWrapper<>(commonAfterUpdate, updateItem);
+	}
 
-		ResourceItemWrapper resultItemWrapper = commonAfterUpdate.generateItemWrapper();
-		resultItemWrapper.setItem(updateItem);
+	@Override
+	public ResourceItemConverter<T> getResourceItemConverter() {
 
-		return resultItemWrapper;
+		return itemConverter;
 	}
 
 	/**
@@ -246,7 +242,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @param targetItemId 対象リソースアイテムのID
 	 * @return リソースアイテム
 	 */
-	protected abstract T doRead(String targetItemId);
+	protected abstract T doGetResourceItem(String targetItemId);
 
 	/**
 	 * クエリによってリソースアイテムを取得する抽象メソッド.<br>
@@ -256,7 +252,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @param conditions 条件Map(データ項目名,データ項目の条件)
 	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
 	 */
-	protected abstract Map<T, ResourceItemCommonData> doReadByQuery(List<ResourceItemCommonData> commonDataList,
+	protected abstract Map<T, ResourceItemCommonData> doExecuteQuery(List<ResourceItemCommonData> commonDataList,
 			Map<String, String[]> conditions);
 
 	/**
@@ -284,17 +280,6 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @param targetItemId 各リソースにおけるアイテムのID
 	 */
 	protected abstract void doDelete(String targetItemId);
-
-	/**
-	 * このリソースのリソースアイテムを専用の型に変換するコンバータを返します.
-	 *
-	 * @return コンバータ
-	 */
-	protected ResourceItemConverter<T> itemConverter() {
-
-		// TODO: コンフィグ化
-		return new JsonResourceItemConverter<>();
-	}
 
 	/**
 	 * このリソースのリソース名を返します.
@@ -335,7 +320,7 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	 * @param lockManager セットする lockManager
 	 */
 	@Override
-	public void setLockManager(LockManager lockManager) {
+	public void setLockManager(LockStrategy lockManager) {
 		this.lockManager = lockManager;
 	}
 
@@ -351,16 +336,16 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	}
 
 	/**
-	 * 共通データのキーとなる同期データIDで共通データエンティティを検索し、返します.<br>
+	 * リソースアイテム共通データのIDオブジェクトで共通データエンティティを検索し、返します.<br>
 	 * 取得できない場合、{@link NotFoundException}をスローします.
 	 *
-	 * @param resourceItemId リソースアイテムID
+	 * @param id リソースアイテム共通データID
 	 * @return 共通データエンティティ
 	 * @throws NotFoundException IDからエンティティが取得できなかったとき
 	 */
-	private ResourceItemCommonData currentCommonData(String resourceItemId) {
+	private ResourceItemCommonData currentCommonData(ResourceItemCommonDataId id) {
 
-		ResourceItemCommonData common = repository.findOne(new ResourceItemCommonDataId(getResourceName(), resourceItemId));
+		ResourceItemCommonData common = repository.findOne(id);
 
 		if (common == null) {
 			throw new NotFoundException("entity not found");
@@ -369,74 +354,93 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 	}
 
 	/**
-	 * 新規リソースに対応する共通データを生成し、保存します.
+	 * リソース名、そのリソースごとのアイテムにおけるIDで共通データエンティティを検索し、返します.<br>
+	 * 取得できない場合、{@link NotFoundException}をスローします.
 	 *
-	 * @param itemWrapper リソースアイテムのラッパーオブジェクト
-	 * @param targetItemId 各リソースアイテムのID
+	 * @param resourceName リソース名
+	 * @param targetItemId 対象リソースアイテムのID
+	 * @return 共通データエンティティ
+	 * @throws NotFoundException IDからエンティティが取得できなかったとき
+	 */
+	private ResourceItemCommonData currentCommonData(String resourceName, String targetItemId) {
+
+		ResourceItemCommonData common = repository.findByTargetItemId(resourceName, targetItemId);
+
+		if (common == null) {
+			throw new NotFoundException("entity not found");
+		}
+		return common;
+	}
+
+	/**
+	 * 新規リソースに対応する共通データを保存します.
+	 *
+	 * @param common リソースアイテム共通データ
 	 * @return 保存された共通データ
 	 */
-	private ResourceItemCommonData saveNewCommonData(ResourceItemWrapper itemWrapper, String targetItemId) {
+	private ResourceItemCommonData saveNewCommonData(ResourceItemCommonData common) {
 
-		ResourceItemCommonData newCommon = new ResourceItemCommonData(new ResourceItemCommonDataId(getResourceName(), itemWrapper.getResourceItemId()),
-				targetItemId);
-		newCommon.modifiy(itemWrapper);
+		if (repository.exists(common.getId())) {
 
-		if (repository.exists(newCommon.getId())) {
-
-			EntityExistsException cause = new EntityExistsException("duplicated common data : id = "
-					+ newCommon.getId());
+			EntityExistsException cause = new EntityExistsException("duplicated common data : id = " + common.getId());
 			throw new BadRequestException("inconsistent data exists", cause);
 		}
 
-		return repository.save(newCommon);
+		return repository.save(common);
 	}
 
 	/**
-	 * リソースに対応する共通データを更新し、保存します.<br>
-	 * ロックは開放されます.
+	 * リソースに対応する共通データを保存します.<br>
 	 *
-	 * @param requestHeader リソースへのリクエストヘッダ
-	 * @return リソースからのレスポンスヘッダ
+	 * @param common リソースアイテム共通データ
+	 * @return 保存された共通データ
 	 */
-	private ResourceItemCommonData saveUpdatedCommonData(ResourceItemWrapper itemWrapper) {
+	private ResourceItemCommonData saveUpdatedCommonData(ResourceItemCommonData common) {
 
-		ResourceItemCommonData updatingCommon = currentCommonData(itemWrapper.getResourceItemId());
-
-		updatingCommon.modifiy(itemWrapper);
-
-		repository.save(updatingCommon);
-
-		return updatingCommon;
+		return repository.save(common);
 	}
 
 	/**
-	 * リソースに対応する共通データに対し、ロックを設定します.<br>
+	 * リソースアイテム共通データのバージョン比較により、リソースアイテムの更新が実行できるか判定します.<br>
 	 *
-	 * @param id 共通データID
-	 * @param lockKey ロックキー
-	 * @return 共通データ
+	 * @param forUpdate update(/delete)対象リソースアイテムの共通データ
+	 * @param server サーバで保持している現在の共通データ
+	 * @return update(/delete)できる場合true.
 	 */
-	private ResourceItemCommonData getLock(String resourceItemId, String lockKey) {
+	private boolean conflict(ResourceItemCommonData forUpdate, ResourceItemCommonData server) {
 
-		ResourceItemCommonData existingCommon = currentCommonData(resourceItemId);
-
-		// TODO: ロックエラー判定→LockManager？
-		existingCommon.setLockKey(lockKey);
-		repository.save(existingCommon);
-
-		return existingCommon;
+		return server.getLastModified() > forUpdate.getLastModified();
 	}
 
-	/**
-	 * リソースに対応する共通データに対し、ロックを解除して更新します.
-	 *
-	 * @param id 共通データID
-	 * @param lockKey ロックキー
-	 */
-	private void releaseLock(String resourceItemId, String lockKey) {
-
-		ResourceItemCommonData existingCommon = currentCommonData(resourceItemId);
-		existingCommon.setLockKey(null);
-		repository.save(existingCommon);
-	}
+	//
+	//	/**
+	//	 * リソースに対応する共通データに対し、ロックを設定します.<br>
+	//	 *
+	//	 * @param id 共通データID
+	//	 * @param lockKey ロックキー
+	//	 * @return 共通データ
+	//	 */
+	//	private ResourceItemCommonData getLock(String resourceItemId, String lockKey) {
+	//
+	//		ResourceItemCommonData existingCommon = currentCommonData(resourceItemId);
+	//
+	//		// TODO: ロックエラー判定→LockManager？
+	//		existingCommon.setLockKey(lockKey);
+	//		repository.save(existingCommon);
+	//
+	//		return existingCommon;
+	//	}
+	//
+	//	/**
+	//	 * リソースに対応する共通データに対し、ロックを解除して更新します.
+	//	 *
+	//	 * @param id 共通データID
+	//	 * @param lockKey ロックキー
+	//	 */
+	//	private void releaseLock(String resourceItemId, String lockKey) {
+	//
+	//		ResourceItemCommonData existingCommon = currentCommonData(resourceItemId);
+	//		existingCommon.setLockKey(null);
+	//		repository.save(existingCommon);
+	//	}
 }

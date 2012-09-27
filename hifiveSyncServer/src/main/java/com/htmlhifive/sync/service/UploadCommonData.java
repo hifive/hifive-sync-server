@@ -24,11 +24,11 @@ import javax.persistence.Transient;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.codehaus.jackson.annotate.JsonIgnore;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
-import com.htmlhifive.sync.resource.SyncResultType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.htmlhifive.sync.resource.SyncConflictType;
 
 /**
  * 上り更新に関する共通情報を保持するデータクラス(エンティティ).
@@ -50,18 +50,18 @@ public class UploadCommonData {
 	/**
 	 * 最終上り更新時刻.<br>
 	 * このフィールドは競合がない場合のみクライアントへのレスポンスに含みます.<br>
-	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています)
+	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonInclude}を追加しています)
 	 */
 	private long lastUploadTime;
 
 	/**
 	 * 競合発生時の同期結果タイプ.<br>
 	 * このフィールドは競合発生時のみクライアントへのレスポンスに含みます.<br>
-	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています).<br>
+	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonInclude}を追加しています).<br>
 	 * また、永続化の対象外です.
 	 */
 	@Transient
-	private SyncResultType conflictType;
+	private SyncConflictType conflictType;
 
 	/**
 	 * @see Object#equals(Object)
@@ -117,11 +117,11 @@ public class UploadCommonData {
 	}
 
 	/**
-	 * nullのときクライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています).
+	 * nullのときクライアントへのレスポンスから除外するため、{@link JsonInclude}を追加しています).
 	 *
 	 * @return lastUploadTime
 	 */
-	@JsonSerialize(include = Inclusion.NON_NULL)
+	@JsonInclude(Include.NON_NULL)
 	public long getLastUploadTime() {
 		return lastUploadTime;
 	}
@@ -134,19 +134,19 @@ public class UploadCommonData {
 	}
 
 	/**
-	 * nullのときクライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています).
+	 * nullのときクライアントへのレスポンスから除外するため、{@link JsonInclude}を追加しています).
 	 *
 	 * @return conflictType
 	 */
-	@JsonSerialize(include = Inclusion.NON_NULL)
-	public SyncResultType getConflictType() {
+	@JsonInclude(Include.NON_NULL)
+	public SyncConflictType getConflictType() {
 		return conflictType;
 	}
 
 	/**
 	 * @param conflictType セットする conflictType
 	 */
-	public void setConflictType(SyncResultType conflictType) {
+	public void setConflictType(SyncConflictType conflictType) {
 		this.conflictType = conflictType;
 	}
 }

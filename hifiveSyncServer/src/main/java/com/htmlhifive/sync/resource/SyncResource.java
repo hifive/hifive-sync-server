@@ -18,6 +18,9 @@ package com.htmlhifive.sync.resource;
 
 import java.util.List;
 
+import com.htmlhifive.sync.common.ResourceItemCommonData;
+import com.htmlhifive.sync.service.UploadCommonData;
+
 /**
  * 「リソース」を表すインターフェース.<br>
  * このフレームワークにおける「リソース」とは、 ある形を持ったデータの集合を表します.<br>
@@ -28,12 +31,14 @@ import java.util.List;
 public interface SyncResource<T> {
 
 	/**
-	 * 指定されたリソースアイテムIDを持つリソースアイテムを取得します.<br>
+	 * 指定されたリソースアイテム共通データに対応するリソースアイテムを取得します.<br>
+	 * 渡される共通データには、リソース名が含まれていない可能性があります.<br>
+	 * リソース名は各リソース実装において{@link SyncResourceService}を参照し、設定する必要があります.
 	 *
-	 * @param resourceItemId リソースアイテムID
+	 * @param itemCommonData リソースアイテム共通データ
 	 * @return リソースアイテムのラッパーオブジェクト
 	 */
-	ResourceItemWrapper read(String resourceItemId);
+	public ResourceItemWrapper<T> getResourceItem(ResourceItemCommonData itemCommonData);
 
 	/**
 	 * クエリの条件に合致する全リソースアイテムを取得します.<br>
@@ -42,32 +47,37 @@ public interface SyncResource<T> {
 	 * @param query クエリオブジェクト
 	 * @return 条件に合致するリソースアイテムのリスト
 	 */
-	List<ResourceItemWrapper> readByQuery(ResourceQueryConditions query);
+	List<ResourceItemWrapper<T>> executeQuery(ResourceQueryConditions query);
 
 	/**
-	 * リソースアイテムを新規追加登録します.
+	 * リソースアイテムを新規登録します.
 	 *
-	 * @param itemWrapper 登録リソースアイテム
-	 * @return 登録されたリソースアイテム
+	 * @param uploadCommon 上り更新共通データ
+	 * @param itemCommon リソースアイテム共通データ
+	 * @param item アイテム
+	 * @return 新規登録されたアイテムの情報を含むラッパーオブジェクト
 	 */
-	ResourceItemWrapper create(ResourceItemWrapper itemWrapper);
+	ResourceItemWrapper<T> create(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon, T item);
 
 	/**
-	 * リクエストヘッダが指定するリソースアイテムを更新します.<br>
+	 * リソースアイテムを指定されたアイテムの内容で更新します.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
-	 * @param item 更新後のリソースアイテム
-	 * @return 更新結果を含む同期レスポンスのリスト
+	 * @param uploadCommon 上り更新共通データ
+	 * @param itemCommon リソースアイテム共通データ
+	 * @param item アイテム
+	 * @return 更新されたアイテムの情報を含むラッパーオブジェクト
 	 */
-	ResourceItemWrapper update(ResourceItemWrapper itemWrapper);
+	ResourceItemWrapper<T> update(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon, T item);
 
 	/**
-	 * リクエストヘッダが指定するリソースアイテムを削除します.
+	 * リクエストヘッダが指定するリソースアイテムを削除します.<br>
+	 * 競合の解決方法によって、実際にはアイテムが更新される可能性があります.
 	 *
-	 * @param requestHeader 同期リクエストヘッダ
-	 * @return 削除結果を含む同期レスポンスのリスト
+	 * @param uploadCommon 上り更新共通データ
+	 * @param itemCommon リソースアイテム共通データ
+	 * @return 削除、あるいは更新されたアイテムの情報を含むラッパーオブジェクト
 	 */
-	ResourceItemWrapper delete(ResourceItemWrapper itemWrapper);
+	ResourceItemWrapper<T> delete(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon);
 
 	/**
 	 * このリソースのリソース名を返します.
@@ -84,12 +94,19 @@ public interface SyncResource<T> {
 	Class<T> getItemType();
 
 	/**
+	 * このリソースのアイテム型に変換するためのコンバータオブジェクトを返します.
+	 *
+	 * @return アイテムの型を表すClassオブジェクト
+	 */
+	ResourceItemConverter<T> getResourceItemConverter();
+
+	/**
 	 * リソースのロックを管理するマネージャを設定します.<br>
 	 * 通常、アプリケーションから使用することはありません.
 	 *
 	 * @param lockManager セットする lockManager
 	 */
-	void setLockManager(LockManager lockManager);
+	void setLockManager(LockStrategy lockManager);
 
 	/**
 	 * ロックエラー発生時の更新方法を指定するストラテジーオブジェクトを設定します.<br>

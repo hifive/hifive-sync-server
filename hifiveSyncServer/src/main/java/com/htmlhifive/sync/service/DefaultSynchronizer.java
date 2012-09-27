@@ -27,14 +27,15 @@ import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.resource.DefaultSyncResourceManager;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.ResourceQueryConditions;
+import com.htmlhifive.sync.resource.SyncConflictType;
 import com.htmlhifive.sync.resource.SyncResource;
 import com.htmlhifive.sync.resource.SyncResourceManager;
-import com.htmlhifive.sync.resource.SyncResultType;
 
 /**
  * リソースの同期処理を実行するデフォルトサービス実装.<br>
@@ -75,25 +76,25 @@ public class DefaultSynchronizer implements Synchronizer {
 	public DownloadResponse download(DownloadRequest request) {
 
 		// リソース名ごとに結果をコンテナに格納する
-		Map<String, List<ResourceItemWrapper>> resultMap = new HashMap<>();
+		Map<String, List<ResourceItemWrapper<?>>> resultMap = new HashMap<>();
 
 		// クエリごとに処理し、結果をコンテナに格納
 		for (String resourceName : request.getQueries().keySet()) {
 
 			// Mapにリソース名ごとのコンテナが存在しない場合は生成
 			if (!resultMap.containsKey(resourceName)) {
-				resultMap.put(resourceName, new ArrayList<ResourceItemWrapper>());
+				resultMap.put(resourceName, new ArrayList<ResourceItemWrapper<?>>());
 			}
 
-			List<ResourceItemWrapper> resultList = resultMap.get(resourceName);
+			List<ResourceItemWrapper<?>> resultList = resultMap.get(resourceName);
 			for (ResourceQueryConditions queryConditions : request.getQueries().get(resourceName)) {
 
 				// リソースへリクエスト発行
 				SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-				List<ResourceItemWrapper> resultItemList = resource.readByQuery(queryConditions);
+				List<? extends ResourceItemWrapper<?>> resultItemList = resource.executeQuery(queryConditions);
 
 				// 結果をマージする(同じリソースアイテムは1件のみとなる)
-				for (ResourceItemWrapper itemWrapper : resultItemList) {
+				for (ResourceItemWrapper<?> itemWrapper : resultItemList) {
 					if (resultList.contains(itemWrapper)) {
 						resultList.add(itemWrapper);
 					}
@@ -151,57 +152,57 @@ public class DefaultSynchronizer implements Synchronizer {
 		}
 
 		// 競合の種類ごとに、競合データリソースのアイテムリスト(リソース別Map)に格納する
-		Map<SyncResultType, Map<String, List<ResourceItemWrapper>>> resultMapHolder = new HashMap<>();
-		resultMapHolder.put(SyncResultType.DUPLICATEDID, new HashMap<String, List<ResourceItemWrapper>>());
-		resultMapHolder.put(SyncResultType.UPDATED, new HashMap<String, List<ResourceItemWrapper>>());
+		Map<SyncConflictType, Map<String, List<ResourceItemWrapper<?>>>> resultMapHolder = new HashMap<>();
+		resultMapHolder.put(SyncConflictType.DUPLICATEDID, new HashMap<String, List<ResourceItemWrapper<?>>>());
+		resultMapHolder.put(SyncConflictType.UPDATED, new HashMap<String, List<ResourceItemWrapper<?>>>());
 
 		// リソースアイテムごとに処理(上り更新リクエストデータのみ、ResourceItemWrapperにリソース名を持つ)
-		for (ResourceItemWrapper uploadingItemWrapper : request.getResourceItems()) {
+		for (ResourceItemWrapper<? extends Map<String, Object>> uploadingItemWrapper : request.getResourceItems()) {
 
-			// 更新時刻を設定
-			uploadingItemWrapper.setUploadTime(requestCommon.getLastUploadTime());
+			String resourceName = uploadingItemWrapper.getItemCommonData().getId().getResourceName();
 
-			SyncResource<?> resource = resourceManager.locateSyncResource(uploadingItemWrapper.getResourceName());
+			SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
 
-			ResourceItemWrapper itemWrapperAfterUpload = doUpload(resource, uploadingItemWrapper);
+			ResourceItemWrapper<?> itemWrapperAfterUpload = doUpload(resource, requestCommon, uploadingItemWrapper);
+
+			SyncConflictType conflictType = itemWrapperAfterUpload.getItemCommonData().getConflictType();
 
 			// 競合でない場合は次のリソースアイテムの更新へ(更新後のアイテムは使用しない)
-			if (itemWrapperAfterUpload.getResultType() == SyncResultType.OK) {
+			if (conflictType == null) {
 				continue;
 			}
 
-			Map<String, List<ResourceItemWrapper>> resultMap = resultMapHolder.get(itemWrapperAfterUpload
-					.getResultType());
+			Map<String, List<ResourceItemWrapper<?>>> resultMap = resultMapHolder.get(conflictType);
 
 			// Mapにリソース名ごとのコンテナが存在しない場合は生成
-			if (!resultMap.containsKey(uploadingItemWrapper.getResourceName())) {
+			if (!resultMap.containsKey(resourceName)) {
 
-				List<ResourceItemWrapper> itemList = new ArrayList<>();
-				resultMap.put(uploadingItemWrapper.getResourceName(), itemList);
+				List<ResourceItemWrapper<?>> itemList = new ArrayList<>();
+				resultMap.put(resourceName, itemList);
 			}
 
 			// 競合しているアイテムをItemMapにマージ(同じリソースアイテムは1件のみとなる)
-			if (!resultMap.get(resource).contains(itemWrapperAfterUpload)) {
-				resultMap.get(resource).add(itemWrapperAfterUpload);
+			if (!resultMap.get(resourceName).contains(itemWrapperAfterUpload)) {
+				resultMap.get(resourceName).add(itemWrapperAfterUpload);
 			}
 
 			// 競合時の処理継続判断(競合のタイプごとに)
-			if (!continueOnConflict(itemWrapperAfterUpload.getResultType())) {
+			if (!continueOnConflict(conflictType)) {
 
 				// 継続しない場合はConflictExceptionをスロー
-				throwConflictException(itemWrapperAfterUpload.getResultType(), resultMap);
+				throwConflictException(conflictType, resultMap);
 			}
 
 			// ステータスに設定し、次のリソースアイテムの更新へ
-			responseCommon.setConflictType(itemWrapperAfterUpload.getResultType());
+			responseCommon.setConflictType(conflictType);
 		}
 
 		// 以下の優先順で複数の競合データをConflictExceptionでスロー
-		if (responseCommon.getConflictType() == SyncResultType.DUPLICATEDID) {
-			throwConflictException(SyncResultType.DUPLICATEDID, resultMapHolder.get(SyncResultType.DUPLICATEDID));
+		if (responseCommon.getConflictType() == SyncConflictType.DUPLICATEDID) {
+			throwConflictException(SyncConflictType.DUPLICATEDID, resultMapHolder.get(SyncConflictType.DUPLICATEDID));
 		}
-		if (responseCommon.getConflictType() == SyncResultType.UPDATED) {
-			throwConflictException(SyncResultType.UPDATED, resultMapHolder.get(SyncResultType.UPDATED));
+		if (responseCommon.getConflictType() == SyncConflictType.UPDATED) {
+			throwConflictException(SyncConflictType.UPDATED, resultMapHolder.get(SyncConflictType.UPDATED));
 		}
 
 		// 競合がない場合、上り更新時刻をレスポンスの共通データに設定し、更新する
@@ -228,19 +229,27 @@ public class DefaultSynchronizer implements Synchronizer {
 	 * エレメント型を固定することで、JSONからの型変換を行ったエレメントをリソースに渡すことができます.
 	 *
 	 * @param resource リソース
+	 * @param requestCommon
 	 * @param itemWrapper 更新するリソースアイテム
 	 * @return 更新後のリソースアイテム
 	 */
-	private ResourceItemWrapper doUpload(SyncResource<?> resource, ResourceItemWrapper itemWrapper)
-			throws ConflictException {
+	private <T> ResourceItemWrapper<T> doUpload(SyncResource<T> resource, UploadCommonData requestCommon,
+			ResourceItemWrapper<? extends Map<String, Object>> itemWrapper) throws ConflictException {
 
-		switch (itemWrapper.getAction()) {
+		ResourceItemCommonData itemCommon = itemWrapper.getItemCommonData();
+		T item;
+		switch (itemWrapper.getItemCommonData().getAction()) {
 			case CREATE:
-				return resource.create(itemWrapper);
+				item = resource.getResourceItemConverter().convert(itemWrapper.getItem(), resource.getItemType());
+				return resource.create(requestCommon, itemCommon, item);
+
 			case UPDATE:
-				return resource.update(itemWrapper);
+				item = resource.getResourceItemConverter().convert(itemWrapper.getItem(), resource.getItemType());
+				return resource.update(requestCommon, itemCommon, item);
+
 			case DELETE:
-				return resource.delete(itemWrapper);
+				return resource.delete(requestCommon, itemCommon);
+
 			default:
 				throw new BadRequestException("undefined action has called.");
 		}
@@ -253,10 +262,10 @@ public class DefaultSynchronizer implements Synchronizer {
 	 * @param resultType 上り更新結果のタイプ
 	 * @return 継続する場合true
 	 */
-	private boolean continueOnConflict(SyncResultType resultType) {
+	private boolean continueOnConflict(SyncConflictType resultType) {
 
 		// TODO:コンフィグ化
-		return resultType != SyncResultType.DUPLICATEDID && resultType != SyncResultType.UPDATED;
+		return resultType != SyncConflictType.DUPLICATEDID && resultType != SyncConflictType.UPDATED;
 	}
 
 	/**
@@ -265,8 +274,8 @@ public class DefaultSynchronizer implements Synchronizer {
 	 * @param conflictType 競合タイプ
 	 * @param conflictItemMap 競合したリソースアイテムの情報を保持しているMap
 	 */
-	private void throwConflictException(SyncResultType conflictType,
-			Map<String, List<ResourceItemWrapper>> conflictItemMap) {
+	private void throwConflictException(SyncConflictType conflictType,
+			Map<String, List<ResourceItemWrapper<?>>> conflictItemMap) {
 
 		UploadCommonData conflictCommon = new UploadCommonData();
 		conflictCommon.setConflictType(conflictType);

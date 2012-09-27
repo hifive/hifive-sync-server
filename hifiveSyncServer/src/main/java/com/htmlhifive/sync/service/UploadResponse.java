@@ -22,9 +22,9 @@ import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 
 /**
@@ -44,9 +44,9 @@ public class UploadResponse {
 	 * 競合リソースアイテムのリスト.<br>
 	 * リソース別にリストを保持します.<br>
 	 * このフィールドは競合発生時のみ、競合データとしてクライアントへのレスポンスに含みます.<br>
-	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています)
+	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonInclude}を追加しています)
 	 */
-	private Map<String, List<ResourceItemWrapper>> resourceItems;
+	private Map<String, List<ResourceItemWrapper<?>>> resourceItems;
 
 	/**
 	 * 上り更新共通データを指定して上り更新レスポンスを生成します.
@@ -108,19 +108,19 @@ public class UploadResponse {
 	}
 
 	/**
-	 * nullのときレスポンスから除外するため、{@link JsonSerialize}を追加しています).
+	 * nullのときレスポンスから除外するため、{@link JsonInclude}を追加しています).
 	 *
 	 * @return resourceItems
 	 */
-	@JsonSerialize(include = Inclusion.NON_NULL)
-	public Map<String, List<ResourceItemWrapper>> getResourceItems() {
+	@JsonInclude(Include.NON_NULL)
+	public Map<String, List<ResourceItemWrapper<?>>> getResourceItems() {
 		return resourceItems;
 	}
 
 	/**
 	 * @param resourceItems セットする resourceItems
 	 */
-	public void setResourceItems(Map<String, List<ResourceItemWrapper>> resourceItems) {
+	public void setResourceItems(Map<String, List<ResourceItemWrapper<?>>> resourceItems) {
 		this.resourceItems = resourceItems;
 	}
 }

@@ -16,27 +16,19 @@
  */
 package com.htmlhifive.sync.resource;
 
-import org.springframework.stereotype.Service;
-
 import com.htmlhifive.sync.common.ResourceItemCommonData;
-import com.htmlhifive.sync.exception.ItemUpdatedException;
+import com.htmlhifive.sync.exception.LockException;
 
 /**
- * 更新を行わず、クライアントに判断を求める更新戦略実装クラス.<br>
+ * リソースごとのロック取得ロジックを実装するクラスのインタフェース.
  *
- * @author kishigam
+ * @author kawaguch
  */
-@Service
-public class ClientResolvingStrategy implements UpdateStrategy {
+public interface LockStrategy {
 
-	/**
-	 * 競合を解決せず、ItemUpdateExceptionをスローします.
-	 */
-	@Override
-	public <T> T resolveConflict(ResourceItemCommonData itemCommon, T item, ResourceItemCommonData serverCommon,
-			T serverItem) throws ItemUpdatedException {
+	public boolean lock(ResourceItemCommonData commonData) throws LockException;
 
-		throw new ItemUpdatedException("return client to resolve.");
-	}
+	public boolean isLocked();
 
+	public void unlock(ResourceItemCommonData commonData);
 }

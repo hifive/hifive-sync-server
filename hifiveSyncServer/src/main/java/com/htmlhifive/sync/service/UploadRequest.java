@@ -17,6 +17,7 @@
 package com.htmlhifive.sync.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -40,7 +41,7 @@ public class UploadRequest {
 	/**
 	 * 上り更新対象を表すリソースアイテムリストのMap.<br>
 	 */
-	private List<ResourceItemWrapper> resourceItems;
+	private List<ResourceItemWrapper<? extends Map<String, Object>>> resourceItems;
 
 	/**
 	 * @see Object#equals(Object)
@@ -95,14 +96,14 @@ public class UploadRequest {
 	/**
 	 * @return resourceItems
 	 */
-	public List<ResourceItemWrapper> getResourceItems() {
+	public List<ResourceItemWrapper<? extends Map<String, Object>>> getResourceItems() {
 		return resourceItems;
 	}
 
 	/**
 	 * @param resourceItems セットする resourceItems
 	 */
-	public void setResourceItems(List<ResourceItemWrapper> resourceItems) {
+	public void setResourceItems(List<ResourceItemWrapper<? extends Map<String, Object>>> resourceItems) {
 		this.resourceItems = resourceItems;
 	}
 }

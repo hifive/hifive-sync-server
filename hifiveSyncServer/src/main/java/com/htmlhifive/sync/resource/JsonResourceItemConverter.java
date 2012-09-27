@@ -16,9 +16,9 @@
  */
 package com.htmlhifive.sync.resource;
 
-import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.htmlhifive.sync.exception.BadRequestException;
 
 /**

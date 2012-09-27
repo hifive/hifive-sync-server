@@ -41,14 +41,14 @@ public @interface SyncResourceService {
 	String resourceName();
 
 	/**
-	 * リソースが使用するLockManagerのクラスオブジェクト.<br>
+	 * リソースが使用するロック戦略の実装クラス.<br>
 	 *
 	 * @return LockManagerのクラスオブジェクト
 	 */
-	Class<? extends LockManager> lockManager() default OptimisticLockManager.class;
+	Class<? extends LockStrategy> lockStrategy() default DefaultLockStrategy.class;
 
 	/**
-	 * リソースが使用する更新戦略のクラスオブジェクト.<br>
+	 * リソースが使用する競合発生時のリソースアイテム更新戦略の実装クラス.<br>
 	 *
 	 * @return LockManagerのクラスオブジェクト
 	 */
