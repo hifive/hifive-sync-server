@@ -28,10 +28,9 @@ public interface Synchronizer {
 	 * リソースごとに、指定されたクエリでリソースアイテムを検索、取得します.
 	 *
 	 * @param request 下り更新リクエストデータ
-	 * @param withLock ロックを取得するときtrue
 	 * @return 下り更新レスポンスデータ
 	 */
-	public DownloadResponse download(DownloadRequest request, boolean withLock);
+	public DownloadResponse download(DownloadRequest request);
 
 	/**
 	 * 上り更新を実行します.<br>

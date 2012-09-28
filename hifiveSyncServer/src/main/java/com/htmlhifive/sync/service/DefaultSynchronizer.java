@@ -77,14 +77,13 @@ public class DefaultSynchronizer implements Synchronizer {
 	 * リソースごとに、指定されたクエリでリソースアイテムを検索、取得します.
 	 *
 	 * @param request 下り更新リクエストデータ
-	 * @param withLock ロックを取得するときtrue
 	 * @return 下り更新レスポンスデータ
 	 */
 	@Override
-	public DownloadResponse download(DownloadRequest request, boolean lock) {
+	public DownloadResponse download(DownloadRequest request) {
 
-		// 今回の下り更新実行時刻の算出と共通データへのセット
-		long downloadTime = generateDownloadTime();
+		// 今回の同期実行時刻と共通データへのセット
+		long downloadTime = generateSyncTime();
 		request.getDownloadCommonData().setSyncTime(downloadTime);
 
 		// リソース名ごとに結果をコンテナに格納する
@@ -103,8 +102,7 @@ public class DefaultSynchronizer implements Synchronizer {
 
 				// リソースへリクエスト発行
 				SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-				List<? extends ResourceItemWrapper<?>> resultItemList = lock ? resource.executeQueryWithLock(
-						request.getDownloadCommonData(), queryConditions) : resource.executeQuery(queryConditions);
+				List<? extends ResourceItemWrapper<?>> resultItemList = resource.executeQuery(queryConditions);
 
 				// 結果をマージする(同じリソースアイテムは1件のみとなる)
 				for (ResourceItemWrapper<?> itemWrapper : resultItemList) {
@@ -120,8 +118,8 @@ public class DefaultSynchronizer implements Synchronizer {
 		DownloadCommonData responseCommon = new DownloadCommonData();
 		responseCommon.setStorageId(request.getDownloadCommonData().getStorageId());
 
-		// リクエストの処理時刻でレスポンスの最終下り更新時刻を更新
-		responseCommon.setLastDownloadTime(request.getDownloadCommonData().getSyncTime());
+		// リクエストの処理時刻でレスポンスの最終下り更新時刻を更新(同時に上り更新されたデータを読み出すためのバッファを考慮)
+		responseCommon.setLastDownloadTime(request.getDownloadCommonData().getSyncTime() - BUFFER_TIME_FOR_DOWNLOAD);
 
 		// 下り更新レスポンスに結果を設定
 		DownloadResponse response = new DownloadResponse(responseCommon);
@@ -129,17 +127,6 @@ public class DefaultSynchronizer implements Synchronizer {
 
 		// 下り更新では同期ステータスを更新しない
 		return response;
-	}
-
-	/**
-	 * 下り更新時刻を決定します.<br>
-	 * 同時に行われている他のクライアントによる上り更新データを確実に含めるため、バッファ時間を考慮します.
-	 *
-	 * @return
-	 */
-	private long generateDownloadTime() {
-
-		return new Date().getTime() - BUFFER_TIME_FOR_DOWNLOAD;
 	}
 
 	/**
@@ -154,7 +141,7 @@ public class DefaultSynchronizer implements Synchronizer {
 
 		// リクエストの上り更新共通データに今回の上り更新処理時刻を設定
 		UploadCommonData requestCommon = request.getUploadCommonData();
-		requestCommon.setSyncTime(generateUploadTime());
+		requestCommon.setSyncTime(generateSyncTime());
 
 		// 保存していた、前回までの上り更新共通データを取得し、レスポンスの共通データとして初期設定
 		UploadCommonData responseCommon = lastUploadCommonData(requestCommon.getStorageId());
@@ -247,7 +234,7 @@ public class DefaultSynchronizer implements Synchronizer {
 	 *
 	 * @return 上り更新時刻
 	 */
-	private long generateUploadTime() {
+	private long generateSyncTime() {
 
 		return new Date().getTime();
 	}

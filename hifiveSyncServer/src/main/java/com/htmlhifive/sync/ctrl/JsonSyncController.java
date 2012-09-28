@@ -20,7 +20,6 @@ import java.util.UUID;
 
 import javax.annotation.Resource;
 
-import org.springframework.data.repository.query.Param;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,9 +56,9 @@ public class JsonSyncController {
 	 * @param request 下り更新リクエストデータ
 	 * @return 下り更新レスポンスデータ
 	 */
-	@RequestMapping(value = "/download", method = RequestMethod.POST, params = { "lock" }, headers = {
+	@RequestMapping(value = "/download", method = RequestMethod.POST, params = {}, headers = {
 			"Accept=application/json", "Content-Type=application/json" })
-	public ResponseEntity<DownloadResponse> download(@RequestBody DownloadRequest request, @Param("lock") boolean lock) {
+	public ResponseEntity<DownloadResponse> download(@RequestBody DownloadRequest request) {
 
 		boolean isInitialDownload = false;
 		// ストレージIDが含まれていない場合、初回アクセスなのでストレージIDを生成、リクエストの下り更新共通データにセット
@@ -69,7 +68,7 @@ public class JsonSyncController {
 		}
 
 		// 下り更新サービスを呼び出し
-		DownloadResponse response = synchronizer.download(request, lock);
+		DownloadResponse response = synchronizer.download(request);
 
 		// 初回アクセス以外はストレージIDをレスポンスから除外するためnullをセット
 		if (!isInitialDownload) {
