@@ -297,10 +297,19 @@ public abstract class AbstractSyncResource<T> implements SyncResource<T> {
 			}
 
 			if (updateItem == null) {
+
 				itemCommon.setAction(SyncAction.DELETE);
 				doDelete(itemCommon.getTargetItemId());
 			} else {
 				itemCommon.setAction(SyncAction.UPDATE);
+				if (currentCommon.getAction() == SyncAction.DELETE) {
+					try {
+						doCreate(updateItem);
+					} catch (DuplicateIdException e) {
+						// データ不整合のため、CONFLICTを返さない
+						throw new SyncException("inconsistent data. Deleted", e);
+					}
+				}
 				doUpdate(updateItem);
 			}
 
