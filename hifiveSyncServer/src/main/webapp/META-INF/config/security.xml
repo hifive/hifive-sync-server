@@ -6,7 +6,7 @@
   http://www.springframework.org/schema/security
   http://www.springframework.org/schema/security/spring-security-3.1.xsd">
 
-	<!-- HTTP-Securityの設定 auto-configをtrueにすることでデフォルト設定が有効になり、記述量を削減でき る -->
+	<!-- HTTP-Securityの設定 auto-configをtrueにすることでデフォルト設定が有効になり、記述量を削減できる -->
 	<http auto-config="true">
 		<!-- URL毎に必要な権限を記述する ここではすべてのURLにアクセスするには、 主体がロールROLE_ADMINを保持していることが必要という意味になる -->
 		<http-basic />
@@ -18,28 +18,29 @@
 		<!-- Bean定義ファイルやRDBMSから主体情報を取得し、 ユーザ認証を行うauthentication-provider -->
 		<authentication-provider>
 			<!-- Bean定義ファイルから主体情報を取得するuser-service -->
+			<!-- 環境に合わせて設定 -->
 			<jdbc-user-service data-source-ref="securityDataSource"
-				users-by-username-query="select username, password, 1 from RBM_USER where username = ?"
-				authorities-by-username-query="select u.username, 'ROLE_' || upper(ur.groupname) as role from rbm_user u, rbm_group ur where u.username = ur.username and u.username = ?" />
-
+				users-by-username-query="xxx"
+				authorities-by-username-query="yuu />
 		</authentication-provider>
 		<!-- LDAPから主体情報を取得して、ユーザ認証を行う ldap-authentication-providerや 独自のauthentication-providerを利用することも可能 -->
 	</authentication-manager>
 
-	<beans:bean id="securityDataSource"
-		class="org.springframework.jdbc.datasource.DriverManagerDataSource">
-		<beans:property name="driverClassName">
-			<beans:value>oracle.jdbc.OracleDriver</beans:value>
-		</beans:property>
-		<beans:property name="url">
-			<beans:value>jdbc:oracle:thin:@crater.o.sysrdc.ns-sol.co.jp:1521:orcl
-			</beans:value>
-		</beans:property>
-		<beans:property name="username">
-			<beans:value>REST</beans:value>
-		</beans:property>
-		<beans:property name="password">
-			<beans:value>REST</beans:value>
-		</beans:property>
-	</beans:bean>
+	<beans:bean id="
+				securityDataSource "
+				class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+				<beans:property name="driverClassName">
+					<beans:value>oracle.jdbc.OracleDriver</beans:value>
+				</beans:property>
+				<beans:property name="url">
+					<beans:value><!-- 環境に合わせて設定 -->
+					</beans:value>
+				</beans:property>
+				<beans:property name="username">
+					<beans:value>REST</beans:value>
+				</beans:property>
+				<beans:property name="password">
+					<beans:value>REST</beans:value>
+				</beans:property>
+			</beans:bean>
 </beans:beans>
