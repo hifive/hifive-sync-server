@@ -16,30 +16,14 @@
  */
 package com.htmlhifive.sync.common;
 
-import javax.persistence.LockModeType;
-
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
-
-import com.htmlhifive.sync.resource.ResourceLockModeType;
 
 /**
  * リソースアイテム共通ロックデータエンティティを永続化するためのリポジトリ.<br>
+ * SpringFrameworkの標準的なリポジトリ、独自拡張メソッドを定義した{@link ResourceItemCommonLockDataRepositoryCustom}インターフェースを継承します.<br>
  *
  * @author kishigam
  */
 public interface ResourceItemCommonLockDataRepository extends
-		JpaRepository<ResourceItemCommonLockData, ResourceItemCommonDataId> {
-
-	// 	 メソッド名からSpringFrameworkがクエリーを生成
-	/**
-	 * 指定された項目に合致するリソースアイテム共通ロックデータを取得します.<br>
-	 * 悲観的WRITEロックを必要とします.
-	 *
-	 * @param resourceName リソース名
-	 * @param targetItemId 共通データの対象リソースアイテムにおけるID
-	 * @return 検索した共通データエンティティ
-	 */
-	@Lock(LockModeType.PESSIMISTIC_WRITE)
-	ResourceItemCommonLockData findByIdAndLockMode(ResourceItemCommonDataId id, ResourceLockModeType lockMode);
+		JpaRepository<ResourceItemCommonLockData, ResourceItemCommonDataId>, ResourceItemCommonLockDataRepositoryCustom {
 }

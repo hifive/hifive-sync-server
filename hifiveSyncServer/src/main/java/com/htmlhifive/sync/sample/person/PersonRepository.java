@@ -17,12 +17,14 @@
 package com.htmlhifive.sync.sample.person;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
  * Personエンティティを永続化するためのリポジトリ. <br>
- * SpringFrameworkの標準的なリポジトリメソッドを継承します.
+ * SpringFrameworkの標準的なリポジトリ、独自拡張メソッドを定義した{@link PersonRepositoryCustom}インターフェースを継承します.<br>
  *
  * @author kishigam
  */
-public interface PersonRepository extends JpaRepository<Person, String> {
+public interface PersonRepository extends JpaRepository<Person, String>, JpaSpecificationExecutor<Person>,
+		PersonRepositoryCustom {
 }

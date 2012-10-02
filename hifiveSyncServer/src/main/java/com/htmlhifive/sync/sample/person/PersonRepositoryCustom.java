@@ -14,17 +14,10 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.sample.scd;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+package com.htmlhifive.sync.sample.person;
 
 /**
- * 予定データエンティティを永続化するためのリポジトリ. <br>
- * SpringFrameworkの標準的なリポジトリ、独自拡張メソッドを定義した{@link ScheduleRepositoryCustom}インターフェースを継承します.<br>
- *
- * @author kishigam
+ * 予定エンティティリポジトリの独自拡張インターフェース.
  */
-public interface ScheduleRepository extends JpaRepository<Schedule, String>, JpaSpecificationExecutor<Schedule>,
-		ScheduleRepositoryCustom {
+public interface PersonRepositoryCustom {
 }
