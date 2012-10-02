@@ -473,7 +473,6 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	 */
 	private boolean conflict(long uploadTime, ResourceItemCommonData server) {
 
-//		return server.getLastModified() > uploadTime;
-	return true;
+		return server.getLastModified() > uploadTime;
 	}
 }
