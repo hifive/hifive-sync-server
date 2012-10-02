@@ -36,6 +36,7 @@ import com.htmlhifive.sync.sample.person.Person;
 import com.htmlhifive.sync.sample.person.PersonResource;
 import com.htmlhifive.sync.service.DefaultSynchronizer;
 import com.htmlhifive.sync.service.Synchronizer;
+import com.htmlhifive.sync.service.download.DownloadCommonData;
 import com.htmlhifive.sync.service.download.DownloadRequest;
 import com.htmlhifive.sync.service.download.DownloadResponse;
 import com.htmlhifive.sync.service.lock.LockRequest;
@@ -83,7 +84,13 @@ public class JsonSyncController {
 	public ResponseEntity<DownloadResponse> download(@RequestBody DownloadRequest request) {
 
 		boolean isInitialDownload = false;
-		// ストレージIDが含まれていない場合、初回アクセスなのでストレージIDを生成、リクエストの下り更新共通データにセット
+
+		// 下り更新共通データがない場合、およびストレージIDが含まれていない場合は初回アクセス
+		// ストレージIDを生成、リクエストの下り更新共通データにセット
+		if (request.getDownloadCommonData() == null) {
+			isInitialDownload = true;
+			request.setDownloadCommonData(new DownloadCommonData(generateNewStorageId()));
+		}
 		if (request.getDownloadCommonData().getStorageId() == null) {
 			isInitialDownload = true;
 			request.getDownloadCommonData().setStorageId(generateNewStorageId());
@@ -226,8 +233,8 @@ public class JsonSyncController {
 	private <T> ResponseEntity<T> createHttpResponseEntity(T body, HttpStatus status) {
 
 		HttpHeaders responseHeaders = new HttpHeaders();
-//		responseHeaders.setContentType(MediaType.APPLICATION_JSON);
-				responseHeaders.add("Content-Type", "application/json;charset=utf-8");
+		//		responseHeaders.setContentType(MediaType.APPLICATION_JSON);
+		responseHeaders.add("Content-Type", "application/json;charset=utf-8");
 
 		return new ResponseEntity<>(body, responseHeaders, status);
 	}
