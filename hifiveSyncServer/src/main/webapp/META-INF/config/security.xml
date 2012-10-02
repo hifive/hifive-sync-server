@@ -6,41 +6,15 @@
   http://www.springframework.org/schema/security
   http://www.springframework.org/schema/security/spring-security-3.1.xsd">
 
-	<!-- HTTP-Securityの設定 auto-configをtrueにすることでデフォルト設定が有効になり、記述量を削減できる -->
 	<http auto-config="true">
-		<!-- URL毎に必要な権限を記述する ここではすべてのURLにアクセスするには、 主体がロールROLE_ADMINを保持していることが必要という意味になる -->
 		<http-basic />
 		<intercept-url pattern="/**" access='ROLE_ADMIN' />
 	</http>
 
-	<!-- ユーザ認証の設定 authentication-managerはユーザ認証処理を 1つ以上のauthentication-providerに委譲する -->
 	<authentication-manager>
-		<!-- Bean定義ファイルやRDBMSから主体情報を取得し、 ユーザ認証を行うauthentication-provider -->
 		<authentication-provider>
-			<!-- Bean定義ファイルから主体情報を取得するuser-service -->
-			<!-- 環境に合わせて設定 -->
-			<jdbc-user-service data-source-ref="securityDataSource"
-				users-by-username-query="xxx"
-				authorities-by-username-query="yuu />
+     	   <user-service properties="/META-INF/users.properties" />
 		</authentication-provider>
-		<!-- LDAPから主体情報を取得して、ユーザ認証を行う ldap-authentication-providerや 独自のauthentication-providerを利用することも可能 -->
 	</authentication-manager>
 
-	<beans:bean id="
-				securityDataSource "
-				class="org.springframework.jdbc.datasource.DriverManagerDataSource">
-				<beans:property name="driverClassName">
-					<beans:value>oracle.jdbc.OracleDriver</beans:value>
-				</beans:property>
-				<beans:property name="url">
-					<beans:value><!-- 環境に合わせて設定 -->
-					</beans:value>
-				</beans:property>
-				<beans:property name="username">
-					<beans:value>REST</beans:value>
-				</beans:property>
-				<beans:property name="password">
-					<beans:value>REST</beans:value>
-				</beans:property>
-			</beans:bean>
 </beans:beans>
