@@ -21,12 +21,12 @@ package com.htmlhifive.sync.exception;
  *
  * @author kishigam
  */
-public class LockException extends Exception {
+public class LockException extends RuntimeException {
 
 	/**
 	 * シリアルバージョンUID.
 	 */
-	private static final long serialVersionUID = 1621213380727697249L;
+	private static final long serialVersionUID = -3406290314766630231L;
 
 	/**
 	 * @see RuntimeException

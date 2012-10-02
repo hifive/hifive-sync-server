@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.service;
+package com.htmlhifive.sync.service.download;
 
 import java.util.List;
 import java.util.Map;

@@ -17,4 +17,10 @@ public interface SyncCommonData {
 	 * 同期操作の実行時刻を返します.
 	 */
 	long getSyncTime();
+
+	/**
+	 * ロックトークン.<br>
+	 * ロックを必要とする処理において設定、参照されるトークンを返します.
+	 */
+	String getLockToken();
 }

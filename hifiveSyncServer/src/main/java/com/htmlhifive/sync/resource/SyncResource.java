@@ -19,57 +19,41 @@ package com.htmlhifive.sync.resource;
 import java.util.List;
 
 import com.htmlhifive.sync.common.ResourceItemCommonData;
-import com.htmlhifive.sync.service.DownloadCommonData;
-import com.htmlhifive.sync.service.UploadCommonData;
+import com.htmlhifive.sync.common.ResourceItemCommonDataId;
+import com.htmlhifive.sync.exception.LockException;
+import com.htmlhifive.sync.service.SyncCommonData;
+import com.htmlhifive.sync.service.download.DownloadCommonData;
+import com.htmlhifive.sync.service.lock.LockCommonData;
+import com.htmlhifive.sync.service.upload.UploadCommonData;
 
 /**
  * 「リソース」を表すインターフェース.<br>
- * このフレームワークにおける「リソース」とは、 ある形を持ったデータの集合を表します.<br>
- * リソースはリソースアイテムを持ちます。リソースアイテムはデータ同期の最小単位です.
+ * このフレームワークにおけるリソースとは、 ある形を持ったデータの集合を表します.<br>
+ * このデータはリソースアイテムと呼ばれ、データ同期の最小単位になります.
  *
- * @param <T> アイテムのデータ型
+ * @param <I> アイテムのデータ型
  */
-public interface SyncResource<T> {
+public interface SyncResource<I> {
 
 	/**
-	 * 指定されたリソースアイテム共通データに対応するリソースアイテムを取得します.<br>
-	 * 渡される共通データには、リソース名が含まれていない可能性があります.<br>
-	 * リソース名は各リソース実装において{@link SyncResourceService}を参照し、設定する必要があります.
-	 *
-	 * @param itemCommonData リソースアイテム共通データ
-	 * @return リソースアイテムのラッパーオブジェクト
-	 */
-	public ResourceItemWrapper<T> getResourceItem(ResourceItemCommonData itemCommonData);
-
-	/**
-	 * クエリの条件に合致する全リソースアイテムを取得します.<br>
-	 * ロックは考慮しません.
-	 *
-	 * @param query クエリオブジェクト
-	 * @return 条件に合致するリソースアイテムのリスト
-	 */
-	List<ResourceItemWrapper<T>> executeQuery(ResourceQueryConditions query);
-
-	/**
-	 * 指定されたリソースアイテム共通データに対応するリソースアイテムをロックし、取得します.<br>
-	 * 渡される共通データには、リソース名が含まれていない可能性があります.<br>
-	 * リソース名は各リソース実装において{@link SyncResourceService}を参照し、設定する必要があります.
+	 * 指定されたリソースアイテム共通データに対応するリソースアイテムを取得します.
 	 *
 	 * @param downloadCommon 下り更新共通データ
 	 * @param itemCommonData リソースアイテム共通データ
 	 * @return リソースアイテムのラッパーオブジェクト
+	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
-	ResourceItemWrapper<T> getResourceItemWithLock(DownloadCommonData downloadCommon,
-			ResourceItemCommonData itemCommonData);
+	ResourceItemWrapper<I> get(DownloadCommonData downloadCommon, ResourceItemCommonData itemCommonData);
 
 	/**
-	 * クエリの条件に合致する全リソースアイテムをロックし、取得します.
+	 * クエリの条件に合致する全リソースアイテムを取得します.
 	 *
-	 * @param downloadCommon 下り更新共通データ
+	 * @param downloadCommon 共通データ
 	 * @param query クエリオブジェクト
 	 * @return 条件に合致するリソースアイテムのリスト
+	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
-	List<ResourceItemWrapper<T>> executeQueryWithLock(DownloadCommonData downloadCommon, ResourceQueryConditions query);
+	List<ResourceItemWrapper<I>> getByQuery(SyncCommonData syncCommon, ResourceQueryConditions query);
 
 	/**
 	 * リソースアイテムを新規登録します.
@@ -79,48 +63,87 @@ public interface SyncResource<T> {
 	 * @param item アイテム
 	 * @return 新規登録されたアイテムの情報を含むラッパーオブジェクト
 	 */
-	ResourceItemWrapper<T> create(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon, T item);
+	ResourceItemWrapper<I> create(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon, I item);
 
 	/**
-	 * リソースアイテムを指定されたアイテムの内容で更新します.
+	 * リソースアイテムを指定されたアイテムの内容で更新します. <br>
+	 * 競合が発生し、その解決方法によってはアイテムが新規登録、削除される可能性があります.
 	 *
 	 * @param uploadCommon 上り更新共通データ
 	 * @param itemCommon リソースアイテム共通データ
 	 * @param item アイテム
 	 * @return 更新されたアイテムの情報を含むラッパーオブジェクト
+	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
-	ResourceItemWrapper<T> update(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon, T item);
+	ResourceItemWrapper<I> update(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon, I item);
 
 	/**
-	 * リクエストヘッダが指定するリソースアイテムを削除します.<br>
-	 * 競合の解決方法によって、実際にはアイテムが更新される可能性があります.
+	 * リソースアイテムを削除します. 競合が発生し、その解決方法によってはアイテムが新規登録、更新される可能性があります.
 	 *
 	 * @param uploadCommon 上り更新共通データ
 	 * @param itemCommon リソースアイテム共通データ
-	 * @return 削除、あるいは更新されたアイテムの情報を含むラッパーオブジェクト
+	 * @return 更新されたアイテムの情報を含むラッパーオブジェクト
+	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
-	ResourceItemWrapper<T> delete(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon);
+	ResourceItemWrapper<I> delete(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon);
+
+	/**
+	 * 指定されたリソースアイテムをロックします.
+	 *
+	 * @param lockCommon ロック取得共通データ
+	 * @param itemWrapper リソースアイテムラッパーオブジェクト
+	 * @throws LockException ロックできなかった場合
+	 */
+	void lock(LockCommonData lockCommon, ResourceItemWrapper<I> itemWrapper);
+
+	/**
+	 * 指定されたリソースアイテムのロックを開放します.
+	 *
+	 * @param lockCommonData ロック取得共通データ
+	 * @param itemWrapper リソースアイテムラッパーオブジェクト
+	 * @throws LockException 対象リソースアイテムがロックされていた場合
+	 */
+	void releaseLock(LockCommonData lockCommonData, ResourceItemWrapper<I> itemWrapper);
+
+	/**
+	 * ロックされている全リソースアイテムの情報を返します.<br>
+	 * 返されるリストのリソースアイテムラッパーオブジェクトはアイテムそのものは保持しません.
+	 *
+	 * @param lockCommonData ロック取得共通データ
+	 * @throws LockException 対象リソースアイテムがロックされていた場合
+	 */
+	List<ResourceItemCommonDataId> lockedItemInfo(LockCommonData lockCommonData);
+
+	/**
+	 * 指定されたリソースアイテムのアクセス権を確保します.<br>
+	 * 更新やロックの対象とする全てのリソースアイテムのアクセス権を正しい順序で確保することで、デッドロックによる処理失敗の可能性をなくすことができます.
+	 *
+	 * @param syncCommon 共通データ
+	 * @param itemWrapper リソースアイテムラッパーオブジェクト
+	 * @throws LockException 対象リソースアイテムがロックされていた場合
+	 */
+	ResourceItemCommonData reserve(ResourceItemCommonDataId id);
 
 	/**
 	 * このリソースのリソース名を返します.
 	 *
 	 * @return リソース名
 	 */
-	String getResourceName();
+	String name();
 
 	/**
 	 * このリソースのアイテム型を返します.
 	 *
 	 * @return アイテムの型を表すClassオブジェクト
 	 */
-	Class<T> getItemType();
+	Class<I> itemType();
 
 	/**
 	 * このリソースのアイテム型に変換するためのコンバータオブジェクトを返します.
 	 *
 	 * @return アイテムの型を表すClassオブジェクト
 	 */
-	ResourceItemConverter<T> getResourceItemConverter();
+	ResourceItemConverter<I> itemConverter();
 
 	/**
 	 * リソースのロックを管理するマネージャを設定します.<br>

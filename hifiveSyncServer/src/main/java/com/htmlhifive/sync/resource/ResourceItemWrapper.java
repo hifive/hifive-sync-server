@@ -16,15 +16,19 @@
  */
 package com.htmlhifive.sync.resource;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import com.htmlhifive.sync.common.ResourceItemCommonData;
 
 /**
  * リソースアイテム1件の情報を保持するデータラッパー.<br>
  * サーバ上の1つのリソースアイテムに関する共通情報、およびリソースアイテムそのもののオブジェクトを保持します.
  *
- * @author kishigam
+ * @param <I> リソースアイテムの型
  */
-public class ResourceItemWrapper<T> {
+public class ResourceItemWrapper<I> {
 
 	/**
 	 * リソースアイテム共通データ.
@@ -34,7 +38,14 @@ public class ResourceItemWrapper<T> {
 	/**
 	 * このデータが表現するリソースアイテムの本体.
 	 */
-	private T item;
+	private I item;
+
+	/**
+	 * フレームワーク、ライブラリが使用するプライベートデフォルトコンストラクタ.
+	 */
+	@SuppressWarnings("unused")
+	private ResourceItemWrapper() {
+	}
 
 	/**
 	 * アイテム共通データとアイテムを指定してデータラッパーを生成します.
@@ -42,9 +53,45 @@ public class ResourceItemWrapper<T> {
 	 * @param itemCommonData リソースアイテム共通データ
 	 * @param item リソースアイテムオブジェクト
 	 */
-	public ResourceItemWrapper(ResourceItemCommonData itemCommonData, T item) {
+	public ResourceItemWrapper(ResourceItemCommonData itemCommonData, I item) {
 		this.itemCommonData = itemCommonData;
 		this.item = item;
+	}
+
+	/**
+	 * @see Object#equals(Object)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(Object obj) {
+
+		if (this == obj)
+			return true;
+		if (!(obj instanceof ResourceItemWrapper))
+			return false;
+
+		ResourceItemWrapper<I> itemWrapper = (ResourceItemWrapper<I>) obj;
+
+		return new EqualsBuilder().append(this.itemCommonData, itemWrapper.itemCommonData)
+				.append(this.item, itemWrapper.item).isEquals();
+	}
+
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+
+		return new HashCodeBuilder(17, 37).append(this.itemCommonData).append(this.item).hashCode();
+	}
+
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+
+		return ToStringBuilder.reflectionToString(this);
 	}
 
 	/**
@@ -64,14 +111,14 @@ public class ResourceItemWrapper<T> {
 	/**
 	 * @return item
 	 */
-	public T getItem() {
+	public I getItem() {
 		return item;
 	}
 
 	/**
 	 * @param item セットする item
 	 */
-	public void setItem(T item) {
+	public void setItem(I item) {
 		this.item = item;
 	}
 }

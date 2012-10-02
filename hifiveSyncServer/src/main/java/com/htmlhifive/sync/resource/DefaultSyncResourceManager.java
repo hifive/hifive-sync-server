@@ -17,7 +17,9 @@
 package com.htmlhifive.sync.resource;
 
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,9 +54,9 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	private Map<String, Class<? extends SyncResource<?>>> resourceMap;
 
 	/**
-	 * リソースごとのロックマネージャを保持するMap
+	 * リソースごとのロック戦略オブジェクトを保持するMap
 	 */
-	private Map<String, Class<? extends LockStrategy>> lockManagerMap;
+	private Map<String, Class<? extends LockStrategy>> lockStrategyMap;
 
 	/**
 	 * リソースごとの更新戦略オブジェクトを保持するMap.<br>
@@ -67,7 +69,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	public DefaultSyncResourceManager() {
 
 		this.resourceMap = new HashMap<>();
-		this.lockManagerMap = new HashMap<>();
+		this.lockStrategyMap = new HashMap<>();
 		this.updateStrategyMap = new HashMap<>();
 
 		init();
@@ -101,7 +103,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 			resourceMap.put(resourceName, resourceClass);
 
 			// ロックマネージャを特定する
-			lockManagerMap.put(resourceName, resourceAnnotation.lockStrategy());
+			lockStrategyMap.put(resourceName, resourceAnnotation.lockStrategy());
 
 			// 更新戦略オブジェクトを特定する
 			updateStrategyMap.put(resourceName, resourceAnnotation.updateStrategy());
@@ -150,10 +152,21 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 
 		SyncResource<?> sr = context.getBean(resourceClass);
 
-		// LockManager,UpdateStrategyのセット
-		sr.setLockStrategy(context.getBean(lockManagerMap.get(resourceName)));
+		// LockStrategy,UpdateStrategyのセット
+		sr.setLockStrategy(context.getBean(lockStrategyMap.get(resourceName)));
 		sr.setUpdateStrategy(context.getBean(updateStrategyMap.get(resourceName)));
 
 		return sr;
+	}
+
+	/**
+	 * このマネージャが管理する全リソースのリソース名をリストで返します.
+	 *
+	 * @return リソース名のリスト
+	 */
+	@Override
+	public List<String> allResourcNames() {
+
+		return new ArrayList<>(resourceMap.keySet());
 	}
 }

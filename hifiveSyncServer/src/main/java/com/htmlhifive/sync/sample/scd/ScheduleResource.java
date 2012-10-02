@@ -25,8 +25,6 @@ import javax.annotation.Resource;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.BadRequestException;
@@ -44,7 +42,6 @@ import com.htmlhifive.sync.sample.person.PersonRepository;
  * @author kishigam
  */
 @SyncResourceService(resourceName = "schedule", updateStrategy = ClientResolvingStrategy.class)
-@Transactional(propagation = Propagation.MANDATORY)
 public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem> {
 
 	/**
@@ -67,7 +64,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	 * @return リソースアイテム
 	 */
 	@Override
-	protected ScheduleResourceItem doGetResourceItem(String targetItemId) {
+	protected ScheduleResourceItem doGet(String targetItemId) {
 
 		Schedule bean = findSchedule(targetItemId);
 
@@ -94,13 +91,13 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
 	 */
 	@Override
-	protected Map<ScheduleResourceItem, ResourceItemCommonData> doExecuteQuery(
+	protected Map<ScheduleResourceItem, ResourceItemCommonData> doGetByQuery(
 			List<ResourceItemCommonData> commonDataList, Map<String, String[]> conditions) {
 
 		Map<ScheduleResourceItem, ResourceItemCommonData> itemMap = new HashMap<>();
 		for (ResourceItemCommonData common : commonDataList) {
 
-			ScheduleResourceItem item = doGetResourceItem(common.getTargetItemId());
+			ScheduleResourceItem item = doGet(common.getTargetItemId());
 
 			// TODO: queryの適用
 
@@ -122,7 +119,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 		if (repository.exists(newItem.getScheduleId())) {
 
-			throw new DuplicateIdException(newItem.getScheduleId(), doGetResourceItem(newItem.getScheduleId()));
+			throw new DuplicateIdException(newItem.getScheduleId(), doGet(newItem.getScheduleId()));
 		}
 
 		Schedule newEntity = new Schedule();

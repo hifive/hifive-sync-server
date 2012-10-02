@@ -16,6 +16,13 @@
  */
 package com.htmlhifive.sync.service;
 
+import com.htmlhifive.sync.service.download.DownloadRequest;
+import com.htmlhifive.sync.service.download.DownloadResponse;
+import com.htmlhifive.sync.service.lock.LockRequest;
+import com.htmlhifive.sync.service.lock.LockResponse;
+import com.htmlhifive.sync.service.upload.UploadRequest;
+import com.htmlhifive.sync.service.upload.UploadResponse;
+
 /**
  * リソースの同期処理を実行するサービスインタフェース.
  *
@@ -40,4 +47,25 @@ public interface Synchronizer {
 	 * @return 上り更新レスポンスデータ
 	 */
 	public UploadResponse upload(UploadRequest request);
+
+	/**
+	 * ロックの取得を実行します.<br>
+	 * リソースごとに、指定されたクエリでリソースアイテムを検索、ロックを行います.<br>
+	 * 全ての対象リソースアイテムがロックできた場合のみ、各リソースアイテムを上り更新するためのロックトークンを返します.<br>
+	 * 1件でもロックに失敗した場合、LockExceptionがスローされ、他の全てのリソースアイテムもロックされません.<br>
+	 * ロックを取得していない場合、ロックの取得をサポートしないロック方式の場合は空の結果が返ります.
+	 *
+	 * @param request ロックリクエストデータ
+	 * @return ロック取得レスポンスデータ
+	 */
+	public LockResponse getLock(LockRequest request);
+
+	/**
+	 * ロックの開放を実行します.<br>
+	 * ロックが開放できない場合、LockExceptionがスローされます.<br>
+	 * ロックを取得していない場合、ロックの取得をサポートしないロック方式の場合は何も起こりません.
+	 *
+	 * @param request ロックリクエストデータ
+	 */
+	public void releaseLock(LockRequest request);
 }

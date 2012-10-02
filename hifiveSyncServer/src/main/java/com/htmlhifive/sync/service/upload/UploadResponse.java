@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.service;
+package com.htmlhifive.sync.service.upload;
 
 import java.util.List;
 import java.util.Map;
@@ -22,9 +22,9 @@ import java.util.Map;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 
 /**
@@ -44,7 +44,7 @@ public class UploadResponse {
 	 * 競合リソースアイテムのリスト.<br>
 	 * リソース別にリストを保持します.<br>
 	 * このフィールドは競合発生時のみ、競合データとしてクライアントへのレスポンスに含みます.<br>
-	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonInclude}を追加しています)
+	 * 未設定のときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.
 	 */
 	private Map<String, List<ResourceItemWrapper<?>>> resourceItems;
 
@@ -108,11 +108,11 @@ public class UploadResponse {
 	}
 
 	/**
-	 * nullのときレスポンスから除外するため、{@link JsonInclude}を追加しています).
+	 * 未設定のときレスポンスから除外するため、{@link JsonSerialize}を追加しています.
 	 *
 	 * @return resourceItems
 	 */
-	@JsonInclude(Include.NON_NULL)
+	@JsonSerialize(include = Inclusion.NON_EMPTY)
 	public Map<String, List<ResourceItemWrapper<?>>> getResourceItems() {
 		return resourceItems;
 	}

@@ -24,9 +24,11 @@ import javax.persistence.Transient;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.annotate.JsonUnwrapped;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.htmlhifive.sync.resource.SyncAction;
 import com.htmlhifive.sync.resource.SyncConflictType;
 
@@ -42,15 +44,15 @@ public class ResourceItemCommonData {
 
 	/**
 	 * IDオブジェクト.<br>
-	 * このオブジェクトのプロパティを展開して使用するため、getterメソッドに@JsonUnwrappedを付加しています.
+	 * このオブジェクトのプロパティを展開して使用するため、getterメソッドに{@link JsonUnwrapped}を付加しています.
 	 */
 	@EmbeddedId
 	private ResourceItemCommonDataId id;
 
 	/**
 	 * この共通データが対象とするリソースアイテムのID.<br>
-	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
+	 * このフィールドはクライアントと通信するリクエスト、レスポンスに含みません.<br>
+	 * リクエスト、レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
 	 */
 	private String targetItemId;
 
@@ -60,9 +62,16 @@ public class ResourceItemCommonData {
 	private SyncAction action;
 
 	/**
-	 * このリソースアイテムの競合状態.<br>
+	 * このリソースアイテムのロックがリクエスト処理後も継続することを示すフラグ.<br>
 	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
+	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.
+	 */
+	private boolean keepLock;
+
+	/**
+	 * このリソースアイテムの競合状態.<br>
+	 * このフィールドはクライアントと通信するリクエスト、レスポンスに含みません.<br>
+	 * リクエスト、レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
 	 */
 	@Transient
 	private SyncConflictType conflictType;
@@ -71,6 +80,13 @@ public class ResourceItemCommonData {
 	 * リソースアイテムの最終更新時刻(ミリ秒)
 	 */
 	private long lastModified;
+
+	/**
+	 * フレームワーク、ライブラリが使用するプライベートデフォルトコンストラクタ.
+	 */
+	@SuppressWarnings("unused")
+	private ResourceItemCommonData() {
+	}
 
 	/**
 	 * IDオブジェクト、対象リソースアイテムのIDを指定して共通データを生成します.
@@ -152,8 +168,7 @@ public class ResourceItemCommonData {
 	}
 
 	/**
-	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、{@link JsonIgnore}を追加しています.
+	 * リクエスト、レスポンスから除外するため、{@link JsonIgnore}を追加しています.
 	 *
 	 * @return targetItemId
 	 */
@@ -184,8 +199,24 @@ public class ResourceItemCommonData {
 	}
 
 	/**
-	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、{@link JsonIgnore}を追加しています.
+	 * レスポンスから除外するため、{@link @JsonSerialize}を追加しています.
+	 *
+	 * @return keepLock
+	 */
+	@JsonSerialize(include = Inclusion.NON_DEFAULT)
+	public boolean isKeepLock() {
+		return keepLock;
+	}
+
+	/**
+	 * @param keepLock セットする keepLock
+	 */
+	public void setKeepLock(boolean keepLock) {
+		this.keepLock = keepLock;
+	}
+
+	/**
+	 * リクエスト、レスポンスから除外するため、{@link JsonIgnore}を追加しています.
 	 *
 	 * @return conflictType
 	 */

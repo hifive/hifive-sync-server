@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.service;
+package com.htmlhifive.sync.service.upload;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
@@ -24,11 +24,12 @@ import javax.persistence.Transient;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.htmlhifive.sync.resource.SyncConflictType;
+import com.htmlhifive.sync.service.SyncCommonData;
 
 /**
  * 上り更新に関する共通情報を保持するデータクラス(エンティティ).
@@ -41,8 +42,8 @@ public class UploadCommonData implements SyncCommonData {
 
 	/**
 	 * クライアントのストレージID.<br>
-	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています)
+	 * このフィールドはクライアントへのレスポンスに含みます.<br>
+	 * 未設定のときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.
 	 */
 	@Id
 	private String storageId;
@@ -50,25 +51,34 @@ public class UploadCommonData implements SyncCommonData {
 	/**
 	 * 最終上り更新時刻.<br>
 	 * このフィールドは競合がない場合のみクライアントへのレスポンスに含みます.<br>
-	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonInclude}を追加しています)
+	 * 未設定のときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.
 	 */
 	private long lastUploadTime;
 
 	/**
 	 * この更新リクエストが実行される時刻.<br>
 	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています)
+	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
 	 */
 	private long syncTime;
 
 	/**
 	 * 競合発生時の同期結果タイプ.<br>
 	 * このフィールドは競合発生時のみクライアントへのレスポンスに含みます.<br>
-	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonInclude}を追加しています).<br>
+	 * 未設定のときのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.<br>
 	 * また、永続化の対象外です.
 	 */
 	@Transient
 	private SyncConflictType conflictType;
+
+	/**
+	 * リクエストの対象となっているロックトークン.<br>
+	 * このフィールドはクライアントへのレスポンスに含みません.<br>
+	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.<br>
+	 * また、永続化の対象外です.
+	 */
+	@Transient
+	private String lockToken;
 
 	/**
 	 * @see Object#equals(Object)
@@ -107,12 +117,12 @@ public class UploadCommonData implements SyncCommonData {
 	}
 
 	/**
-	 * クライアントへのレスポンスから除外するため、{@link JsonIgnore}を追加しています)
+	 * クライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.
 	 *
 	 * @return storageId
 	 */
 	@Override
-	@JsonIgnore
+	@JsonSerialize(include = Inclusion.NON_DEFAULT)
 	public String getStorageId() {
 		return storageId;
 	}
@@ -125,11 +135,11 @@ public class UploadCommonData implements SyncCommonData {
 	}
 
 	/**
-	 * nullのときクライアントへのレスポンスから除外するため、{@link JsonInclude}を追加しています).
+	 * 未設定のときクライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.
 	 *
 	 * @return lastUploadTime
 	 */
-	@JsonInclude(Include.NON_DEFAULT)
+	@JsonSerialize(include = Inclusion.NON_DEFAULT)
 	public long getLastUploadTime() {
 		return lastUploadTime;
 	}
@@ -142,12 +152,12 @@ public class UploadCommonData implements SyncCommonData {
 	}
 
 	/**
-	 * クライアントへのレスポンスから除外するため、{@link JsonIgnore}を追加しています)
+	 * クライアントへのレスポンスから除外するため、{@link JsonIgnore}を追加しています.
 	 *
 	 * @return syncTime
 	 */
-	@Override
 	@JsonIgnore
+	@Override
 	public long getSyncTime() {
 		return syncTime;
 	}
@@ -160,11 +170,11 @@ public class UploadCommonData implements SyncCommonData {
 	}
 
 	/**
-	 * nullのときクライアントへのレスポンスから除外するため、{@link JsonInclude}を追加しています).
+	 * 未設定のときクライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.
 	 *
 	 * @return conflictType
 	 */
-	@JsonInclude(Include.NON_NULL)
+	@JsonSerialize(include = Inclusion.NON_DEFAULT)
 	public SyncConflictType getConflictType() {
 		return conflictType;
 	}
@@ -174,5 +184,23 @@ public class UploadCommonData implements SyncCommonData {
 	 */
 	public void setConflictType(SyncConflictType conflictType) {
 		this.conflictType = conflictType;
+	}
+
+	/**
+	 * クライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.
+	 *
+	 * @return lockToken
+	 */
+	@JsonSerialize(include = Inclusion.NON_DEFAULT)
+	@Override
+	public String getLockToken() {
+		return lockToken;
+	}
+
+	/**
+	 * @param lockToken セットする lockToken
+	 */
+	public void setLockToken(String lockToken) {
+		this.lockToken = lockToken;
 	}
 }

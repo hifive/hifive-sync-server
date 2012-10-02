@@ -14,15 +14,16 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.service;
+package com.htmlhifive.sync.service.download;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.codehaus.jackson.annotate.JsonIgnore;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
+import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.htmlhifive.sync.service.SyncCommonData;
 
 /**
  * 下り更新に関する共通情報を保持するデータクラス(エンティティ).
@@ -34,7 +35,7 @@ public class DownloadCommonData implements SyncCommonData {
 	/**
 	 * クライアントのストレージID.<br>
 	 * このフィールドはクライアントの初回アクセス時のみクライアントへのレスポンスに含みます.<br>
-	 * nullのときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonInclude}を追加しています)
+	 * 未設定のときレスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.
 	 */
 	private String storageId;
 
@@ -45,10 +46,33 @@ public class DownloadCommonData implements SyncCommonData {
 
 	/**
 	 * この更新リクエストが実行される時刻.<br>
-	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています)
+	 * このフィールドはクライアントとのリクエスト、レスポンスに含みません.<br>
+	 * リクエスト、レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
 	 */
 	private long syncTime;
+
+	/**
+	 * リクエストの対象となっているロックトークン.<br>
+	 * このフィールドはクライアントへのレスポンスに含みません.<br>
+	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.<br>
+	 */
+	private String lockToken;
+
+	/**
+	 * フレームワーク、ライブラリが使用するプライベートデフォルトコンストラクタ.
+	 */
+	@SuppressWarnings("unused")
+	private DownloadCommonData() {
+	}
+
+	/**
+	 * 指定されたストレージIDを持つ下り更新共通データを生成します.
+	 *
+	 * @param storageId ストレージID
+	 */
+	public DownloadCommonData(String storageId) {
+		this.storageId = storageId;
+	}
 
 	/**
 	 * @see Object#equals(Object)
@@ -77,12 +101,12 @@ public class DownloadCommonData implements SyncCommonData {
 	}
 
 	/**
-	 * nullのときクライアントへのレスポンスから除外するため、{@link JsonInclude}を追加しています).
+	 * nullのときクライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.
 	 *
 	 * @return storageId
 	 */
+	@JsonSerialize(include = Inclusion.NON_DEFAULT)
 	@Override
-	@JsonInclude(Include.NON_NULL)
 	public String getStorageId() {
 		return storageId;
 	}
@@ -109,12 +133,12 @@ public class DownloadCommonData implements SyncCommonData {
 	}
 
 	/**
-	 * クライアントへのレスポンスから除外するため、{@link JsonIgnore}を追加しています)
+	 * リクエスト、レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
 	 *
 	 * @return syncTime
 	 */
-	@Override
 	@JsonIgnore
+	@Override
 	public long getSyncTime() {
 		return syncTime;
 	}
@@ -124,5 +148,23 @@ public class DownloadCommonData implements SyncCommonData {
 	 */
 	public void setSyncTime(long syncTime) {
 		this.syncTime = syncTime;
+	}
+
+	/**
+	 * クライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.
+	 *
+	 * @return lockToken
+	 */
+	@JsonSerialize(include = Inclusion.NON_DEFAULT)
+	@Override
+	public String getLockToken() {
+		return lockToken;
+	}
+
+	/**
+	 * @param lockToken セットする lockToken
+	 */
+	public void setLockToken(String lockToken) {
+		this.lockToken = lockToken;
 	}
 }

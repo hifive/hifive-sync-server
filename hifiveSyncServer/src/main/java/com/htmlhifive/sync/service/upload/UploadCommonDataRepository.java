@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.service;
+package com.htmlhifive.sync.service.upload;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

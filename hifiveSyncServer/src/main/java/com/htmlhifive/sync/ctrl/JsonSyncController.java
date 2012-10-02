@@ -16,12 +16,14 @@
  */
 package com.htmlhifive.sync.ctrl;
 
+import java.security.Principal;
 import java.util.UUID;
 
 import javax.annotation.Resource;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,15 +31,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.htmlhifive.sync.exception.ConflictException;
+import com.htmlhifive.sync.exception.LockException;
+import com.htmlhifive.sync.sample.person.Person;
+import com.htmlhifive.sync.sample.person.PersonResource;
 import com.htmlhifive.sync.service.DefaultSynchronizer;
-import com.htmlhifive.sync.service.DownloadRequest;
-import com.htmlhifive.sync.service.DownloadResponse;
 import com.htmlhifive.sync.service.Synchronizer;
-import com.htmlhifive.sync.service.UploadRequest;
-import com.htmlhifive.sync.service.UploadResponse;
+import com.htmlhifive.sync.service.download.DownloadRequest;
+import com.htmlhifive.sync.service.download.DownloadResponse;
+import com.htmlhifive.sync.service.lock.LockRequest;
+import com.htmlhifive.sync.service.lock.LockResponse;
+import com.htmlhifive.sync.service.upload.UploadRequest;
+import com.htmlhifive.sync.service.upload.UploadResponse;
 
 /**
- * JSON形式の同期リクエストを処理するコントローラクラス.
+ * 同期リクエストを処理するコントローラクラス.<br>
+ * 4つの機能をクライアントに提供します.<br>
+ * <ul>
+ * <li>リソースアイテムの下り更新(download) ： /download
+ * <li>リソースアイテムの上り更新(upload) ： /upload
+ * <li>リソースアイテムのロック(getLock) ： /getlock
+ * <li>リソースアイテムのロック開放(releaseLock) ： /releaselock
+ * <li>ログインユーザーのID取得(getUserId) ： /person
+ * </ul>
+ * いずれの機能も、JSONによってデータを送受信します.
  *
  * @author kishigam
  */
@@ -51,13 +67,19 @@ public class JsonSyncController {
 	private Synchronizer synchronizer;
 
 	/**
+	 * 人情報のリソース.
+	 */
+	@Resource
+	private PersonResource personResource;
+
+	/**
 	 * 下り更新処理を行うクライアントからのリクエストを処理し、結果をレスポンスとして返します.<br>
 	 *
 	 * @param request 下り更新リクエストデータ
-	 * @return 下り更新レスポンスデータ
+	 * @return 下り更新レスポンスデータ(JSON形式)
 	 */
 	@RequestMapping(value = "/download", method = RequestMethod.POST, params = {}, headers = {
-			"Accept=application/json", "Content-Type=application/json" })
+			"Content-Type=application/json", "Accept=application/json" })
 	public ResponseEntity<DownloadResponse> download(@RequestBody DownloadRequest request) {
 
 		boolean isInitialDownload = false;
@@ -67,16 +89,25 @@ public class JsonSyncController {
 			request.getDownloadCommonData().setStorageId(generateNewStorageId());
 		}
 
-		// 下り更新サービスを呼び出し
-		DownloadResponse response = synchronizer.download(request);
+		try {
+			// 下り更新サービスを呼び出し
+			DownloadResponse response = synchronizer.download(request);
 
-		// 初回アクセス以外はストレージIDをレスポンスから除外するためnullをセット
-		if (!isInitialDownload) {
-			response.getDownloadCommonData().setStorageId(null);
+			// 初回アクセス以外はストレージIDをレスポンスデータから除外するためnullをセット
+			if (!isInitialDownload) {
+				response.getDownloadCommonData().setStorageId(null);
+			}
+
+			// ロックトークンをレスポンスデータから除外するためnullをセット
+			response.getDownloadCommonData().setLockToken(null);
+
+			// HTTPレスポンスをリターン
+			return createHttpResponseEntity(response, HttpStatus.OK);
+
+		} catch (LockException e) {
+			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
+			return createHttpResponseEntity(HttpStatus.LOCKED);
 		}
-
-		// HTTPレスポンスをリターン
-		return createHttpResponseEntity(response, HttpStatus.OK);
 	}
 
 	/**
@@ -94,27 +125,99 @@ public class JsonSyncController {
 	 * 上り更新処理を行うクライアントからのリクエストを処理し、結果をレスポンスとして返します.<br>
 	 *
 	 * @param request 上り更新リクエストデータ
-	 * @return 上り更新レスポンスデータ
+	 * @return 上り更新レスポンスデータ(JSON形式)
 	 */
-	@RequestMapping(value = "/upload", method = RequestMethod.POST, params = {}, headers = { "Accept=application/json",
-			"Content-Type=application/json" })
+	@RequestMapping(value = "/upload", method = RequestMethod.POST, params = {}, headers = {
+			"Content-Type=application/json", "Accept=application/json" })
 	public ResponseEntity<UploadResponse> upload(@RequestBody UploadRequest request) {
 
 		try {
 			// 上り更新サービスを呼び出し
 			UploadResponse response = synchronizer.upload(request);
 
+			// ストレージID、競合タイプ(NONE)、ロックトークンをレスポンスデータから除外するためnullをセット
+			response.getUploadCommonData().setStorageId(null);
+			response.getUploadCommonData().setConflictType(null);
+			response.getUploadCommonData().setLockToken(null);
+
 			// レスポンスデータを生成し、リターン
 			return createHttpResponseEntity(response, HttpStatus.OK);
 
 		} catch (ConflictException e) {
-
+			// 競合発生時は409レスポンスをリターンする
 			return createHttpResponseEntity(e.getResponse(), HttpStatus.CONFLICT);
+		} catch (LockException e) {
+			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
+			return createHttpResponseEntity(HttpStatus.LOCKED);
 		}
 	}
 
 	/**
-	 * HTTPレスポンスボディとステータスコードからレスポンスエンティティを返します.
+	 * リソースアイテムをロックするクライアントからのリクエストを処理し、結果をレスポンスとして返します.<br>
+	 *
+	 * @param request ロック取得リクエストデータ
+	 * @return ロックレスポンスデータ(JSON形式)
+	 */
+	@RequestMapping(value = "/getlock", method = RequestMethod.POST, params = {}, headers = {
+			"Content-Type=application/json", "Accept=application/json" })
+	public ResponseEntity<LockResponse> getLock(@RequestBody LockRequest request) {
+
+		try {
+			// ロック取得サービスを呼び出し
+			LockResponse response = synchronizer.getLock(request);
+
+			// ストレージIDをレスポンスデータから除外するためnullをセット
+			response.getLockCommonData().setStorageId(null);
+
+			// レスポンスデータを生成し、リターン
+			return createHttpResponseEntity(response, HttpStatus.OK);
+
+		} catch (LockException e) {
+			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
+			return createHttpResponseEntity(HttpStatus.LOCKED);
+		}
+	}
+
+	/**
+	 * ロックを開放するクライアントからのリクエストを処理し、結果をレスポンスとして返します.<br>
+	 *
+	 * @param request ロックリクエストデータ
+	 * @return ロックレスポンスデータ(JSON形式)
+	 */
+	@RequestMapping(value = "/releaselock", method = RequestMethod.POST, params = {}, headers = {
+			"Content-Type=application/json", "Accept=application/json" })
+	public ResponseEntity<Void> releaseLock(@RequestBody LockRequest request) {
+
+		try {
+			// ロック開放サービスを呼び出し
+			synchronizer.releaseLock(request);
+
+			// ボディなしのレスポンスデータを生成し、リターン
+			return createHttpResponseEntity(HttpStatus.OK);
+
+		} catch (LockException e) {
+			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
+			return createHttpResponseEntity(HttpStatus.LOCKED);
+		}
+	}
+
+	/**
+	 * ログインユーザーを取得、ユーザー名(ID)をレスポンスとして返します.<br>
+	 *
+	 * @param principal Spring Securityから渡されるプリンシパルオブジェクト
+	 * @return ログインユーザーに対応するIDを含むPersonデータ(JSON形式)
+	 */
+	@RequestMapping(value = "/person", method = RequestMethod.GET, params = {}, headers = {
+			"Content-Type=application/json", "Accept=application/json" })
+	public ResponseEntity<Person> getUserId(Principal principal) {
+
+		// Principalに設定されたログインユーザー情報を取得、レスポンスデータとしてリターン
+		Person loginPerson = personResource.getResourceItemByPersonId(principal.getName());
+		return createHttpResponseEntity(loginPerson, HttpStatus.OK);
+	}
+
+	/**
+	 * レスポンスボディとステータスコードからHTTPレスポンスエンティティを返します.
 	 *
 	 * @param body リクエストボディ
 	 * @param status ステータスコードオブジェクト
@@ -123,8 +226,24 @@ public class JsonSyncController {
 	private <T> ResponseEntity<T> createHttpResponseEntity(T body, HttpStatus status) {
 
 		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.add("Content-Type", "application/json;charset=utf-8");
+//		responseHeaders.setContentType(MediaType.APPLICATION_JSON);
+				responseHeaders.add("Content-Type", "application/json;charset=utf-8");
 
 		return new ResponseEntity<>(body, responseHeaders, status);
+	}
+
+	/**
+	 * ステータスコードからボディを含まないHTTPレスポンスエンティティを返します.
+	 *
+	 * @param status ステータスコードオブジェクト
+	 * @return HTTPレスポンスエンティティ
+	 */
+	private <T> ResponseEntity<T> createHttpResponseEntity(HttpStatus status) {
+
+		HttpHeaders responseHeaders = new HttpHeaders();
+		responseHeaders.setContentType(MediaType.APPLICATION_JSON);
+		//		responseHeaders.add("Content-Type", "application/json;charset=utf-8");
+
+		return new ResponseEntity<>(null, responseHeaders, status);
 	}
 }

@@ -17,12 +17,12 @@
 package com.htmlhifive.sync.resource;
 
 /**
- * リソースアイテムの情報を保持するオブジェクトを、実際の型に変換するコンバータインターフェース.
+ * リソースアイテムの情報を保持するオブジェクトとリソースアイテムの型を相互変換するコンバータインターフェース.
  *
- * @param <T> リソースアイテムの型
+ * @param <I> リソースアイテムの型
  * @author kishigam
  */
-public interface ResourceItemConverter<T> {
+public interface ResourceItemConverter<I> {
 
 	/**
 	 * オブジェクトをリソースアイテムの型に変換します.
@@ -31,5 +31,5 @@ public interface ResourceItemConverter<T> {
 	 * @param to リソースアイテム型のクラスオブジェクト
 	 * @return リソースアイテム型オブジェクト
 	 */
-	T convert(Object itemObj, Class<T> to);
+	I convertToItem(Object itemObj, Class<I> to);
 }

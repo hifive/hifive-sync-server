@@ -16,6 +16,8 @@
  */
 package com.htmlhifive.sync.resource;
 
+import java.util.List;
+
 /**
  * アプリケーション内に存在するリソースを管理するサービスインターフェース.
  */
@@ -29,4 +31,11 @@ public interface SyncResourceManager {
 	 * @return リソースクラス
 	 */
 	SyncResource<?> locateSyncResource(String resourceName);
+
+	/**
+	 * このマネージャが管理する全リソースのリソース名をリストで返します.
+	 *
+	 * @return リソース名のリスト
+	 */
+	List<String> allResourcNames();
 }

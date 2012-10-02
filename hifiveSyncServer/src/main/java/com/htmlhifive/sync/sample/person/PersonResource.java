@@ -37,7 +37,6 @@ import com.htmlhifive.sync.resource.SyncResourceService;
  * 同期データを専用サービスで管理する抽象リソースクラスをこのリソース用に実装します.
  */
 @SyncResourceService(resourceName = "person", updateStrategy = ClientResolvingStrategy.class)
-@Transactional(propagation = Propagation.MANDATORY)
 public class PersonResource extends AbstractSyncResource<Person> {
 
 	/**
@@ -47,6 +46,23 @@ public class PersonResource extends AbstractSyncResource<Person> {
 	private PersonRepository repository;
 
 	/**
+	 * 指定されたIDだけを持つPersonを返します.<br>
+	 * Personが存在しない場合、nullを返します.
+	 *
+	 * @param personId ID
+	 * @return Personオブジェクト
+	 */
+	@Transactional(propagation = Propagation.SUPPORTS)
+	public Person getResourceItemByPersonId(String personId) {
+
+		// Personデータを検索(ロックは考慮しない)
+		// 存在しなければBadRequestExceptionがスローされる
+		doGet(personId);
+
+		return Person.emptyPerson(personId);
+	}
+
+	/**
 	 * 単一データreadメソッドのリソース別独自処理を行う抽象メソッド.<br>
 	 * エンティティをリポジトリから取得し、アイテムクラスのオブジェクトに設定して返します.
 	 *
@@ -54,7 +70,7 @@ public class PersonResource extends AbstractSyncResource<Person> {
 	 * @return リソースアイテム
 	 */
 	@Override
-	protected Person doGetResourceItem(String targetItemId) {
+	protected Person doGet(String targetItemId) {
 
 		return findPerson(targetItemId);
 	}
@@ -68,13 +84,13 @@ public class PersonResource extends AbstractSyncResource<Person> {
 	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
 	 */
 	@Override
-	protected Map<Person, ResourceItemCommonData> doExecuteQuery(List<ResourceItemCommonData> commonDataList,
+	protected Map<Person, ResourceItemCommonData> doGetByQuery(List<ResourceItemCommonData> commonDataList,
 			Map<String, String[]> conditions) {
 
 		Map<Person, ResourceItemCommonData> itemMap = new HashMap<>();
 		for (ResourceItemCommonData common : commonDataList) {
 
-			Person item = doGetResourceItem(common.getTargetItemId());
+			Person item = doGet(common.getTargetItemId());
 
 			// TODO: queryの適用
 
@@ -96,7 +112,7 @@ public class PersonResource extends AbstractSyncResource<Person> {
 
 		if (repository.exists(newItem.getPersonId())) {
 
-			throw new DuplicateIdException(newItem.getPersonId(), doGetResourceItem(newItem.getPersonId()));
+			throw new DuplicateIdException(newItem.getPersonId(), doGet(newItem.getPersonId()));
 		}
 
 		repository.save(newItem);

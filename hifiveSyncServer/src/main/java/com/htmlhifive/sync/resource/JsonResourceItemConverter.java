@@ -16,18 +16,18 @@
  */
 package com.htmlhifive.sync.resource;
 
+import org.codehaus.jackson.map.ObjectMapper;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.htmlhifive.sync.exception.BadRequestException;
 
 /**
- * JSON形式のデータをリソースアイテムの型に変換するコンバータ実装.
+ * JSON形式のデータとリソースアイテムの型を相互変換するコンバータ実装.
  *
  * @author kishigam
  */
 @Service
-public class JsonResourceItemConverter<T> implements ResourceItemConverter<T> {
+public class JsonResourceItemConverter<I> implements ResourceItemConverter<I> {
 
 	/**
 	 * JSON形式のアイテムデータをアイテム型に変換して返します.
@@ -38,7 +38,7 @@ public class JsonResourceItemConverter<T> implements ResourceItemConverter<T> {
 	 * @throws BadRequestException アイテムデータがアイテムの型に適合しないとき
 	 */
 	@Override
-	public T convert(Object itemObj, Class<T> to) {
+	public I convertToItem(Object itemObj, Class<I> to) {
 
 		Object item = null;
 		try {

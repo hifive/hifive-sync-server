@@ -19,7 +19,7 @@ package com.htmlhifive.sync.exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import com.htmlhifive.sync.service.UploadResponse;
+import com.htmlhifive.sync.service.upload.UploadResponse;
 
 /**
  * 同期(上り更新)において競合が発生したことを示す例外.<br>
