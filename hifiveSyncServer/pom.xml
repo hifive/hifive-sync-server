@@ -10,8 +10,7 @@
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<spring.version>3.1.0.RELEASE</spring.version>
-		<hibernate.version>4.0.1.Final</hibernate.version>
+		<spring.version>3.1.2.RELEASE</spring.version>
 	</properties>
 
 	<dependencies>
@@ -105,12 +104,12 @@
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-core</artifactId>
-			<version>${hibernate.version}</version>
+			<version>4.0.1.Final</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate</groupId>
 			<artifactId>hibernate-entitymanager</artifactId>
-			<version>${hibernate.version}</version>
+			<version>4.0.1.Final</version>
 		</dependency>
 
 		<!-- Apache Commons -->
@@ -146,9 +145,14 @@
 			<version>4.10</version>
 			<scope>test</scope>
 		</dependency>
+<!--
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.0.6</version>
+		</dependency>
+-->
 
-		<!-- <dependency> <groupId>ch.qos.logback</groupId> <artifactId>logback-classic</artifactId>
-			<version>1.0.6</version> </dependency> -->
 	</dependencies>
 
 	<build>
