@@ -16,7 +16,6 @@
  */
 package com.htmlhifive.sync.ctrl;
 
-import java.security.Principal;
 import java.util.UUID;
 
 import javax.annotation.Resource;
@@ -32,8 +31,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.exception.LockException;
-import com.htmlhifive.sync.sample.person.Person;
-import com.htmlhifive.sync.sample.person.PersonResource;
 import com.htmlhifive.sync.service.DefaultSynchronizer;
 import com.htmlhifive.sync.service.Synchronizer;
 import com.htmlhifive.sync.service.download.DownloadCommonData;
@@ -52,7 +49,6 @@ import com.htmlhifive.sync.service.upload.UploadResponse;
  * <li>リソースアイテムの上り更新(upload) ： /upload
  * <li>リソースアイテムのロック(getLock) ： /getlock
  * <li>リソースアイテムのロック開放(releaseLock) ： /releaselock
- * <li>ログインユーザーのID取得(getUserId) ： /person
  * </ul>
  * いずれの機能も、JSONによってデータを送受信します.
  *
@@ -66,12 +62,6 @@ public class JsonSyncController {
 	 */
 	@Resource(type = DefaultSynchronizer.class)
 	private Synchronizer synchronizer;
-
-	/**
-	 * 人情報のリソース.
-	 */
-	@Resource
-	private PersonResource personResource;
 
 	/**
 	 * 下り更新処理を行うクライアントからのリクエストを処理し、結果をレスポンスとして返します.<br>
@@ -206,21 +196,6 @@ public class JsonSyncController {
 			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
 			return createHttpResponseEntity(HttpStatus.LOCKED);
 		}
-	}
-
-	/**
-	 * ログインユーザーを取得、ユーザー名(ID)をレスポンスとして返します.<br>
-	 *
-	 * @param principal Spring Securityから渡されるプリンシパルオブジェクト
-	 * @return ログインユーザーに対応するIDを含むPersonデータ(JSON形式)
-	 */
-	@RequestMapping(value = "/person", method = RequestMethod.GET, params = {}, headers = {
-			"Content-Type=application/json", "Accept=application/json" })
-	public ResponseEntity<Person> getUserId(Principal principal) {
-
-		// Principalに設定されたログインユーザー情報を取得、レスポンスデータとしてリターン
-		Person loginPerson = personResource.getResourceItemByPersonId(principal.getName());
-		return createHttpResponseEntity(loginPerson, HttpStatus.OK);
 	}
 
 	/**
