@@ -16,6 +16,8 @@
  */
 package com.htmlhifive.sync.sample.scd;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +31,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
+import com.htmlhifive.sync.exception.SyncException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
 import com.htmlhifive.sync.resource.ClientResolvingStrategy;
 import com.htmlhifive.sync.resource.SyncResourceService;
@@ -66,7 +69,11 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	@Override
 	protected ScheduleResourceItem doGet(String targetItemId) {
 
-		return createItemFromBean(findSchedule(targetItemId));
+		Schedule bean = findSchedule(targetItemId);
+
+		ScheduleResourceItem item = new ScheduleResourceItem(bean.getScheduleId());
+		item.setFromBean(bean);
+		return item;
 	}
 
 	/**
@@ -91,37 +98,14 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 			for (ResourceItemCommonData common : commonDataList) {
 				if (common.getTargetItemId().equals(schedule.getScheduleId())) {
 
-					itemMap.put(createItemFromBean(schedule), common);
+					ScheduleResourceItem item = new ScheduleResourceItem(schedule.getScheduleId());
+					item.setFromBean(schedule);
+					itemMap.put(item, common);
 				}
 			}
 		}
 
 		return itemMap;
-	}
-
-	/**
-	 * エンティティの持つ情報からリソースアイテムオブジェクトを生成します.
-	 *
-	 * @param bean Scheduleエンティティ
-	 * @return リソースアイテムオブジェクト
-	 */
-	private ScheduleResourceItem createItemFromBean(Schedule bean) {
-
-		ScheduleResourceItem item = new ScheduleResourceItem(bean.getScheduleId());
-		item.setUserIds(bean.getUserIds());
-		item.setTitle(bean.getTitle());
-		item.setCategory(bean.getCategory());
-
-		// 強制的にlazy fetchを起こす
-		item.setDates(new ArrayList<>(bean.getDates()));
-
-		item.setStartTime(bean.getStartTime());
-		item.setFinishTime(bean.getFinishTime());
-		item.setDetail(bean.getDetail());
-		item.setPlace(bean.getPlace());
-		item.setCreateUserName(bean.getCreateUser().getName());
-
-		return item;
 	}
 
 	/**
@@ -150,9 +134,8 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		newEntity.setTitle(newItem.getTitle());
 		newEntity.setCategory(newItem.getCategory());
 
-		// 日付リストの新規生成
-		//		newEntity.setNewDateBeans(newItem.getDates());
-		newEntity.setDates(newItem.getDates());
+		// 日付文字列書式を変換してセット
+		newEntity.setDates(removeDateSeparator(newItem.getDates()));
 
 		newEntity.setStartTime(newItem.getStartTime());
 		newEntity.setFinishTime(newItem.getFinishTime());
@@ -186,9 +169,8 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		updatingEntity.setTitle(item.getTitle());
 		updatingEntity.setCategory(item.getCategory());
 
-		// 元の日付リストの更新
-		//		updatingEntity.setUpdatedDateBeans(item.getDates());
-		updatingEntity.setDates(item.getDates());
+		// 日付文字列書式を変換してセット
+		updatingEntity.setDates(removeDateSeparator(item.getDates()));
 
 		updatingEntity.setStartTime(item.getStartTime());
 		updatingEntity.setFinishTime(item.getFinishTime());
@@ -199,6 +181,25 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 		item.setCreateUserName(updatingEntity.getCreateUser().getName());
 		return item;
+	}
+
+	/**
+	 * 日付文字列のセパレータ(スラッシュ)を除去し、8桁文字列に変換します.
+	 *
+	 * @param newItem
+	 * @return
+	 */
+	private List<String> removeDateSeparator(List<String> slashSeparatedList) {
+		List<String> nonSeparatedList = new ArrayList<>();
+		try {
+			for (String date : slashSeparatedList) {
+				nonSeparatedList
+						.add(new SimpleDateFormat("yyyyMMdd").format(new SimpleDateFormat("y/M/d").parse(date)));
+			}
+		} catch (ParseException e) {
+			throw new SyncException(e);
+		}
+		return nonSeparatedList;
 	}
 
 	/**

@@ -67,7 +67,7 @@ public class Schedule {
 	private String category;
 
 	/**
-	 * 予定の日付のリスト(yyyy/MM/dd形式).
+	 * 予定の日付のリスト(yyyyMMdd形式).
 	 */
 	@ElementCollection
 	private List<String> dates;
