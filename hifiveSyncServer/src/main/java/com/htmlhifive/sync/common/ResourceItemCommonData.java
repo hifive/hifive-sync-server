@@ -150,18 +150,6 @@ public class ResourceItemCommonData {
 		this.lastModified = uploadTime;
 	}
 
-	//	/**
-	//	 * このオブジェクトの内容を設定してリソースアイテムのラッパーオブジェクトを生成します.
-	//	 */
-	//	public ResourceItemWrapper generateItemWrapper() {
-	//
-	//		ResourceItemWrapper wrapper = new ResourceItemWrapper(this.id.getResourceItemId());
-	//		wrapper.setAction(this.action);
-	//		wrapper.setLastModified(lastModified);
-	//
-	//		return wrapper;
-	//	}
-
 	/**
 	 * このオブジェクトのプロパティを展開して使用するため、@JsonUnwrappedを付加しています.
 	 *

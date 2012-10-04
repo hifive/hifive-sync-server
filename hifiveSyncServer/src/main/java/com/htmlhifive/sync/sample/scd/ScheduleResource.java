@@ -111,7 +111,10 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		item.setUserIds(bean.getUserIds());
 		item.setTitle(bean.getTitle());
 		item.setCategory(bean.getCategory());
-		item.setDates(bean.getDates());
+
+		// 強制的にlazy fetchを起こす
+		item.setDates(new ArrayList<>(bean.getDates()));
+
 		item.setStartTime(bean.getStartTime());
 		item.setFinishTime(bean.getFinishTime());
 		item.setDetail(bean.getDetail());

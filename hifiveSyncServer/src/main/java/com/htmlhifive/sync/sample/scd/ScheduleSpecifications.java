@@ -17,6 +17,8 @@
 package com.htmlhifive.sync.sample.scd;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +32,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.domain.Specifications;
 
 import com.htmlhifive.sync.common.ResourceItemCommonData;
-import com.htmlhifive.sync.sample.person.Person;
 
 /**
  * Scheduleをリソースクエリによって検索するためのSpring Specification定義クラス.
@@ -57,15 +58,25 @@ public class ScheduleSpecifications {
 			specList.add(isInIds(targetItemIdList.toArray(new String[] {})));
 		}
 
+		Specification<Schedule> tempSpec;
 		for (String cond : conditions.keySet()) {
-			if (cond.equals("scheduleId")) {
-				specList.add(isInIds(conditions.get(cond)));
-			}
-			if (cond.equals("personIds")) {
-				specList.add(isInPersonIds(conditions.get(cond)));
-			}
+			switch (cond) {
+				case ("sceduleId"):
+					specList.add(isInIds(conditions.get(cond)));
+					break;
+				case ("personIds"):
+					specList.add(isInPersonIds(conditions.get(cond)));
+					break;
+				//				case ("date-from"):
+				//					tempSpec = isGtOrEqSomeDates(conditions.get(cond)[0]);
+				//					if (tempSpec != null) {
+				//						specList.add(tempSpec);
+				//					}
+				// ・・・
 
-			// ・・・
+				default:
+					// 何もしない
+			}
 		}
 
 		if (specList.isEmpty()) {
@@ -110,9 +121,69 @@ public class ScheduleSpecifications {
 			@Override
 			public Predicate toPredicate(Root<Schedule> root, CriteriaQuery<?> cq, CriteriaBuilder builder) {
 
-				return ((Join<?, ?>) root.<Schedule, Person> fetch("userBeans")).get("personId").in(
-						(Object[]) personIds);
+				return ((Join<?, ?>) root.fetch("userBeans")).get("personId").in((Object[]) personIds);
 			}
 		};
+	}
+
+	//	/**
+	//	 * 指定された日付以降の予定日を持つScheduleを抽出するSpecificationを返します.
+	//	 *
+	//	 * @param dateStr 日付文字列(スラッシュ区切り、「日」省略可)
+	//	 * @return Specificationオブジェクト
+	//	 */
+	//	public static Specification<Schedule> isGtOrEqSomeDates(final String dateStr) {
+	//		return new Specification<Schedule>() {
+	//			@Override
+	//			public Predicate toPredicate(Root<Schedule> root, CriteriaQuery<?> cq, CriteriaBuilder builder) {
+	//
+	//				Date fromDate = parseWithFirstDate(dateStr);
+	//
+	//
+	//
+	//
+	//			}
+	//		};
+	//
+	//	}
+
+	private static Date parseWithFirstDate(String dateStr) {
+
+		String[] dateArray = dateStr.split("/");
+
+		if (dateArray.length < 1) {
+			return null;
+		}
+
+		Calendar cal = Calendar.getInstance();
+		cal.clear();
+
+		cal.set(Calendar.YEAR, Integer.parseInt(dateArray[0]));
+		cal.set(Calendar.MONTH,
+				dateArray.length >= 2 ? Integer.parseInt(dateArray[1]) - 1 : cal.getActualMinimum(Calendar.MONTH));
+		cal.set(Calendar.DATE,
+				dateArray.length >= 3 ? Integer.parseInt(dateArray[2]) : cal.getActualMinimum(Calendar.DATE));
+
+		return cal.getTime();
+	}
+
+	private static Date parseWithEndDate(String dateStr) {
+
+		String[] dateArray = dateStr.split("/");
+
+		if (dateArray.length < 1) {
+			return null;
+		}
+
+		Calendar cal = Calendar.getInstance();
+		cal.clear();
+
+		cal.set(Calendar.YEAR, Integer.parseInt(dateArray[0]));
+		cal.set(Calendar.MONTH,
+				dateArray.length >= 2 ? Integer.parseInt(dateArray[1]) - 1 : cal.getActualMaximum(Calendar.MONTH));
+		cal.set(Calendar.DATE,
+				dateArray.length >= 3 ? Integer.parseInt(dateArray[2]) : cal.getActualMaximum(Calendar.DATE));
+
+		return cal.getTime();
 	}
 }

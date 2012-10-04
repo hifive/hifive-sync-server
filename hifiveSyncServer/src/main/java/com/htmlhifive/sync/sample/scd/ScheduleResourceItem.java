@@ -61,17 +61,17 @@ public class ScheduleResourceItem {
 	private String category;
 
 	/**
-	 * このアイテムが示す予定の予定日(文字列)のリスト.
+	 * このアイテムが示す予定の予定日(yyyy/MM/dd)のリスト.
 	 */
 	private List<String> dates;
 
 	/**
-	 * このアイテムが示す予定の開始時刻.
+	 * このアイテムが示す予定の開始時刻(24時間、コロン区切り).
 	 */
 	private String startTime;
 
 	/**
-	 * このアイテムが示す予定の終了時刻.
+	 * このアイテムが示す予定の終了時刻(24時間、コロン区切り).
 	 */
 	private String finishTime;
 

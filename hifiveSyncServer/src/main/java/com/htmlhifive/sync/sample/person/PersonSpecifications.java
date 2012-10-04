@@ -56,11 +56,18 @@ public class PersonSpecifications {
 		}
 
 		for (String cond : conditions.keySet()) {
-			if (cond.equals("personId")) {
-				specList.add(isInIds(conditions.get(cond)));
-			}
-			if (cond.equals("organization")) {
-				specList.add(isEqualOrganization(conditions.get(cond)[0]));
+			switch (cond) {
+				case ("personId"):
+					specList.add(isInIds(conditions.get(cond)));
+					break;
+				case ("organization"):
+					specList.add(isEqualOrganization(conditions.get(cond)[0]));
+					break;
+
+				// ・・・
+
+				default:
+					// 何もしない
 			}
 		}
 

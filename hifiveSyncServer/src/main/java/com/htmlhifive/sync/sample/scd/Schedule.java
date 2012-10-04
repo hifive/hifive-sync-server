@@ -67,20 +67,20 @@ public class Schedule {
 	private String category;
 
 	/**
-	 * 予定の日付のリスト.
+	 * 予定の日付のリスト(yyyy/MM/dd形式).
 	 */
 	@ElementCollection
 	private List<String> dates;
 
 	/**
-	 * 予定の開始時刻.<br>
-	 * 24時間・4桁文字列で表現することを前提としています. 予定の種類によっては、開始－終了でない単一時刻も保持します.
+	 * 予定の開始時刻(24時間・コロン区切り).<br>
+	 * 予定の種類によっては、開始－終了でない単一時刻も保持します.
 	 */
 	private String startTime;
 
 	/**
-	 * 予定の終了時刻.<br>
-	 * 24時間・4桁文字列で表現することを前提としています. 開始－終了でない単一時刻の予定の場合、設定する必要はありません.
+	 * 予定の終了時刻(24時間・コロン区切り).<br>
+	 * 開始－終了でない単一時刻の予定の場合、設定する必要はありません.
 	 */
 	private String finishTime;
 
@@ -277,20 +277,6 @@ public class Schedule {
 	public void setCategory(String category) {
 		this.category = category;
 	}
-
-	//	/**
-	//	 * @return dateBeans
-	//	 */
-	//	public List<ScheduleDateBean> getDateBeans() {
-	//		return dateBeans;
-	//	}
-	//
-	//	/**
-	//	 * @param dateBeans セットする dateBeans
-	//	 */
-	//	public void setDateBeans(List<ScheduleDateBean> dateBeans) {
-	//		this.dateBeans = dateBeans;
-	//	}
 
 	/**
 	 * @return dates

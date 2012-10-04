@@ -108,11 +108,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		List<ResourceItemWrapper<I>> resultList = new ArrayList<>();
 		for (I item : items.keySet()) {
 
-			ResourceItemCommonData common = items.get(item);
-
-			ResourceItemWrapper<I> itemWrapper = new ResourceItemWrapper<>(common, item);
-
-			resultList.add(itemWrapper);
+			resultList.add(new ResourceItemWrapper<>(items.get(item), item));
 		}
 
 		return resultList;
@@ -134,9 +130,11 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			// 成功すると共通データで管理する各リソースアイテムのIDが返され、登録を行ったアイテムがサーバで管理される
 			String targetItemId = doCreate(item);
 
-			// 対象リソースアイテムのID、更新時刻を設定し、リソースアイテム共通データを新規保存
+			// 対象リソースアイテムのIDを設定し、リソースアイテム共通データを新規生成
 			itemCommon.setTargetItemId(targetItemId);
-			itemCommon.setLastModified(uploadCommon.getLastUploadTime());
+			// アクション、上り更新実行時刻を設定
+			itemCommon.modify(itemCommon.getAction(), uploadCommon.getSyncTime());
+			// 保存
 			saveNewCommonData(itemCommon);
 
 			// 登録されたリソースアイテム共通データ、アイテムをリターン
@@ -263,7 +261,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			doUpdate(updateItem);
 		}
 
-		currentCommon.modify(itemCommon.getAction(), uploadCommon.getLastUploadTime());
+		currentCommon.modify(itemCommon.getAction(), uploadCommon.getSyncTime());
 		ResourceItemCommonData commonAfterUpdate = saveUpdatedCommonData(currentCommon);
 
 		commonAfterUpdate.setConflictType(SyncConflictType.NONE);
