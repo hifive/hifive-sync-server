@@ -36,14 +36,14 @@ import com.htmlhifive.sync.service.upload.UploadCommonData;
 public interface SyncResource<I> {
 
 	/**
-	 * 指定されたリソースアイテム共通データに対応するリソースアイテムを取得します.
+	 * 指定されたリソースアイテム共通データに対応するリソースアイテムをそれぞれ取得します.
 	 *
 	 * @param downloadCommon 下り更新共通データ
-	 * @param itemCommonData リソースアイテム共通データ
-	 * @return リソースアイテムのラッパーオブジェクト
+	 * @param itemCommonDataList リソースアイテム共通データのリスト
+	 * @return リソースアイテムのラッパーオブジェクトのリスト
 	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
-	ResourceItemWrapper<I> get(DownloadCommonData downloadCommon, ResourceItemCommonData itemCommonData);
+	List<ResourceItemWrapper<I>> get(DownloadCommonData downloadCommon, List<ResourceItemCommonData> itemCommonDataList);
 
 	/**
 	 * クエリの条件に合致する全リソースアイテムを取得します.
@@ -91,35 +91,35 @@ public interface SyncResource<I> {
 	 * 指定されたリソースアイテムをロックします.
 	 *
 	 * @param lockCommon ロック取得共通データ
-	 * @param itemWrapper リソースアイテムラッパーオブジェクト
+	 * @param itemCommon リソースアイテム共通データ
 	 * @throws LockException ロックできなかった場合
 	 */
-	void lock(LockCommonData lockCommon, ResourceItemWrapper<I> itemWrapper);
+	void lock(LockCommonData lockCommon, ResourceItemCommonData itemCommon);
 
 	/**
 	 * 指定されたリソースアイテムのロックを開放します.
 	 *
 	 * @param lockCommonData ロック取得共通データ
-	 * @param itemWrapper リソースアイテムラッパーオブジェクト
+	 * @param itemCommon リソースアイテム共通データ
 	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
-	void releaseLock(LockCommonData lockCommonData, ResourceItemWrapper<I> itemWrapper);
+	void releaseLock(LockCommonData lockCommonData, ResourceItemCommonData itemCommon);
 
 	/**
-	 * ロックされている全リソースアイテムの情報を返します.<br>
-	 * 返されるリストのリソースアイテムラッパーオブジェクトはアイテムそのものは保持しません.
+	 * ロックされている全リソースアイテムの共通データを返します.<br>
 	 *
 	 * @param lockCommonData ロック取得共通データ
+	 * @return リソースアイテム共通データのリスト
 	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
-	List<ResourceItemCommonDataId> lockedItemInfo(LockCommonData lockCommonData);
+	List<ResourceItemCommonData> lockedItemInfo(LockCommonData lockCommonData);
 
 	/**
 	 * 指定されたリソースアイテムのアクセス権を確保します.<br>
 	 * 更新やロックの対象とする全てのリソースアイテムのアクセス権を正しい順序で確保することで、デッドロックによる処理失敗の可能性をなくすことができます.
 	 *
-	 * @param syncCommon 共通データ
-	 * @param itemWrapper リソースアイテムラッパーオブジェクト
+	 * @param id リソースアイテム共通データID
+	 * @return アクセス権を取得したリソースアイテム共通データ
 	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
 	ResourceItemCommonData reserve(ResourceItemCommonDataId id);
@@ -144,6 +144,14 @@ public interface SyncResource<I> {
 	 * @return アイテムの型を表すClassオブジェクト
 	 */
 	ResourceItemConverter<I> itemConverter();
+
+	/**
+	 * リソースのロックモードを設定します.<br>
+	 * 通常、アプリケーションから使用することはありません.
+	 *
+	 * @param lockMode セットする lockMode
+	 */
+	void setLockMode(ResourceLockModeType lockMode);
 
 	/**
 	 * リソースのロックを管理するマネージャを設定します.<br>

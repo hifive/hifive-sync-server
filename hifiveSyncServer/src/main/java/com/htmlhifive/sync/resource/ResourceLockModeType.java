@@ -8,6 +8,11 @@ package com.htmlhifive.sync.resource;
 public enum ResourceLockModeType {
 
 	/**
+	 * ロックなし.
+	 */
+	UNLOCK,
+
+	/**
 	 * 共有ロックモード.
 	 */
 	SHARED,

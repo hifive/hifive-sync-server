@@ -64,13 +64,7 @@ public class DefaultSynchronizer implements Synchronizer {
 	 * クライアントに返す今回の同期時刻を、実際の同期実行時刻の何ミリ秒前とするかを設定します.<br>
 	 * (現在の設定は60,000ミリ秒＝1分)
 	 */
-	private static final long BUFFER_TIME_FOR_DOWNLOAD = 1L * 60L * 1_000L;
-
-	/**
-	 * リソースへのインターフェースを取得するためのマネージャ.
-	 */
-	@Resource(type = DefaultSyncResourceManager.class)
-	private SyncResourceManager resourceManager;
+	private long bufferTImeForDownload = 1L * 60L * 1_000L;
 
 	/**
 	 * DUPLICATE_ID競合発生時の処理継続可否
@@ -83,14 +77,15 @@ public class DefaultSynchronizer implements Synchronizer {
 	private boolean continueOnConflictOfUpdated = true;
 
 	/**
-	 * 下り更新の同期モード
+	 * 上り更新、および下り更新の同期モード
 	 */
-	private SyncModeType downloadSyncMode = SyncModeType.NOT_PREPARE;
+	private SyncModeType syncMode = SyncModeType.NOT_PREPARE;
 
 	/**
-	 * 上り更新の同期モード TODO: デフォルトをPREPAREに変更予定
+	 * リソースへのインターフェースを取得するためのマネージャ.
 	 */
-	private SyncModeType uploadSyncMode = SyncModeType.NOT_PREPARE;
+	@Resource(type = DefaultSyncResourceManager.class)
+	private SyncResourceManager resourceManager;
 
 	/**
 	 * 同期ステータスのリポジトリ.
@@ -113,30 +108,34 @@ public class DefaultSynchronizer implements Synchronizer {
 		requestCommon.setSyncTime(generateSyncTime());
 
 		ResultMapBuilder resultBuilder = new ResultMapBuilder();
-		// クエリごとに処理し、結果をコンテナに格納
-		for (String resourceName : request.getQueries().keySet()) {
 
-			for (ResourceQueryConditions queryConditions : request.getQueries().get(resourceName)) {
+		// PREPAREモードの場合、リソースアイテムをreserve
+		if (this.syncMode == SyncModeType.PREPARE) {
 
-				// リソースアイテムを取得、リソース名ごとに結果をマージ(同一アイテムは1つのみ含む)
-				SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-				resultBuilder.addAll(resourceName, resource.getByQuery(requestCommon, queryConditions));
-			}
-		}
-
-		// PREPAREモードの場合、
-		if (this.downloadSyncMode == SyncModeType.PREPARE) {
-
-			// TODO:
+			// TODO 次期バージョンにて実装予定
+			//
 			// prepare(sort,reserve)
 			// get
+
+		} else {
+
+			// クエリごとに処理し、結果をコンテナに格納
+			for (String resourceName : request.getQueries().keySet()) {
+
+				for (ResourceQueryConditions queryConditions : request.getQueries().get(resourceName)) {
+
+					// リソースアイテムを取得、リソース名ごとに結果をマージ(同一アイテムは1つのみ含む)
+					SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
+					resultBuilder.addAll(resourceName, resource.getByQuery(requestCommon, queryConditions));
+				}
+			}
 		}
 
 		// レスポンス用共通データ
 		DownloadCommonData responseCommon = new DownloadCommonData(requestCommon.getStorageId());
 
 		// リクエストの処理時刻でレスポンスの最終下り更新時刻を更新(同タイミングで上り更新されたデータを読み出すためのバッファを考慮)
-		responseCommon.setLastDownloadTime(requestCommon.getSyncTime() - BUFFER_TIME_FOR_DOWNLOAD);
+		responseCommon.setLastDownloadTime(requestCommon.getSyncTime() - bufferTImeForDownload);
 
 		// 下り更新レスポンスに結果を設定
 		DownloadResponse response = new DownloadResponse(responseCommon);
@@ -169,9 +168,9 @@ public class DefaultSynchronizer implements Synchronizer {
 		}
 
 		// PREPAREモードの場合
-		if (this.uploadSyncMode == SyncModeType.PREPARE) {
+		if (this.syncMode == SyncModeType.PREPARE) {
 
-			// TODO:
+			// TODO 次期バージョンにて実装予定
 			// prepare(sort,reserve)
 		}
 
@@ -250,7 +249,7 @@ public class DefaultSynchronizer implements Synchronizer {
 			}
 		}
 
-		// TODO:
+		// TODO 次期バージョンにて実装予定
 		// prepare(sort,reserve)
 		// lock
 
@@ -276,22 +275,11 @@ public class DefaultSynchronizer implements Synchronizer {
 	@Override
 	public void releaseLock(LockRequest request) {
 
-		// TODO:
+		// TODO 次期バージョンにて実装予定
 		// lockedItemInfo
 		// prepare(sort,reserve)
 		// releaseLock
 	}
-
-	//	/**
-	//	 * リストに含まれるリソースアイテムのアクセス権を確保します.<br>
-	//	 * アクセス権の確保はリソース名、リソースアイテムIDの順序で実行されます.
-	//	 *
-	//	 * @param itemWrapperList リソースアイテムラッパーオブジェクトのリスト
-	//	 */
-	//	protected void prepare(List<? extends ResourceItemWrapper<?>> itemWrapperList) {
-	//		// TODO sort,reserve
-	//
-	//	}
 
 	/**
 	 * リソースのロックを取得する際に使用するロックトークンを発行します.
@@ -484,23 +472,13 @@ public class DefaultSynchronizer implements Synchronizer {
 	}
 
 	/**
-	 * 下り更新の同期モードを設定します.<br>
+	 * 上り更新、および下り更新の同期モードを設定します.<br>
 	 * 通常、アプリケーションから使用することはありません.
 	 *
-	 * @param downloadSyncMode セットする downloadSyncMode
+	 * @param syncMode セットする syncMode
 	 */
-	public void setDownloadSyncMode(SyncModeType downloadSyncMode) {
-		this.downloadSyncMode = downloadSyncMode;
-	}
-
-	/**
-	 * 上り更新の同期モードを設定します.<br>
-	 * 通常、アプリケーションから使用することはありません.
-	 *
-	 * @param uploadSyncMode セットする uploadSyncMode
-	 */
-	public void setUploadSyncMode(SyncModeType uploadSyncMode) {
-		this.uploadSyncMode = uploadSyncMode;
+	public void setSyncMode(SyncModeType syncMode) {
+		this.syncMode = syncMode;
 	}
 
 	/**
@@ -521,5 +499,15 @@ public class DefaultSynchronizer implements Synchronizer {
 	 */
 	public void setContinueOnConflictOfUpdated(boolean continueOnConflictOfUpdated) {
 		this.continueOnConflictOfUpdated = continueOnConflictOfUpdated;
+	}
+
+	/**
+	 * 同タイミングで上り更新されたデータを読み出すためのバッファ時間を設定します.<br>
+	 * 通常、アプリケーションから使用することはありません.
+	 *
+	 * @param bufferTImeForDownload セットする bufferTImeForDownload
+	 */
+	public void setBufferTImeForDownload(long bufferTImeForDownload) {
+		this.bufferTImeForDownload = bufferTImeForDownload;
 	}
 }

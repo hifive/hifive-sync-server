@@ -17,7 +17,6 @@
 package com.htmlhifive.sync.resource;
 
 import java.util.List;
-import java.util.Map;
 
 import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.LockException;
@@ -33,78 +32,52 @@ public interface LockStrategy {
 	/**
 	 * 1件のリソースアイテムを指定されたモードでロックします.
 	 *
-	 * @param syncCommon
-	 * @param commonData
-	 * @param item
-	 * @param lockMode
+	 * @param syncCommon sync共通データ
+	 * @param itemCommon リソースアイテム共通データ
+	 * @param lockMode ロックモード
 	 * @throws LockException ロックが取得できなかったとき
 	 */
-	public <T> void lock(SyncCommonData syncCommon, ResourceItemCommonData itemCommon, T item,
-			ResourceLockModeType lockMode) throws LockException;
+	public void lock(SyncCommonData syncCommon, ResourceItemCommonData itemCommon, ResourceLockModeType lockMode)
+			throws LockException;
 
 	/**
 	 * Mapで指定されたすべてのリソースアイテムを指定されたモードでロックします.
 	 *
-	 * @param syncCommon
-	 * @param itemMap
-	 * @param lockMode
+	 * @param syncCommon sync共通データ
+	 * @param itemCommonList リソースアイテム共通データのリスト
+	 * @param lockMode ロックモード
 	 * @throws LockException ロックが取得できなかったとき
 	 */
-	public <T> void lock(SyncCommonData syncCommon, Map<T, ResourceItemCommonData> itemMap,
+	public void lock(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonList,
 			ResourceLockModeType lockMode) throws LockException;
 
 	/**
 	 * リソースアイテム共通データのリストに含まれる対象アイテムのうち、クエリの条件を満たすリソースアイテムを、指定されたモードでロックします.
 	 *
-	 * @param syncCommon
-	 * @param commonDataList
-	 * @param query
-	 * @param lockMode
+	 * @param syncCommon sync共通データ
+	 * @param itemCommonList リソースアイテム共通データのリスト
+	 * @param query クエリ
+	 * @param lockMode ロックモード
 	 * @return クエリの条件を満たすリソースアイテム共通データのリスト
 	 * @throws LockException ロックが取得できなかったとき
 	 */
-	public <T> List<ResourceItemCommonData> lock(SyncCommonData syncCommon,
-			List<ResourceItemCommonData> commonDataList, List<ResourceQueryConditions> query,
-			ResourceLockModeType lockMode) throws LockException;
+	public List<ResourceItemCommonData> lock(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonList,
+			List<ResourceQueryConditions> query, ResourceLockModeType lockMode) throws LockException;
 
 	/**
-	 * 指定された1件のリソースアイテムが指定されたモードでロックされている場合trueを返します.
+	 * 指定された1件のリソースアイテムのロック状態を表すロックモードをを返します.
 	 *
-	 * @param syncCommon
-	 * @param commonData
-	 * @param item
-	 * @param lockMode
-	 * @return
+	 * @param syncCommon sync共通データ
+	 * @param itemCommon リソースアイテム共通データ
+	 * @return ロックモード
 	 */
-	public <T> boolean isLocked(SyncCommonData syncCommon, ResourceItemCommonData commonData, T item,
-			ResourceLockModeType lockMode);
-
-	/**
-	 * 指定された1件のリソースアイテムが排他ロックモードでロックされている場合はfalseを返し、それ以外の場合はtrueを返します.
-	 *
-	 * @param syncCommon
-	 * @param commonData
-	 * @param item
-	 * @return
-	 */
-	public <T> boolean canRead(SyncCommonData syncCommon, ResourceItemCommonData commonData, T item);
-
-	/**
-	 * 指定された1件のリソースアイテムがいずれのモードでもロックされていない場合trueを返します.
-	 *
-	 * @param syncCommon
-	 * @param commonData
-	 * @param item
-	 * @return
-	 */
-	public <T> boolean canWrite(SyncCommonData syncCommon, ResourceItemCommonData commonData, T item);
+	public ResourceLockModeType getLockMode(SyncCommonData syncCommon, ResourceItemCommonData itemCommon);
 
 	/**
 	 * 指定されたリソースアイテムのロックを解放します.
 	 *
-	 * @param syncCommon
-	 * @param commonData
-	 * @param item
+	 * @param syncCommon sync共通データ
+	 * @param itemCommon リソースアイテム共通データ
 	 */
-	public <T> void unlock(SyncCommonData syncCommon, ResourceItemCommonData commonData, T item);
+	public void unlock(SyncCommonData syncCommon, ResourceItemCommonData itemCommon);
 }

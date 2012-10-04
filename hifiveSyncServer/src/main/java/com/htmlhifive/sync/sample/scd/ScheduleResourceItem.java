@@ -16,16 +16,11 @@
  */
 package com.htmlhifive.sync.sample.scd;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-
-import com.htmlhifive.sync.exception.SyncException;
 
 /**
  * 予定リソースが外部と受け渡しするリソースアイテムクラス.
@@ -110,35 +105,6 @@ public class ScheduleResourceItem {
 	 */
 	public ScheduleResourceItem(String scheduleId) {
 		this.scheduleId = scheduleId;
-	}
-
-	/**
-	 * エンティティの持つ情報からこのリソースアイテムオブジェクトに値を設定.
-	 *
-	 * @param bean Scheduleエンティティ
-	 */
-	public void setFromBean(Schedule bean) {
-
-		this.userIds = bean.getUserIds();
-		this.title = bean.getTitle();
-		this.category = bean.getCategory();
-
-		// スラッシュ区切りに変換
-		List<String> slashSeparatedList = new ArrayList<>();
-		try {
-			for (String date : bean.getDates()) {
-				slashSeparatedList.add(new SimpleDateFormat("y/M/d").format(new SimpleDateFormat("yyyyMMdd")
-						.parse(date)));
-			}
-		} catch (ParseException e) {
-			throw new SyncException(e);
-		}
-		this.dates = slashSeparatedList;
-		this.startTime = bean.getStartTime();
-		this.finishTime = bean.getFinishTime();
-		this.detail = bean.getDetail();
-		this.place = bean.getPlace();
-		this.createUserName = bean.getCreateUser().getName();
 	}
 
 	/**

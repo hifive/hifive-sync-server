@@ -71,8 +71,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 		Schedule bean = findSchedule(targetItemId);
 
-		ScheduleResourceItem item = new ScheduleResourceItem(bean.getScheduleId());
-		item.setFromBean(bean);
+		ScheduleResourceItem item = createItem(bean);
 		return item;
 	}
 
@@ -97,15 +96,46 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		for (Schedule schedule : scheduleList) {
 			for (ResourceItemCommonData common : commonDataList) {
 				if (common.getTargetItemId().equals(schedule.getScheduleId())) {
-
-					ScheduleResourceItem item = new ScheduleResourceItem(schedule.getScheduleId());
-					item.setFromBean(schedule);
+					ScheduleResourceItem item = createItem(schedule);
 					itemMap.put(item, common);
 				}
 			}
 		}
 
 		return itemMap;
+	}
+
+	/**
+	 * エンティティの持つ情報からリソースアイテムオブジェクトに値を設定します.
+	 *
+	 * @param bean Scheduleエンティティ
+	 */
+	private ScheduleResourceItem createItem(Schedule bean) {
+
+		ScheduleResourceItem item = new ScheduleResourceItem(bean.getScheduleId());
+
+		item.setUserIds(bean.getUserIds());
+		item.setTitle(bean.getTitle());
+		item.setCategory(bean.getCategory());
+
+		// スラッシュ区切りに変換
+		List<String> slashSeparatedList = new ArrayList<>();
+		try {
+			for (String date : bean.getDates()) {
+				slashSeparatedList.add(new SimpleDateFormat("y/M/d").format(new SimpleDateFormat("yyyyMMdd")
+						.parse(date)));
+			}
+		} catch (ParseException e) {
+			throw new SyncException(e);
+		}
+		item.setDates(bean.getDates());
+		item.setStartTime(bean.getStartTime());
+		item.setFinishTime(bean.getFinishTime());
+		item.setDetail(bean.getDetail());
+		item.setPlace(bean.getPlace());
+		item.setCreateUserName(bean.getCreateUser().getName());
+
+		return item;
 	}
 
 	/**

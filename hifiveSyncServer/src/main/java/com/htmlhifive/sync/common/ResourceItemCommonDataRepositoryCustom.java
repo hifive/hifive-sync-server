@@ -26,6 +26,8 @@ import org.springframework.data.repository.query.Param;
  */
 public interface ResourceItemCommonDataRepositoryCustom {
 
+	// TODO: 次期バージョンにて実装予定(reserve用finder)
+
 	/**
 	 * リソース名が合致し、ある時刻以降に更新されたリソースの共通データを返します.<br>
 	 *
