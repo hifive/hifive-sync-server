@@ -21,10 +21,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
  * 予定データエンティティを永続化するためのリポジトリ. <br>
- * SpringFrameworkの標準的なリポジトリ、独自拡張メソッドを定義した{@link ScheduleRepositoryCustom}インターフェースを継承します.<br>
+ * SpringFrameworkの標準的なリポジトリインターフェースを継承します.<br>
  *
  * @author kishigam
  */
-public interface ScheduleRepository extends JpaRepository<Schedule, String>, JpaSpecificationExecutor<Schedule>,
-		ScheduleRepositoryCustom {
+public interface ScheduleRepository extends JpaRepository<Schedule, String>, JpaSpecificationExecutor<Schedule> {
 }

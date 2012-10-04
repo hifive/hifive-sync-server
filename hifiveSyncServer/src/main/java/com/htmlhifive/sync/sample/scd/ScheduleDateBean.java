@@ -16,11 +16,9 @@
  */
 package com.htmlhifive.sync.sample.scd;
 
-import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
-import javax.persistence.Table;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -31,8 +29,8 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  *
  * @author kishigam
  */
-@Entity
-@Table(name = "SCHEDULE_DATE")
+//@Entity
+//@Table(name = "SCHEDULE_DATE")
 public class ScheduleDateBean {
 
     /**

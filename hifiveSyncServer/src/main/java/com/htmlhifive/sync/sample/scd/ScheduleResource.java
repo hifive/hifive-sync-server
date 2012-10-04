@@ -66,20 +66,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	@Override
 	protected ScheduleResourceItem doGet(String targetItemId) {
 
-		Schedule bean = findSchedule(targetItemId);
-
-		ScheduleResourceItem item = new ScheduleResourceItem(bean.getScheduleId());
-		item.setUserIds(bean.getUserIds());
-		item.setTitle(bean.getTitle());
-		item.setCategory(bean.getCategory());
-		item.setDates(bean.getDates());
-		item.setStartTime(bean.getStartTime());
-		item.setFinishTime(bean.getFinishTime());
-		item.setDetail(bean.getDetail());
-		item.setPlace(bean.getPlace());
-		item.setCreateUserName(bean.getCreateUser().getName());
-
-		return item;
+		return createItemFromBean(findSchedule(targetItemId));
 	}
 
 	/**
@@ -95,16 +82,43 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 			List<ResourceItemCommonData> commonDataList, Map<String, String[]> conditions) {
 
 		Map<ScheduleResourceItem, ResourceItemCommonData> itemMap = new HashMap<>();
-		for (ResourceItemCommonData common : commonDataList) {
 
-			ScheduleResourceItem item = doGet(common.getTargetItemId());
+		// Specificationsを用いたクエリ実行
+		List<Schedule> scheduleList = repository.findAll(ScheduleSpecifications.parseConditions(commonDataList,
+				conditions));
 
-			// TODO: queryの適用
+		for (Schedule schedule : scheduleList) {
+			for (ResourceItemCommonData common : commonDataList) {
+				if (common.getTargetItemId().equals(schedule.getScheduleId())) {
 
-			itemMap.put(item, common);
+					itemMap.put(createItemFromBean(schedule), common);
+				}
+			}
 		}
 
 		return itemMap;
+	}
+
+	/**
+	 * エンティティの持つ情報からリソースアイテムオブジェクトを生成します.
+	 *
+	 * @param bean Scheduleエンティティ
+	 * @return リソースアイテムオブジェクト
+	 */
+	private ScheduleResourceItem createItemFromBean(Schedule bean) {
+
+		ScheduleResourceItem item = new ScheduleResourceItem(bean.getScheduleId());
+		item.setUserIds(bean.getUserIds());
+		item.setTitle(bean.getTitle());
+		item.setCategory(bean.getCategory());
+		item.setDates(bean.getDates());
+		item.setStartTime(bean.getStartTime());
+		item.setFinishTime(bean.getFinishTime());
+		item.setDetail(bean.getDetail());
+		item.setPlace(bean.getPlace());
+		item.setCreateUserName(bean.getCreateUser().getName());
+
+		return item;
 	}
 
 	/**
@@ -134,7 +148,8 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		newEntity.setCategory(newItem.getCategory());
 
 		// 日付リストの新規生成
-		newEntity.setNewDateBeans(newItem.getDates());
+		//		newEntity.setNewDateBeans(newItem.getDates());
+		newEntity.setDates(newItem.getDates());
 
 		newEntity.setStartTime(newItem.getStartTime());
 		newEntity.setFinishTime(newItem.getFinishTime());
@@ -169,7 +184,8 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		updatingEntity.setCategory(item.getCategory());
 
 		// 元の日付リストの更新
-		updatingEntity.setUpdatedDateBeans(item.getDates());
+		//		updatingEntity.setUpdatedDateBeans(item.getDates());
+		updatingEntity.setDates(item.getDates());
 
 		updatingEntity.setStartTime(item.getStartTime());
 		updatingEntity.setFinishTime(item.getFinishTime());

@@ -18,6 +18,8 @@ package com.htmlhifive.sync.common;
 
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 
@@ -59,13 +61,16 @@ public class ResourceItemCommonData {
 	/**
 	 * このリソースアイテムを現在の状態に登録したアクション.<br>
 	 */
+	@Enumerated(EnumType.STRING)
 	private SyncAction action;
 
 	/**
 	 * このリソースアイテムのロックがリクエスト処理後も継続することを示すフラグ.<br>
 	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.
+	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.<br>
+	 * また、永続化の対象外です.
 	 */
+	@Transient
 	private boolean keepLock;
 
 	/**
@@ -203,7 +208,7 @@ public class ResourceItemCommonData {
 	 *
 	 * @return keepLock
 	 */
-	@JsonSerialize(include = Inclusion.NON_DEFAULT)
+	@JsonSerialize(include = Inclusion.NON_EMPTY)
 	public boolean isKeepLock() {
 		return keepLock;
 	}

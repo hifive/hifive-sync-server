@@ -122,7 +122,7 @@ public class UploadCommonData implements SyncCommonData {
 	 * @return storageId
 	 */
 	@Override
-	@JsonSerialize(include = Inclusion.NON_DEFAULT)
+	@JsonSerialize(include = Inclusion.NON_EMPTY)
 	public String getStorageId() {
 		return storageId;
 	}
@@ -139,7 +139,7 @@ public class UploadCommonData implements SyncCommonData {
 	 *
 	 * @return lastUploadTime
 	 */
-	@JsonSerialize(include = Inclusion.NON_DEFAULT)
+	@JsonSerialize(include = Inclusion.NON_EMPTY)
 	public long getLastUploadTime() {
 		return lastUploadTime;
 	}
@@ -174,7 +174,7 @@ public class UploadCommonData implements SyncCommonData {
 	 *
 	 * @return conflictType
 	 */
-	@JsonSerialize(include = Inclusion.NON_DEFAULT)
+	@JsonSerialize(include = Inclusion.NON_EMPTY)
 	public SyncConflictType getConflictType() {
 		return conflictType;
 	}
@@ -191,7 +191,7 @@ public class UploadCommonData implements SyncCommonData {
 	 *
 	 * @return lockToken
 	 */
-	@JsonSerialize(include = Inclusion.NON_DEFAULT)
+	@JsonSerialize(include = Inclusion.NON_EMPTY)
 	@Override
 	public String getLockToken() {
 		return lockToken;

@@ -233,8 +233,7 @@ public class JsonSyncController {
 	private <T> ResponseEntity<T> createHttpResponseEntity(T body, HttpStatus status) {
 
 		HttpHeaders responseHeaders = new HttpHeaders();
-		//		responseHeaders.setContentType(MediaType.APPLICATION_JSON);
-		responseHeaders.add("Content-Type", "application/json;charset=utf-8");
+		responseHeaders.setContentType(MediaType.APPLICATION_JSON);
 
 		return new ResponseEntity<>(body, responseHeaders, status);
 	}

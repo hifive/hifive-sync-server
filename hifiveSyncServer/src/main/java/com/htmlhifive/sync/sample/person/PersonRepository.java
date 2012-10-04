@@ -21,10 +21,9 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 /**
  * Personエンティティを永続化するためのリポジトリ. <br>
- * SpringFrameworkの標準的なリポジトリ、独自拡張メソッドを定義した{@link PersonRepositoryCustom}インターフェースを継承します.<br>
+ * SpringFrameworkの標準的なリポジトリインターフェースを継承します.
  *
  * @author kishigam
  */
-public interface PersonRepository extends JpaRepository<Person, String>, JpaSpecificationExecutor<Person>,
-		PersonRepositoryCustom {
+public interface PersonRepository extends JpaRepository<Person, String>, JpaSpecificationExecutor<Person> {
 }

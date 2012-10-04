@@ -17,7 +17,6 @@
 package com.htmlhifive.sync.sample.scd;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.ElementCollection;
@@ -71,7 +70,7 @@ public class Schedule {
 	 * 予定の日付のリスト.
 	 */
 	@ElementCollection
-	private List<ScheduleDateBean> dateBeans;
+	private List<String> dates;
 
 	/**
 	 * 予定の開始時刻.<br>
@@ -157,70 +156,71 @@ public class Schedule {
 		return userIds;
 	}
 
-	/**
-	 * 日付のリストを日付文字列のリストとして返します.
-	 *
-	 * @return
-	 */
-	public List<String> getDates() {
-		List<String> dateList = new ArrayList<>();
-		for (ScheduleDateBean dateBean : this.dateBeans) {
-			dateList.add(dateBean.getScheduleDate());
-		}
-
-		return dateList;
-	}
-
-	/**
-	 * 日付文字列のリストから新規予定日付オブジェクトを生成し、日付のリストを設定します.
-	 *
-	 * @param date スケジュールされた日付のリスト.
-	 */
-	void setNewDateBeans(List<String> dates) {
-
-		List<ScheduleDateBean> dateBeanList = new ArrayList<>();
-		for (String date : dates) {
-			dateBeanList.add(new ScheduleDateBean(this, date));
-		}
-
-		this.dateBeans = dateBeanList;
-	}
-
-	/**
-	 * 日付文字列のリストから日付のリストを更新します.
-	 *
-	 * @param date スケジュールされた日付のリスト.
-	 */
-	void setUpdatedDateBeans(List<String> dates) {
-
-		// DateBeanの双方向関連の更新
-		Iterator<ScheduleDateBean> dateBeansItr = this.dateBeans.iterator();
-		Iterator<String> dateItr = dates.iterator();
-
-		List<ScheduleDateBean> removeList = new ArrayList<>();
-		while (dateBeansItr.hasNext()) {
-			if (dateItr.hasNext()) {
-				ScheduleDateBean oldDateBean = dateBeansItr.next();
-				String date = dateItr.next();
-
-				oldDateBean.setScheduleDate(date);
-			} else {
-				// イテレーションの途中で削除せず、退避
-				// iterator#removeが使えるかどうかはListの実装次第なので使用しない
-				removeList.add(dateBeansItr.next());
-			}
-		}
-
-		// 元より多い分は新規
-		while (dateItr.hasNext()) {
-
-			this.dateBeans.add(new ScheduleDateBean(this, dateItr.next()));
-		}
-
-		for (ScheduleDateBean removing : removeList) {
-			this.dateBeans.remove(removing);
-		}
-	}
+	//
+	//	/**
+	//	 * 日付のリストを日付文字列のリストとして返します.
+	//	 *
+	//	 * @return
+	//	 */
+	//	public List<String> getDates() {
+	//		List<String> dateList = new ArrayList<>();
+	//		for (ScheduleDateBean dateBean : this.dateBeans) {
+	//			dateList.add(dateBean.getScheduleDate());
+	//		}
+	//
+	//		return dateList;
+	//	}
+	//
+	//	/**
+	//	 * 日付文字列のリストから新規予定日付オブジェクトを生成し、日付のリストを設定します.
+	//	 *
+	//	 * @param date スケジュールされた日付のリスト.
+	//	 */
+	//	void setNewDateBeans(List<String> dates) {
+	//
+	//		List<ScheduleDateBean> dateBeanList = new ArrayList<>();
+	//		for (String date : dates) {
+	//			dateBeanList.add(new ScheduleDateBean(this, date));
+	//		}
+	//
+	//		this.dateBeans = dateBeanList;
+	//	}
+	//
+	//	/**
+	//	 * 日付文字列のリストから日付のリストを更新します.
+	//	 *
+	//	 * @param date スケジュールされた日付のリスト.
+	//	 */
+	//	void setUpdatedDateBeans(List<String> dates) {
+	//
+	//		// DateBeanの双方向関連の更新
+	//		Iterator<ScheduleDateBean> dateBeansItr = this.dateBeans.iterator();
+	//		Iterator<String> dateItr = dates.iterator();
+	//
+	//		List<ScheduleDateBean> removeList = new ArrayList<>();
+	//		while (dateBeansItr.hasNext()) {
+	//			if (dateItr.hasNext()) {
+	//				ScheduleDateBean oldDateBean = dateBeansItr.next();
+	//				String date = dateItr.next();
+	//
+	//				oldDateBean.setScheduleDate(date);
+	//			} else {
+	//				// イテレーションの途中で削除せず、退避
+	//				// iterator#removeが使えるかどうかはListの実装次第なので使用しない
+	//				removeList.add(dateBeansItr.next());
+	//			}
+	//		}
+	//
+	//		// 元より多い分は新規
+	//		while (dateItr.hasNext()) {
+	//
+	//			this.dateBeans.add(new ScheduleDateBean(this, dateItr.next()));
+	//		}
+	//
+	//		for (ScheduleDateBean removing : removeList) {
+	//			this.dateBeans.remove(removing);
+	//		}
+	//	}
 
 	/**
 	 * @return scheduleId
@@ -278,18 +278,32 @@ public class Schedule {
 		this.category = category;
 	}
 
+	//	/**
+	//	 * @return dateBeans
+	//	 */
+	//	public List<ScheduleDateBean> getDateBeans() {
+	//		return dateBeans;
+	//	}
+	//
+	//	/**
+	//	 * @param dateBeans セットする dateBeans
+	//	 */
+	//	public void setDateBeans(List<ScheduleDateBean> dateBeans) {
+	//		this.dateBeans = dateBeans;
+	//	}
+
 	/**
-	 * @return dateBeans
+	 * @return dates
 	 */
-	public List<ScheduleDateBean> getDateBeans() {
-		return dateBeans;
+	public List<String> getDates() {
+		return dates;
 	}
 
 	/**
-	 * @param dateBeans セットする dateBeans
+	 * @param dates セットする dates
 	 */
-	public void setDateBeans(List<ScheduleDateBean> dateBeans) {
-		this.dateBeans = dateBeans;
+	public void setDates(List<String> dates) {
+		this.dates = dates;
 	}
 
 	/**

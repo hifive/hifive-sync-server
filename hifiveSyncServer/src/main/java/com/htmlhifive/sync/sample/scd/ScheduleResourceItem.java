@@ -91,8 +91,7 @@ public class ScheduleResourceItem {
 	private String createUserName;
 
 	/**
-	 * デフォルトコンストラクタ.<br>
-	 * アプリケーションからの使用は想定されないため、privateとする.
+	 * フレームワーク、ライブラリが使用するプライベートデフォルトコンストラクタ.<br>
 	 */
 	@SuppressWarnings("unused")
 	private ScheduleResourceItem() {

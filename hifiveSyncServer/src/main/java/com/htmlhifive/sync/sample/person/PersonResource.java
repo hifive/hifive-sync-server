@@ -88,13 +88,15 @@ public class PersonResource extends AbstractSyncResource<Person> {
 			Map<String, String[]> conditions) {
 
 		Map<Person, ResourceItemCommonData> itemMap = new HashMap<>();
-		for (ResourceItemCommonData common : commonDataList) {
 
-			Person item = doGet(common.getTargetItemId());
-
-			// TODO: queryの適用
-
-			itemMap.put(item, common);
+		// Specificationsを用いたクエリ実行
+		List<Person> personList = repository.findAll(PersonSpecifications.parseConditions(commonDataList, conditions));
+		for (Person person : personList) {
+			for (ResourceItemCommonData common : commonDataList) {
+				if (common.getTargetItemId().equals(person.getPersonId())) {
+					itemMap.put(person, common);
+				}
+			}
 		}
 
 		return itemMap;

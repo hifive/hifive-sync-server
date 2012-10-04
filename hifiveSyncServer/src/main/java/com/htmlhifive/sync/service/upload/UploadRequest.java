@@ -41,7 +41,7 @@ public class UploadRequest {
 	/**
 	 * 上り更新対象を表すリソースアイテムリストのMap.<br>
 	 */
-	private List<ResourceItemWrapper<? extends Map<String, Object>>> resourceItems;
+	private List<? extends ResourceItemWrapper<? extends Map<String, Object>>> resourceItems;
 
 	/**
 	 * @see Object#equals(Object)
@@ -96,14 +96,14 @@ public class UploadRequest {
 	/**
 	 * @return resourceItems
 	 */
-	public List<ResourceItemWrapper<? extends Map<String, Object>>> getResourceItems() {
+	public List<? extends ResourceItemWrapper<? extends Map<String, Object>>> getResourceItems() {
 		return resourceItems;
 	}
 
 	/**
 	 * @param resourceItems セットする resourceItems
 	 */
-	public void setResourceItems(List<ResourceItemWrapper<? extends Map<String, Object>>> resourceItems) {
+	public void setResourceItems(List<? extends ResourceItemWrapper<? extends Map<String, Object>>> resourceItems) {
 		this.resourceItems = resourceItems;
 	}
 }
