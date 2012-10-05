@@ -28,6 +28,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.sample.person.Person;
 import com.htmlhifive.sync.sample.person.PersonResource;
 
@@ -60,9 +61,23 @@ public class PersonController {
 			"Content-Type=application/json", "Accept=application/json" })
 	public ResponseEntity<Person> getUserId(Principal principal) {
 
-		// Principalに設定されたログインユーザー情報を取得、レスポンスデータとしてリターン
-		Person loginPerson = personResource.getResourceItemByPersonId(principal.getName());
+		// Principalに設定されたログインユーザー情報と合致するPersonデータを取得
+		Person loginPerson;
+		try {
+			loginPerson = personResource.getResourceItemByPersonId(principal.getName());
 
+			// ID以外をレスポンスにしないためクリア
+			loginPerson.setAge((Integer) null);
+			loginPerson.setName(null);
+			loginPerson.setOrganization(null);
+		} catch (BadRequestException e) {
+
+			// Personデータとして存在しない場合、IDのみ設定したPersonを返すようにする
+			loginPerson = new Person();
+			loginPerson.setPersonId(principal.getName());
+		}
+
+		// レスポンスデータとしてリターン
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.setContentType(MediaType.APPLICATION_JSON);
 

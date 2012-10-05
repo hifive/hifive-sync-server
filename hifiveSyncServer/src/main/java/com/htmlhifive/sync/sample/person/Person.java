@@ -34,20 +34,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 public class Person {
 
 	/**
-	 * IDのみ設定されたインスタンスを返します.
-	 *
-	 * @param personId
-	 * @return インスタンス
-	 */
-	public static Person emptyPerson(String personId) {
-
-		Person empty = new Person();
-		empty.setPersonId(personId);
-
-		return empty;
-	}
-
-	/**
 	 * このエンティティのID.<br>
 	 */
 	@Id

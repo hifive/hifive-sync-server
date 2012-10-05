@@ -57,9 +57,7 @@ public class PersonResource extends AbstractSyncResource<Person> {
 
 		// Personデータを検索(ロックは考慮しない)
 		// 存在しなければBadRequestExceptionがスローされる
-		doGet(personId);
-
-		return Person.emptyPerson(personId);
+		return doGet(personId);
 	}
 
 	/**
@@ -153,7 +151,9 @@ public class PersonResource extends AbstractSyncResource<Person> {
 
 		repository.delete(removingEntity);
 
-		return Person.emptyPerson(targetItemId);
+		Person emptyPerson = new Person();
+		emptyPerson.setPersonId(targetItemId);
+		return emptyPerson;
 	}
 
 	/**
