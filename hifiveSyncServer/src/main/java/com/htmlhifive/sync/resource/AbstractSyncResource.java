@@ -270,7 +270,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		// 競合判定
 		// 競合がなければ、更新対象は渡されたitemとなる
 		I updateItem = item;
-		if (lockMode == ResourceLockModeType.UNLOCK && conflict(itemCommon.getLastModified(), currentCommon)) {
+		if (lockMode == ResourceLockModeType.UNLOCK && conflict(itemCommon, currentCommon)) {
 
 			// サーバで保持しているアイテムを取得
 			I currentItem = currentCommon.getAction() == SyncAction.DELETE ? null : doGet(currentCommon
@@ -488,13 +488,13 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	/**
 	 * リソースアイテム共通データのバージョン比較により、リソースアイテムの更新が実行できるか判定します.<br>
 	 *
-	 * @param forUpdate update(/delete)対象リソースアイテムの共通データ
+	 * @param client update(/delete)対象リソースアイテムの共通データ
 	 * @param server サーバで保持している現在の共通データ
 	 * @return update(/delete)できる場合true.
 	 */
-	private boolean conflict(long uploadTime, ResourceItemCommonData server) {
+	private boolean conflict(ResourceItemCommonData client, ResourceItemCommonData server) {
 
-		return server.getLastModified() > uploadTime;
+		return server.getLastModified() > client.getLastModified();
 	}
 
 	/**
