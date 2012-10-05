@@ -10,7 +10,10 @@
         http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
 
-	<context:property-placeholder location="classpath:META-INF/config/database.properties" />
+	<context:property-placeholder
+		location="classpath:META-INF/config/database.properties" />
+
+	<import resource="database.xml" />
 
 	<context:component-scan base-package="com.htmlhifive.sync" />
 	<jpa:repositories base-package="com.htmlhifive.sync.service"
