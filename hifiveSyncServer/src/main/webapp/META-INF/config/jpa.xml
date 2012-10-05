@@ -16,8 +16,6 @@
 		transaction-manager-ref="txManager" />
 	<jpa:repositories base-package="com.htmlhifive.sync.common"
 		transaction-manager-ref="txManager" />
-	<jpa:repositories base-package="com.htmlhifive.sync.sample"
-		transaction-manager-ref="txManager" />
 
 	<!-- Data Source -->
 	<bean id="dataSource"
