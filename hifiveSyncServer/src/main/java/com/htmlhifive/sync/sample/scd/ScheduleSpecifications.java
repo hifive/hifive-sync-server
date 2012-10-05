@@ -62,7 +62,10 @@ public class ScheduleSpecifications {
 					specList.add(isInIds(conditions.get(cond)));
 					break;
 				case ("personIds"):
-					specList.add(isInPersonIds(conditions.get(cond)));
+					specList.add(isInUserIds(conditions.get(cond)));
+					break;
+				case ("userOrCreator"):
+					specList.add(isInUserIdsAndCreateUserId(conditions.get(cond)));
 					break;
 				//				case ("date-from"):
 				//						specList.add(...);
@@ -110,13 +113,32 @@ public class ScheduleSpecifications {
 	 * @param personIds personIdの配列
 	 * @return Specificationオブジェクト
 	 */
-	public static Specification<Schedule> isInPersonIds(final String[] personIds) {
+	public static Specification<Schedule> isInUserIds(final String[] personIds) {
 		return new Specification<Schedule>() {
 
 			@Override
 			public Predicate toPredicate(Root<Schedule> root, CriteriaQuery<?> cq, CriteriaBuilder builder) {
 
 				return ((Join<?, ?>) root.fetch("userBeans")).get("personId").in((Object[]) personIds);
+			}
+		};
+	}
+
+	/**
+	 * 配列に含むpersonIdのいずれかがpersonIdsのいずれか、またはcreateUserIdに合致するScheduleを抽出するSpecificationを返します.
+	 *
+	 * @param personIds personIdの配列
+	 * @return Specificationオブジェクト
+	 */
+	public static Specification<Schedule> isInUserIdsAndCreateUserId(final String[] personIds) {
+		return new Specification<Schedule>() {
+
+			@Override
+			public Predicate toPredicate(Root<Schedule> root, CriteriaQuery<?> cq, CriteriaBuilder builder) {
+
+				Predicate inUserIds = ((Join<?, ?>) root.fetch("userBeans")).get("personId").in((Object[]) personIds);
+				Predicate inCreator = ((Join<?, ?>) root.fetch("createUser")).get("personId").in((Object[]) personIds);
+				return builder.or(inUserIds, inCreator);
 			}
 		};
 	}
