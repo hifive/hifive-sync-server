@@ -20,13 +20,13 @@
 		transaction-manager-ref="txManager" />
 
 	<!-- hifive-sync-server configuration value -->
-	<util:constant id="PREPARE"
-		static-field="com.htmlhifive.sync.service.SyncModeType.PREPARE" />
+	<util:constant id="AVOID_DEADLOCK"
+		static-field="com.htmlhifive.sync.service.SyncModeType.AVOID_DEADLOCK" />
 
 	<!-- Synchronizer configuration -->
 	<bean id="synchronizer" class="com.htmlhifive.sync.service.DefaultSynchronizer">
 		<property name="bufferTimeForDownload" value="60000" />
-		<!-- <property name="syncMode" value="PREPARE" /> -->
+		<!-- <property name="syncMode" value="AVOID_DEADLOCK" /> -->
 		<!-- <property name="continueOnConflictOfDuplicateId" value="true" /> -->
 		<property name="continueOnConflictOfUpdated" value="true" />
 	</bean>

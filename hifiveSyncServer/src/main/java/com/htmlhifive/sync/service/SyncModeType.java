@@ -10,10 +10,10 @@ public enum SyncModeType {
 	/**
 	 * 最初に対象リソースアイテムのアクセス権を一定の順序で全て確保した後で同期するモード.
 	 */
-	PREPARE,
+	AVOID_DEADLOCK,
 
 	/**
 	 * リソースアイテムのアクセス権を取得せずに同期するモード.
 	 */
-	NOT_PREPARE,
+	DIRECT_UPDATE,
 }

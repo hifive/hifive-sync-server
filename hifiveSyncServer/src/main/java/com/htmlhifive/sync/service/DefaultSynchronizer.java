@@ -67,9 +67,9 @@ public class DefaultSynchronizer implements Synchronizer {
 
 	/**
 	 * 上り更新、および下り更新の同期モード.<br>
-	 * (デフォルト：PREPAREなし)
+	 * (デフォルト：リソースを順序不定で直接更新)
 	 */
-	private SyncModeType syncMode = SyncModeType.NOT_PREPARE;
+	private SyncModeType syncMode = SyncModeType.DIRECT_UPDATE;
 
 	/**
 	 * DUPLICATE_ID競合発生時の処理継続可否.<br>
@@ -111,12 +111,12 @@ public class DefaultSynchronizer implements Synchronizer {
 
 		ResultMapBuilder resultBuilder = new ResultMapBuilder();
 
-		// PREPAREモードの場合、リソースアイテムをreserve
-		if (this.syncMode == SyncModeType.PREPARE) {
+		// AVOID_DEADLOCKモードの場合、リソースアイテムをreserve
+		if (this.syncMode == SyncModeType.AVOID_DEADLOCK) {
 
 			// TODO 次期バージョンにて実装予定
 			//
-			// prepare(sort,reserve)
+			// AVOID_DEADLOCK(sort,reserve)
 			// get
 
 		} else {
@@ -169,11 +169,11 @@ public class DefaultSynchronizer implements Synchronizer {
 			return new UploadResponse(responseCommon);
 		}
 
-		// PREPAREモードの場合
-		if (this.syncMode == SyncModeType.PREPARE) {
+		// AVOID_DEADLOCKモードの場合
+		if (this.syncMode == SyncModeType.AVOID_DEADLOCK) {
 
 			// TODO 次期バージョンにて実装予定
-			// prepare(sort,reserve)
+			// AVOID_DEADLOCK(sort,reserve)
 		}
 
 		// 競合の種類ごとに、競合しているリソースアイテムを収集
@@ -221,7 +221,7 @@ public class DefaultSynchronizer implements Synchronizer {
 
 	/**
 	 * ロックの取得を実行します.<br>
-	 * リソースごとに、指定されたクエリでリソースアイテムを検索、PREPAREモードで各リソースアイテムのロックを行います.<br>
+	 * リソースごとに、指定されたクエリでリソースアイテムを検索、AVOID_DEADLOCKモードで各リソースアイテムのロックを行います.<br>
 	 * 全ての対象リソースアイテムがロックできた場合のみ、各リソースアイテムを上り更新するためのロックトークンを返します.<br>
 	 * 1件でもロックに失敗した場合、LockExceptionがスローされ、他の全てのリソースアイテムもロックされません.<br>
 	 * ロックを取得していない場合、ロックの取得をサポートしないロック方式の場合は空の結果が返ります.
@@ -252,7 +252,7 @@ public class DefaultSynchronizer implements Synchronizer {
 		}
 
 		// TODO 次期バージョンにて実装予定
-		// prepare(sort,reserve)
+		// AVOID_DEADLOCK(sort,reserve)
 		// lock
 
 		// レスポンス用共通データ
@@ -279,7 +279,7 @@ public class DefaultSynchronizer implements Synchronizer {
 
 		// TODO 次期バージョンにて実装予定
 		// lockedItemInfo
-		// prepare(sort,reserve)
+		// AVOID_DEADLOCK(sort,reserve)
 		// releaseLock
 	}
 

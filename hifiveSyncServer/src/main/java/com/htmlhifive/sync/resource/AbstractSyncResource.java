@@ -244,7 +244,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
 	@Override
-	public ResourceItemCommonData reserve(ResourceItemCommonDataId id) {
+	public ResourceItemCommonData forUpdate(ResourceItemCommonDataId id) {
 		// TODO 次期バージョンにて実装予定
 		return null;
 	}
@@ -352,15 +352,17 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	 * サブクラスではIが示すリソースアイテムを与えられたアイテムの内容で更新するようにこのメソッドを実装します.
 	 *
 	 * @param item 更新内容を含むリソースアイテム
+	 * @return 更新されたリソースアイテム
 	 */
 	protected abstract I doUpdate(I item);
 
 	/**
 	 * deleteメソッドのリソース別独自処理を実装する抽象メソッド. <br>
 	 * サブクラスではこのリソースでのアイテムのIDが示すリソースアイテムを削除するようにこのメソッドを実装します.<br>
-	 * また、削除後のリソースアイテムを表すものとして、各リソースアイテムのIDのみが設定されたアイテム型オブジェクトを返す必要があります.
+	 * IDのみ設定されたリソースアイテム型オブジェクトなど、削除後のアイテムを表すオブジェクトを返す必要があります.
 	 *
 	 * @param targetItemId 各リソースにおけるアイテムのID
+	 * @return 削除されたアイテムを表すリソースアイテムオブジェクト
 	 */
 	protected abstract I doDelete(String targetItemId);
 

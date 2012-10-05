@@ -122,7 +122,7 @@ public interface SyncResource<I> {
 	 * @return アクセス権を取得したリソースアイテム共通データ
 	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
-	ResourceItemCommonData reserve(ResourceItemCommonDataId id);
+	ResourceItemCommonData forUpdate(ResourceItemCommonDataId id);
 
 	/**
 	 * このリソースのリソース名を返します.
