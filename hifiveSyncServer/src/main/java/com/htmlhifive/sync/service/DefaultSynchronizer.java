@@ -61,24 +61,27 @@ public class DefaultSynchronizer implements Synchronizer {
 
 	/**
 	 * クライアントに返す今回の同期時刻を、実際の同期実行時刻の何ミリ秒前とするかを設定します.<br>
-	 * (現在の設定は60,000ミリ秒＝1分)
+	 * (デフォルト：0)
 	 */
-	private long bufferTImeForDownload = 1L * 60L * 1_000L;
+	private long bufferTimeForDownload = 0L;
 
 	/**
-	 * 上り更新、および下り更新の同期モード
+	 * 上り更新、および下り更新の同期モード.<br>
+	 * (デフォルト：PREPAREなし)
 	 */
 	private SyncModeType syncMode = SyncModeType.NOT_PREPARE;
 
 	/**
-	 * DUPLICATE_ID競合発生時の処理継続可否
+	 * DUPLICATE_ID競合発生時の処理継続可否.<br>
+	 * (デフォルト：継続しない)
 	 */
 	private boolean continueOnConflictOfDuplicateId = false;
 
 	/**
-	 * DUPLICATE_ID競合発生時の処理継続可否
+	 * DUPLICATE_ID競合発生時の処理継続可否.<br>
+	 * (デフォルト：継続しない)
 	 */
-	private boolean continueOnConflictOfUpdated = true;
+	private boolean continueOnConflictOfUpdated = false;
 
 	/**
 	 * リソースへのインターフェースを取得するためのマネージャ.
@@ -134,7 +137,7 @@ public class DefaultSynchronizer implements Synchronizer {
 		DownloadCommonData responseCommon = new DownloadCommonData(requestCommon.getStorageId());
 
 		// リクエストの処理時刻でレスポンスの最終下り更新時刻を更新(同タイミングで上り更新されたデータを読み出すためのバッファを考慮)
-		responseCommon.setLastDownloadTime(requestCommon.getSyncTime() - bufferTImeForDownload);
+		responseCommon.setLastDownloadTime(requestCommon.getSyncTime() - bufferTimeForDownload);
 
 		// 下り更新レスポンスに結果を設定
 		DownloadResponse response = new DownloadResponse(responseCommon);
@@ -468,5 +471,45 @@ public class DefaultSynchronizer implements Synchronizer {
 		}
 
 		return map;
+	}
+
+	/**
+	 * 設定用setterメソッド.<br>
+	 * アプリケーションから使用することはありません.
+	 *
+	 * @param bufferTimeForDownload セットする bufferTimeForDownload
+	 */
+	public void setBufferTimeForDownload(long bufferTimeForDownload) {
+		this.bufferTimeForDownload = bufferTimeForDownload;
+	}
+
+	/**
+	 * 設定用setterメソッド.<br>
+	 * アプリケーションから使用することはありません.
+	 *
+	 * @param syncMode セットする syncMode
+	 */
+	public void setSyncMode(SyncModeType syncMode) {
+		this.syncMode = syncMode;
+	}
+
+	/**
+	 * 設定用setterメソッド.<br>
+	 * アプリケーションから使用することはありません.
+	 *
+	 * @param continueOnConflictOfDuplicateId セットする continueOnConflictOfDuplicateId
+	 */
+	public void setContinueOnConflictOfDuplicateId(boolean continueOnConflictOfDuplicateId) {
+		this.continueOnConflictOfDuplicateId = continueOnConflictOfDuplicateId;
+	}
+
+	/**
+	 * 設定用setterメソッド.<br>
+	 * アプリケーションから使用することはありません.
+	 *
+	 * @param continueOnConflictOfUpdated セットする continueOnConflictOfUpdated
+	 */
+	public void setContinueOnConflictOfUpdated(boolean continueOnConflictOfUpdated) {
+		this.continueOnConflictOfUpdated = continueOnConflictOfUpdated;
 	}
 }
