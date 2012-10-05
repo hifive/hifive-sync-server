@@ -120,8 +120,13 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 		// スラッシュ区切りに変換
 		List<String> slashSeparatedList = new ArrayList<>();
-		for (int date : bean.getDates()) {
-			slashSeparatedList.add(new SimpleDateFormat("y/M/d").format(date));
+		try {
+			for (int date : bean.getDates()) {
+				slashSeparatedList.add(new SimpleDateFormat("y/M/d").format(new SimpleDateFormat("yyyyMMdd")
+						.parse(String.valueOf(date))));
+			}
+		} catch (ParseException e) {
+			throw new SyncException(e);
 		}
 		item.setDates(slashSeparatedList);
 
