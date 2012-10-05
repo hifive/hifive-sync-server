@@ -180,6 +180,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	 * updateメソッドのリソース別独自処理.<br>
 	 *
 	 * @param item 更新内容を含むリソースアイテム
+	 * @return 更新されたリソースアイテム
 	 */
 	@Override
 	protected ScheduleResourceItem doUpdate(ScheduleResourceItem item) {
@@ -230,16 +231,18 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 	/**
 	 * deleteメソッドのリソース別独自処理. <br>
-	 * エンティティをリポジトリから取得し、物理削除します.
+	 * 論理削除とするため、エンティティは変更せずにIDのみ設定された空のリソースアイテムを返します.
 	 *
 	 * @param targetItemId リソースアイテムのID
+	 * @return 削除されたアイテムを表すリソースアイテムオブジェクト
 	 */
 	@Override
 	protected ScheduleResourceItem doDelete(String targetItemId) {
 
-		Schedule removingEntity = findSchedule(targetItemId);
+		// Schedule removingEntity =
+		findSchedule(targetItemId);
 
-		repository.delete(removingEntity);
+		//		repository.delete(removingEntity);
 
 		return new ScheduleResourceItem(targetItemId);
 	}
