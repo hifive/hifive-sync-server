@@ -44,7 +44,6 @@ import com.htmlhifive.sync.service.download.DownloadResponse;
 import com.htmlhifive.sync.service.lock.LockCommonData;
 import com.htmlhifive.sync.service.lock.LockRequest;
 import com.htmlhifive.sync.service.lock.LockResponse;
-import com.htmlhifive.sync.service.upload.SyncModeType;
 import com.htmlhifive.sync.service.upload.UploadCommonData;
 import com.htmlhifive.sync.service.upload.UploadCommonDataRepository;
 import com.htmlhifive.sync.service.upload.UploadRequest;
@@ -67,6 +66,11 @@ public class DefaultSynchronizer implements Synchronizer {
 	private long bufferTImeForDownload = 1L * 60L * 1_000L;
 
 	/**
+	 * 上り更新、および下り更新の同期モード
+	 */
+	private SyncModeType syncMode = SyncModeType.NOT_PREPARE;
+
+	/**
 	 * DUPLICATE_ID競合発生時の処理継続可否
 	 */
 	private boolean continueOnConflictOfDuplicateId = false;
@@ -75,11 +79,6 @@ public class DefaultSynchronizer implements Synchronizer {
 	 * DUPLICATE_ID競合発生時の処理継続可否
 	 */
 	private boolean continueOnConflictOfUpdated = true;
-
-	/**
-	 * 上り更新、および下り更新の同期モード
-	 */
-	private SyncModeType syncMode = SyncModeType.NOT_PREPARE;
 
 	/**
 	 * リソースへのインターフェースを取得するためのマネージャ.
@@ -469,45 +468,5 @@ public class DefaultSynchronizer implements Synchronizer {
 		}
 
 		return map;
-	}
-
-	/**
-	 * 上り更新、および下り更新の同期モードを設定します.<br>
-	 * 通常、アプリケーションから使用することはありません.
-	 *
-	 * @param syncMode セットする syncMode
-	 */
-	public void setSyncMode(SyncModeType syncMode) {
-		this.syncMode = syncMode;
-	}
-
-	/**
-	 * キー重複競合が発生した場合の処理継続可否を設定します.<br>
-	 * 通常、アプリケーションから使用することはありません.
-	 *
-	 * @param continueOnConflictOfDuplicateId セットする continueOnConflictOfDuplicateId
-	 */
-	public void setContinueOnConflictOfDuplicateId(boolean continueOnConflictOfDuplicateId) {
-		this.continueOnConflictOfDuplicateId = continueOnConflictOfDuplicateId;
-	}
-
-	/**
-	 * 更新競合が発生した場合の処理継続可否を設定します.<br>
-	 * 通常、アプリケーションから使用することはありません.
-	 *
-	 * @param continueOnConflictOfUpdated セットする continueOnConflictOfUpdated
-	 */
-	public void setContinueOnConflictOfUpdated(boolean continueOnConflictOfUpdated) {
-		this.continueOnConflictOfUpdated = continueOnConflictOfUpdated;
-	}
-
-	/**
-	 * 同タイミングで上り更新されたデータを読み出すためのバッファ時間を設定します.<br>
-	 * 通常、アプリケーションから使用することはありません.
-	 *
-	 * @param bufferTImeForDownload セットする bufferTImeForDownload
-	 */
-	public void setBufferTImeForDownload(long bufferTImeForDownload) {
-		this.bufferTImeForDownload = bufferTImeForDownload;
 	}
 }

@@ -1,4 +1,4 @@
-package com.htmlhifive.sync.service.upload;
+package com.htmlhifive.sync.service;
 
 /**
  * 同期処理の実行モードを指定する列挙型.
