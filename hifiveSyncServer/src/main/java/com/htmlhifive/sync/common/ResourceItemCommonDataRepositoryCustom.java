@@ -35,7 +35,7 @@ public interface ResourceItemCommonDataRepositoryCustom {
 	 * @param since データを検索する時刻(指定時刻以降の更新データを検索)
 	 * @return 検索した共通データエンティティのList
 	 */
-	@Query("SELECT d FROM ResourceItemCommonData d WHERE d.id.resourceName = :resourceName AND d.lastModified > :since AND d.action <> 'DELETE'")
+	@Query("SELECT d FROM ResourceItemCommonData d WHERE d.id.resourceName = :resourceName AND d.lastModified > :since")
 	List<ResourceItemCommonData> findModified(@Param("resourceName") String resourceName, @Param("since") long since);
 
 	/**
