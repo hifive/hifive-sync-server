@@ -67,10 +67,10 @@ public class Schedule {
 	private String category;
 
 	/**
-	 * 予定の日付のリスト(yyyyMMdd形式).
+	 * 予定の日付のリスト(yyyyMMddの数値).
 	 */
 	@ElementCollection
-	private List<String> dates;
+	private List<Integer> dates;
 
 	/**
 	 * 予定の開始時刻(24時間・コロン区切り).<br>
@@ -215,14 +215,14 @@ public class Schedule {
 	/**
 	 * @return dates
 	 */
-	public List<String> getDates() {
+	public List<Integer> getDates() {
 		return dates;
 	}
 
 	/**
 	 * @param dates セットする dates
 	 */
-	public void setDates(List<String> dates) {
+	public void setDates(List<Integer> dates) {
 		this.dates = dates;
 	}
 

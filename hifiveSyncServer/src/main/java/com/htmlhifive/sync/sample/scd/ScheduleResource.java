@@ -120,15 +120,11 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 		// スラッシュ区切りに変換
 		List<String> slashSeparatedList = new ArrayList<>();
-		try {
-			for (String date : bean.getDates()) {
-				slashSeparatedList.add(new SimpleDateFormat("y/M/d").format(new SimpleDateFormat("yyyyMMdd")
-						.parse(date)));
-			}
-		} catch (ParseException e) {
-			throw new SyncException(e);
+		for (int date : bean.getDates()) {
+			slashSeparatedList.add(new SimpleDateFormat("y/M/d").format(date));
 		}
-		item.setDates(bean.getDates());
+		item.setDates(slashSeparatedList);
+
 		item.setStartTime(bean.getStartTime());
 		item.setFinishTime(bean.getFinishTime());
 		item.setDetail(bean.getDetail());
@@ -214,17 +210,17 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	}
 
 	/**
-	 * 日付文字列のセパレータ(スラッシュ)を除去し、8桁文字列に変換します.
+	 * 日付文字列のセパレータ(スラッシュ)を除去し、8桁数値に変換します.
 	 *
-	 * @param newItem
-	 * @return
+	 * @param slashSeparatedList セパレータ付き日付文字列のリスト
+	 * @return 日付数値のリスト
 	 */
-	private List<String> removeDateSeparator(List<String> slashSeparatedList) {
-		List<String> nonSeparatedList = new ArrayList<>();
+	private List<Integer> removeDateSeparator(List<String> slashSeparatedList) {
+		List<Integer> nonSeparatedList = new ArrayList<>();
 		try {
 			for (String date : slashSeparatedList) {
-				nonSeparatedList
-						.add(new SimpleDateFormat("yyyyMMdd").format(new SimpleDateFormat("y/M/d").parse(date)));
+				nonSeparatedList.add(Integer.parseInt(new SimpleDateFormat("yyyyMMdd").format(new SimpleDateFormat(
+						"y/M/d").parse(date))));
 			}
 		} catch (ParseException e) {
 			throw new SyncException(e);
