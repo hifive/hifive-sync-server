@@ -8,7 +8,8 @@
 	<context-param>
 		<param-name>contextConfigLocation</param-name>
 		<param-value>
-			/META-INF/config/*.xml
+			classpath*:META-INF/config/applicationContext-hifiveSyncServer.xml
+			classpath*:META-INF/config/*.xml
 		</param-value>
 	</context-param>
 
