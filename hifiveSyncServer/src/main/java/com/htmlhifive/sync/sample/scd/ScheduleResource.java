@@ -16,6 +16,7 @@
  */
 package com.htmlhifive.sync.sample.scd;
 
+import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -46,6 +47,16 @@ import com.htmlhifive.sync.sample.person.PersonRepository;
  */
 @SyncResourceService(resourceName = "schedule", updateStrategy = ClientResolvingStrategy.class)
 public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem> {
+
+	/**
+	 * 日付書式変換のためのフォーマット文字列(整数8桁文字列)
+	 */
+	private static final String FORMAT_STR_INT8 = "yyyyMMdd";
+
+	/**
+	 * 日付書式変換のためのフォーマット文字列(スラッシュ区切りゼロ埋めなし)
+	 */
+	private static final String FORMAT_STR_SLASH_SEPARATION = "y/M/d";
 
 	/**
 	 * エンティティの永続化を担うリポジトリ.
@@ -118,17 +129,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		item.setTitle(bean.getTitle());
 		item.setCategory(bean.getCategory());
 
-		// スラッシュ区切りに変換
-		List<String> slashSeparatedList = new ArrayList<>();
-		try {
-			for (int date : bean.getDates()) {
-				slashSeparatedList.add(new SimpleDateFormat("y/M/d").format(new SimpleDateFormat("yyyyMMdd")
-						.parse(String.valueOf(date))));
-			}
-		} catch (ParseException e) {
-			throw new SyncException(e);
-		}
-		item.setDates(slashSeparatedList);
+		item.setDates(putDateSeparator(bean.getDates()));
 
 		item.setStartTime(bean.getStartTime());
 		item.setFinishTime(bean.getFinishTime());
@@ -137,6 +138,30 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		item.setCreateUserName(bean.getCreateUser().getName());
 
 		return item;
+	}
+
+	/**
+	 * 8桁数値の日付をセパレータ(スラッシュ)区切り文字列に変換します.
+	 *
+	 * @param int8DateList 日付数値のリスト
+	 * @return セパレータ付き日付文字列のリスト
+	 */
+	private List<String> putDateSeparator(List<Integer> int8DateList) {
+
+		DateFormat slashSeparation = new SimpleDateFormat(FORMAT_STR_SLASH_SEPARATION);
+		DateFormat int8 = new SimpleDateFormat(FORMAT_STR_INT8);
+
+		List<String> slashSeparatedList = new ArrayList<>();
+		for (int date : int8DateList) {
+			try {
+				String slashSeparatedDate = slashSeparation.format(int8.parse(String.valueOf(date)));
+				slashSeparatedList.add(slashSeparatedDate);
+			} catch (ParseException e) {
+				throw new SyncException(e);
+			}
+		}
+
+		return slashSeparatedList;
 	}
 
 	/**
@@ -157,21 +182,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		Schedule newEntity = new Schedule();
 		newEntity.setScheduleId(newItem.getScheduleId());
 
-		List<Person> userIdBeans = new ArrayList<>();
-		for (String userId : newItem.getUserIds()) {
-			userIdBeans.add(personRepository.findOne(userId));
-		}
-		newEntity.setUserBeans(userIdBeans);
-		newEntity.setTitle(newItem.getTitle());
-		newEntity.setCategory(newItem.getCategory());
-
-		// 日付文字列書式を変換してセット
-		newEntity.setDates(removeDateSeparator(newItem.getDates()));
-
-		newEntity.setStartTime(newItem.getStartTime());
-		newEntity.setFinishTime(newItem.getFinishTime());
-		newEntity.setDetail(newItem.getDetail());
-		newEntity.setPlace(newItem.getPlace());
+		itemToEntity(newEntity, newItem);
 
 		// 作成者にログインユーザーであるPersonをセット
 		newEntity.setCreateUser(loginUser());
@@ -192,6 +203,22 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 		Schedule updatingEntity = findSchedule(item.getScheduleId());
 
+		itemToEntity(updatingEntity, item);
+
+		repository.save(updatingEntity);
+
+		item.setCreateUserName(updatingEntity.getCreateUser().getName());
+		return item;
+	}
+
+	/**
+	 * リソースアイテムの内容をScheduleに設定します.
+	 *
+	 * @param entity Scheduleオブジェクト(Entity)
+	 * @param item Scheduleリソースアイテムオブジェクト
+	 */
+	private void itemToEntity(Schedule updatingEntity, ScheduleResourceItem item) {
+
 		List<Person> userIdBeans = updatingEntity.getUserBeans();
 		userIdBeans.clear();
 		for (String userId : item.getUserIds()) {
@@ -208,30 +235,50 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		updatingEntity.setFinishTime(item.getFinishTime());
 		updatingEntity.setDetail(item.getDetail());
 		updatingEntity.setPlace(item.getPlace());
-
-		repository.save(updatingEntity);
-
-		item.setCreateUserName(updatingEntity.getCreateUser().getName());
-		return item;
 	}
 
 	/**
 	 * 日付文字列のセパレータ(スラッシュ)を除去し、8桁数値に変換します.
 	 *
-	 * @param slashSeparatedList セパレータ付き日付文字列のリスト
+	 * @param slashSeparatedDateList セパレータ付き日付文字列のリスト
 	 * @return 日付数値のリスト
 	 */
-	private List<Integer> removeDateSeparator(List<String> slashSeparatedList) {
+	private List<Integer> removeDateSeparator(List<String> slashSeparatedDateList) {
+
 		List<Integer> nonSeparatedList = new ArrayList<>();
-		try {
-			for (String date : slashSeparatedList) {
-				nonSeparatedList.add(Integer.parseInt(new SimpleDateFormat("yyyyMMdd").format(new SimpleDateFormat(
-						"y/M/d").parse(date))));
+
+		DateFormat slashSeparation = new SimpleDateFormat(FORMAT_STR_SLASH_SEPARATION);
+		DateFormat int8 = new SimpleDateFormat(FORMAT_STR_INT8);
+
+		for (String date : slashSeparatedDateList) {
+			try {
+				String int8Date = int8.format(slashSeparation.parse(date));
+				nonSeparatedList.add(Integer.parseInt(int8Date));
+			} catch (ParseException e) {
+				throw new SyncException(e);
 			}
-		} catch (ParseException e) {
-			throw new SyncException(e);
 		}
+
 		return nonSeparatedList;
+	}
+
+	/**
+	 * 認証情報からログインユーザーIDを取得します.
+	 *
+	 * @return ログインユーザーID.
+	 */
+	private Person loginUser() {
+
+		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+
+		String username;
+		if (principal instanceof UserDetails) {
+			username = ((UserDetails) principal).getUsername();
+		} else {
+			username = principal.toString();
+		}
+
+		return personRepository.findOne(username);
 	}
 
 	/**
@@ -265,24 +312,5 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 			throw new BadRequestException("entity not found :" + scheduleId);
 		}
 		return found;
-	}
-
-	/**
-	 * 認証情報からログインユーザーIDを取得します.
-	 *
-	 * @return ログインユーザーID.
-	 */
-	private Person loginUser() {
-
-		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-
-		String username;
-		if (principal instanceof UserDetails) {
-			username = ((UserDetails) principal).getUsername();
-		} else {
-			username = principal.toString();
-		}
-
-		return personRepository.findOne(username);
 	}
 }
