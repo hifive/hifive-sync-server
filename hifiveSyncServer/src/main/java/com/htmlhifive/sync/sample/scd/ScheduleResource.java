@@ -241,7 +241,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 		repository.delete(removingEntity);
 
-		return ScheduleResourceItem.emptyItem(targetItemId);
+		return new ScheduleResourceItem(targetItemId);
 	}
 
 	/**
