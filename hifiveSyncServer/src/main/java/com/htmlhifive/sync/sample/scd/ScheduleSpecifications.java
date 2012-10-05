@@ -23,6 +23,7 @@ import java.util.Map;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
@@ -136,7 +137,8 @@ public class ScheduleSpecifications {
 			@Override
 			public Predicate toPredicate(Root<Schedule> root, CriteriaQuery<?> cq, CriteriaBuilder builder) {
 
-				Predicate inUserIds = ((Join<?, ?>) root.fetch("userBeans")).get("personId").in((Object[]) personIds);
+				Predicate inUserIds = ((Join<?, ?>) root.fetch("userBeans", JoinType.LEFT)).get("personId").in(
+						(Object[]) personIds);
 				Predicate inCreator = ((Join<?, ?>) root.fetch("createUser")).get("personId").in((Object[]) personIds);
 				return builder.or(inUserIds, inCreator);
 			}
