@@ -140,17 +140,14 @@ public class PersonResource extends AbstractSyncResource<Person> {
 
 	/**
 	 * deleteメソッドのリソース別独自処理. <br>
-	 * 論理削除とするため、エンティティは変更せずにIDのみ設定された空のリソースアイテムを返します.
+	 * 論理削除のため、エンティティは変更せずにIDのみ設定された空のリソースアイテムを返します.
 	 *
 	 * @param targetItemId リソースアイテムのID
 	 */
 	@Override
 	protected Person doDelete(String targetItemId) {
 
-		//		Person removingEntity =
 		findPerson(targetItemId);
-
-		//		repository.delete(removingEntity);
 
 		Person emptyPerson = new Person();
 		emptyPerson.setPersonId(targetItemId);
