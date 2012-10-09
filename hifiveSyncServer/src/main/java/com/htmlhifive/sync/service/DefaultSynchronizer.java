@@ -26,6 +26,7 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -166,6 +167,13 @@ public class DefaultSynchronizer implements Synchronizer {
 		// 二重送信判定
 		// サーバ側で管理されている前回上り更新時刻より前の場合、二重送信等で処理済みと判断し、そのまま返す.
 		if (responseCommon.isLaterUploadThan(requestCommon)) {
+
+			// TODO: ロギングの整備時に見直し
+			LoggerFactory.getLogger(DefaultSynchronizer.class).info(
+					new StringBuilder().append("info : duplicate uploading detected. storageId : ")
+							.append(responseCommon.getStorageId()).append(", lastUpdateTime : ")
+							.append(responseCommon.getLastUploadTime()).toString());
+
 			return new UploadResponse(responseCommon);
 		}
 
