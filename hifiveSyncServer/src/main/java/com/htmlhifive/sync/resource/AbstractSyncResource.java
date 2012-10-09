@@ -270,11 +270,11 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		// 競合判定
 		// 競合がなければ、更新対象は渡されたitemとなる
 		I updateItem = item;
-		if (requiredLockStatus == ResourceLockStatusType.UNLOCK && conflict(itemCommon, currentCommon)) {
+		if (requiredLockStatus == ResourceLockStatusType.UNLOCK && conflict(itemCommon, currentCommon, uploadCommon)) {
 
-			// サーバで保持しているアイテムを取得
-			I currentItem = currentCommon.getAction() == SyncAction.DELETE ? null : doGet(currentCommon
-					.getTargetItemId());
+			// サーバで保持しているアイテムを取得。論理削除のため、削除済みリソースアイテム(IDのみ設定)の取得にdoDeleteを使用できる
+			I currentItem = currentCommon.getAction() == SyncAction.DELETE ? doDelete(currentCommon.getTargetItemId())
+					: doGet(currentCommon.getTargetItemId());
 
 			try {
 				// 競合解決、更新アイテムを決定し、更新対象のリソースアイテムを上書き
@@ -494,9 +494,15 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	 * @param server サーバで保持している現在の共通データ
 	 * @return update(/delete)できる場合true.
 	 */
-	private boolean conflict(ResourceItemCommonData client, ResourceItemCommonData server) {
+	private boolean conflict(ResourceItemCommonData client, ResourceItemCommonData server, UploadCommonData uploadCommon) {
 
-		return server.getLastModified() > client.getLastModified();
+		if (server.getLastModified() <= client.getLastModified()) {
+			return false;
+		}
+
+		// 同一リクエスト内で同一リソースアイテムを更新する場合は競合でない
+		// 上記条件はサーバ側バージョン(最終更新時刻)と今回のリクエスト時刻が等しいかどうかで判断する
+		return server.getLastModified() != uploadCommon.getSyncTime();
 	}
 
 	/**
