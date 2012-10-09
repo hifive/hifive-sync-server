@@ -21,6 +21,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -82,7 +83,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 		Schedule bean = findSchedule(targetItemId);
 
-		ScheduleResourceItem item = createItem(bean);
+		ScheduleResourceItem item = entityToItem(bean);
 		return item;
 	}
 
@@ -107,7 +108,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		for (Schedule schedule : scheduleList) {
 			for (ResourceItemCommonData common : commonDataList) {
 				if (common.getTargetItemId().equals(schedule.getScheduleId())) {
-					ScheduleResourceItem item = createItem(schedule);
+					ScheduleResourceItem item = entityToItem(schedule);
 					itemMap.put(item, common);
 				}
 			}
@@ -121,15 +122,24 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	 *
 	 * @param bean Scheduleエンティティ
 	 */
-	private ScheduleResourceItem createItem(Schedule bean) {
+	private ScheduleResourceItem entityToItem(Schedule bean) {
 
 		ScheduleResourceItem item = new ScheduleResourceItem(bean.getScheduleId());
 
-		item.setUserIds(bean.getUserIds());
+		List<String> userIds = new ArrayList<>();
+		for (Person user : bean.getUserBeans()) {
+			userIds.add(user.getPersonId());
+		}
+		item.setUserIds(userIds);
+
 		item.setTitle(bean.getTitle());
 		item.setCategory(bean.getCategory());
 
-		item.setDates(putDateSeparator(bean.getDates()));
+		List<String> dates = new ArrayList<>();
+		for (ScheduleDate date : bean.getDateBeans()) {
+			dates.add(putDateSeparator(date.getDate()));
+		}
+		item.setDates(dates);
 
 		item.setStartTime(bean.getStartTime());
 		item.setFinishTime(bean.getFinishTime());
@@ -143,25 +153,22 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	/**
 	 * 8桁数値の日付をセパレータ(スラッシュ)区切り文字列に変換します.
 	 *
-	 * @param int8DateList 日付数値のリスト
-	 * @return セパレータ付き日付文字列のリスト
+	 * @param int8Date 日付数値
+	 * @return セパレータ付き日付文字列
 	 */
-	private List<String> putDateSeparator(List<Integer> int8DateList) {
+	private String putDateSeparator(int int8Date) {
 
 		DateFormat slashSeparation = new SimpleDateFormat(FORMAT_STR_SLASH_SEPARATION);
 		DateFormat int8 = new SimpleDateFormat(FORMAT_STR_INT8);
 
-		List<String> slashSeparatedList = new ArrayList<>();
-		for (int date : int8DateList) {
-			try {
-				String slashSeparatedDate = slashSeparation.format(int8.parse(String.valueOf(date)));
-				slashSeparatedList.add(slashSeparatedDate);
-			} catch (ParseException e) {
-				throw new SyncException(e);
-			}
+		String slashSeparatedDate;
+		try {
+			slashSeparatedDate = slashSeparation.format(int8.parse(String.valueOf(int8Date)));
+		} catch (ParseException e) {
+			throw new SyncException(e);
 		}
 
-		return slashSeparatedList;
+		return slashSeparatedDate;
 	}
 
 	/**
@@ -211,30 +218,21 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	}
 
 	/**
-	 * リソースアイテムの内容をScheduleに設定します.
+	 * リソースアイテムの内容をScheduleエンティティに設定します.<br>
 	 *
 	 * @param entity Scheduleオブジェクト(Entity)
 	 * @param item Scheduleリソースアイテムオブジェクト
 	 */
 	private void itemToEntity(Schedule entity, ScheduleResourceItem item) {
 
-		List<Person> userIdBeans = entity.getUserBeans();
-		userIdBeans.clear();
-		for (String userId : item.getUserIds()) {
-			userIdBeans.add(personRepository.findOne(userId));
-		}
-		entity.setUserBeans(userIdBeans);
+		// userBeansの関連の更新
+		entity.setUserBeans(itemUsersToEntityUsers(entity.getUserBeans(), item.getUserIds()));
 
 		entity.setTitle(item.getTitle());
 		entity.setCategory(item.getCategory());
 
-		List<Integer> dates = entity.getDates();
-		dates.clear();
-		for (String date : item.getDates()) {
-			// 日付文字列書式を変換してセット
-			dates.add(removeDateSeparator(date));
-		}
-		entity.setDates(dates);
+		// DateBeansの関連の更新
+		entity.setDateBeans(itemDatesToEntityDates(entity, item.getDates()));
 
 		entity.setStartTime(item.getStartTime());
 		entity.setFinishTime(item.getFinishTime());
@@ -243,12 +241,73 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	}
 
 	/**
+	 * リソースアイテムのユーザーリストの内容をエンティティのユーザーリストに反映します.<br>
+	 * エンティティのユーザーリストに既に含むものはそのままとし、足りないユーザーのPersonエンティティを取得して加えます.
+	 *
+	 * @param entityUserBeans エンティティのユーザーリスト(Personエンティティのリスト)
+	 * @param itemUserIds リソースアイテムのユーザーリスト(IDのリスト)
+	 * @return 反映後のユーザーリスト(Personエンティティのリスト)
+	 */
+	private List<Person> itemUsersToEntityUsers(List<Person> entityUserBeans, List<String> itemUserIds) {
+
+		List<Person> resultUserList = new ArrayList<>();
+
+		// 足りないユーザーを抽出するためリストのコピーを作成
+		List<String> userListInItem = new ArrayList<>(itemUserIds);
+
+		// 既存のエンティティリストに含まれるものはそのまま新しいリストに含め、コピーから削除
+		for (Person existingPerson : entityUserBeans) {
+			if (itemUserIds.contains(existingPerson.getPersonId())) {
+				resultUserList.add(existingPerson);
+				userListInItem.remove(existingPerson.getPersonId());
+			}
+		}
+
+		// コピーに残ったIDは既存のエンティティリストに含まないため、リポジトリから取得して新しいリストに含める
+		for (String newPersonId : userListInItem) {
+			resultUserList.add(findRelatedPerson(newPersonId));
+		}
+
+		return resultUserList;
+	}
+
+	/**
+	 * リソースアイテムの予定日付リストの内容をエンティティの予定日付リストに反映します.<br>
+	 * エンティティのユーザーリストに既に含むものはそのままとし、足りない日付のScheduleDateエンティティを取得して加えます.
+	 *
+	 * @param entity Scheduleエンティティ
+	 * @param itemDates
+	 * @return
+	 */
+	private List<ScheduleDate> itemDatesToEntityDates(Schedule entity, List<String> itemDates) {
+
+		List<ScheduleDate> resultDatesList = new ArrayList<>();
+
+		Iterator<String> dateItr = itemDates.iterator();
+		for (ScheduleDate dateBean : entity.getDateBeans()) {
+
+			// 日付のマッチングは行わず、取得順に再設定する
+			if (dateItr.hasNext()) {
+				ScheduleDate oldDateBean = dateBean;
+				oldDateBean.setDate(removeDateSeparator(dateItr.next()));
+				resultDatesList.add(oldDateBean);
+			}
+		}
+
+		// 元より多い分は新規
+		while (dateItr.hasNext()) {
+			resultDatesList.add(new ScheduleDate(entity, removeDateSeparator(dateItr.next())));
+		}
+		return resultDatesList;
+	}
+
+	/**
 	 * 日付文字列のセパレータ(スラッシュ)を除去し、8桁数値に変換します.
 	 *
 	 * @param slashSeparatedDate セパレータ付き日付文字列
 	 * @return 日付数値
 	 */
-	private Integer removeDateSeparator(String slashSeparatedDate) {
+	private int removeDateSeparator(String slashSeparatedDate) {
 
 		DateFormat slashSeparation = new SimpleDateFormat(FORMAT_STR_SLASH_SEPARATION);
 		DateFormat int8 = new SimpleDateFormat(FORMAT_STR_INT8);
@@ -284,7 +343,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
 	/**
 	 * deleteメソッドのリソース別独自処理. <br>
-	 * 論理削除とするため、エンティティは変更せずにIDのみ設定された空のリソースアイテムを返します.
+	 * 論理削除のため、エンティティは変更せずにIDのみ設定された空のリソースアイテムを返します.
 	 *
 	 * @param targetItemId リソースアイテムのID
 	 * @return 削除されたアイテムを表すリソースアイテムオブジェクト
@@ -292,11 +351,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	@Override
 	protected ScheduleResourceItem doDelete(String targetItemId) {
 
-		// Schedule removingEntity =
 		findSchedule(targetItemId);
-
-		//		repository.delete(removingEntity);
-
 		return new ScheduleResourceItem(targetItemId);
 	}
 
@@ -311,6 +366,20 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 		Schedule found = repository.findOne(scheduleId);
 		if (found == null) {
 			throw new BadRequestException("entity not found :" + scheduleId);
+		}
+		return found;
+	}
+
+	/**
+	 * このリソースのリソースアイテムと関連するPersonのIDから1件のエンティティをリポジトリを検索して取得します. <br>
+	 *
+	 * @param personId PersonのID
+	 * @return Personエンティティ
+	 */
+	private Person findRelatedPerson(String personId) {
+		Person found = personRepository.findOne(personId);
+		if (found == null) {
+			throw new BadRequestException("entity not found :" + personId);
 		}
 		return found;
 	}

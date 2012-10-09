@@ -22,6 +22,7 @@ import java.util.Map;
 
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Fetch;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
@@ -69,7 +70,7 @@ public class ScheduleSpecifications {
 					specList.add(isInUserIdsAndCreateUserId(conditions.get(cond)));
 					break;
 				//				case ("date-from"):
-				//						specList.add(...);
+				//					specList.add(isGtOrEqSomeDates(conditions.get(cond)[0]));
 				//TODO:日付関係のSpec実装
 				// ・・・
 
@@ -109,7 +110,7 @@ public class ScheduleSpecifications {
 	}
 
 	/**
-	 * 配列に含むpersonIdのいずれかがpersonIdsのいずれかに合致するScheduleを抽出するSpecificationを返します.
+	 * 配列に含むpersonIdのいずれかがuserBeansのIDのいずれかに合致するScheduleを抽出するSpecificationを返します.
 	 *
 	 * @param personIds personIdの配列
 	 * @return Specificationオブジェクト
@@ -126,7 +127,7 @@ public class ScheduleSpecifications {
 	}
 
 	/**
-	 * 配列に含むpersonIdのいずれかがpersonIdsのいずれか、またはcreateUserIdに合致するScheduleを抽出するSpecificationを返します.
+	 * 配列に含むpersonIdのいずれかが、userBeansのIDのいずれか、またはcreateUserIdに合致するScheduleを抽出するSpecificationを返します.
 	 *
 	 * @param personIds personIdの配列
 	 * @return Specificationオブジェクト
@@ -145,22 +146,26 @@ public class ScheduleSpecifications {
 		};
 	}
 
-	//	/**
-	//	 * 指定された日付以降の予定日を持つScheduleを抽出するSpecificationを返します.
-	//	 *
-	//	 * @param dateStr 日付文字列(スラッシュ区切り、「日」省略可)
-	//	 * @return Specificationオブジェクト
-	//	 */
-	//	public static Specification<Schedule> isGtOrEqSomeDates(final String dateStr) {
-	//		return new Specification<Schedule>() {
-	//			@Override
-	//			public Predicate toPredicate(Root<Schedule> root, CriteriaQuery<?> cq, CriteriaBuilder builder) {
-	//
-	//
-	//			}
-	//		};
-	//
-	//	}
+	/**
+	 * 指定された日付以降の予定日を持つScheduleを抽出するSpecificationを返します.
+	 *
+	 * @param dateStr 日付文字列(スラッシュ区切り、「日」省略可)
+	 * @return Specificationオブジェクト
+	 */
+	public static Specification<Schedule> isGtOrEqSomeDates(final String dateStr) {
+		return new Specification<Schedule>() {
+			@Override
+			public Predicate toPredicate(Root<Schedule> root, CriteriaQuery<?> cq, CriteriaBuilder builder) {
+
+				Fetch<Schedule, String> fetch = root.fetch(root.getModel().getCollection("dates", String.class),
+						JoinType.LEFT);
+
+				System.out.println(fetch);
+				return null;
+			}
+		};
+
+	}
 	//
 	//	private static Date parseWithFirstDate(String dateStr) {
 	//

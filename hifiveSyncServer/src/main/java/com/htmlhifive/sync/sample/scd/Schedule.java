@@ -19,13 +19,14 @@ package com.htmlhifive.sync.sample.scd;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.ElementCollection;
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -67,10 +68,10 @@ public class Schedule {
 	private String category;
 
 	/**
-	 * 予定の日付のリスト(yyyyMMddの数値).
+	 * 予定日付のリスト.
 	 */
-	@ElementCollection
-	private List<Integer> dates;
+	@OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
+	private List<ScheduleDate> dateBeans;
 
 	/**
 	 * 予定の開始時刻(24時間・コロン区切り).<br>
@@ -106,7 +107,7 @@ public class Schedule {
 	public Schedule() {
 		// リストフィールドに空のリストインスタンスを設定
 		userBeans = new ArrayList<>();
-		dates = new ArrayList<>();
+		dateBeans = new ArrayList<>();
 	}
 
 	/**
@@ -152,21 +153,6 @@ public class Schedule {
 	public String toString() {
 
 		return ToStringBuilder.reflectionToString(this);
-	}
-
-	/**
-	 * ユーザのリストをユーザーIDのリストとして返します.
-	 *
-	 * @return ユーザーID(文字列)のリスト
-	 */
-	public List<String> getUserIds() {
-
-		List<String> userIds = new ArrayList<>();
-
-		for (Person user : userBeans) {
-			userIds.add(user.getPersonId());
-		}
-		return userIds;
 	}
 
 	/**
@@ -219,17 +205,17 @@ public class Schedule {
 	}
 
 	/**
-	 * @return dates
+	 * @return dateBeans
 	 */
-	public List<Integer> getDates() {
-		return dates;
+	public List<ScheduleDate> getDateBeans() {
+		return dateBeans;
 	}
 
 	/**
-	 * @param dates セットする dates
+	 * @param dateBeans セットする dateBeans
 	 */
-	public void setDates(List<Integer> dates) {
-		this.dates = dates;
+	public void setDateBeans(List<ScheduleDate> dateBeans) {
+		this.dateBeans = dateBeans;
 	}
 
 	/**
