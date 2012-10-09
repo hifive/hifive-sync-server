@@ -56,7 +56,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	/**
 	 * リソースごとのロックモードを保持するMap
 	 */
-	private Map<String, ResourceLockModeType> lockModeMap;
+	private Map<String, ResourceLockStatusType> requiredLockStatusMap;
 
 	/**
 	 * リソースごとのロック戦略オブジェクトを保持するMap
@@ -74,7 +74,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	public DefaultSyncResourceManager() {
 
 		this.resourceMap = new HashMap<>();
-		this.lockModeMap = new HashMap<>();
+		this.requiredLockStatusMap = new HashMap<>();
 		this.lockStrategyMap = new HashMap<>();
 		this.updateStrategyMap = new HashMap<>();
 
@@ -108,8 +108,8 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 			}
 			resourceMap.put(resourceName, resourceClass);
 
-			// ロックモードを特定する
-			lockModeMap.put(resourceName, resourceAnnotation.lockMode());
+			// ロック状態タイプを特定する
+			requiredLockStatusMap.put(resourceName, resourceAnnotation.requiredLockStatus());
 
 			// ロックマネージャを特定する
 			lockStrategyMap.put(resourceName, resourceAnnotation.lockStrategy());
@@ -162,7 +162,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 		SyncResource<?> sr = context.getBean(resourceClass);
 
 		// LockStrategy,UpdateStrategyのセット
-		sr.setLockMode(lockModeMap.get(resourceName));
+		sr.setRequiredLockStatus(requiredLockStatusMap.get(resourceName));
 		sr.setLockStrategy(context.getBean(lockStrategyMap.get(resourceName)));
 		sr.setUpdateStrategy(context.getBean(updateStrategyMap.get(resourceName)));
 

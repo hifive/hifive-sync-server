@@ -30,51 +30,51 @@ import com.htmlhifive.sync.service.SyncCommonData;
 public interface LockStrategy {
 
 	/**
-	 * 1件のリソースアイテムを指定されたモードでロックします.
+	 * 1件のリソースアイテムを指定されたロック状態でロックします.
 	 *
 	 * @param syncCommon sync共通データ
 	 * @param itemCommon リソースアイテム共通データ
-	 * @param lockMode ロックモード
+	 * @param lockStatus ロック状態
 	 * @throws LockException ロックが取得できなかったとき
 	 */
-	public void lock(SyncCommonData syncCommon, ResourceItemCommonData itemCommon, ResourceLockModeType lockMode)
+	public void lock(SyncCommonData syncCommon, ResourceItemCommonData itemCommon, ResourceLockStatusType lockStatus)
 			throws LockException;
 
 	/**
-	 * Mapで指定されたすべてのリソースアイテムを指定されたモードでロックします.
+	 * Mapで指定されたすべてのリソースアイテムを指定されたロック状態でロックします.
 	 *
 	 * @param syncCommon sync共通データ
 	 * @param itemCommonList リソースアイテム共通データのリスト
-	 * @param lockMode ロックモード
+	 * @param lockStatus ロック状態
 	 * @throws LockException ロックが取得できなかったとき
 	 */
 	public void lock(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonList,
-			ResourceLockModeType lockMode) throws LockException;
+			ResourceLockStatusType lockStatus) throws LockException;
 
 	/**
-	 * リソースアイテム共通データのリストに含まれる対象アイテムのうち、クエリの条件を満たすリソースアイテムを、指定されたモードでロックします.
+	 * リソースアイテム共通データのリストに含まれる対象アイテムのうち、クエリの条件を満たすリソースアイテムを、指定されたロック状態でロックします.
 	 *
 	 * @param syncCommon sync共通データ
 	 * @param itemCommonList リソースアイテム共通データのリスト
 	 * @param query クエリ
-	 * @param lockMode ロックモード
+	 * @param lockStatus ロック状態
 	 * @return クエリの条件を満たすリソースアイテム共通データのリスト
 	 * @throws LockException ロックが取得できなかったとき
 	 */
 	public List<ResourceItemCommonData> lock(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonList,
-			List<ResourceQueryConditions> query, ResourceLockModeType lockMode) throws LockException;
+			List<ResourceQueryConditions> query, ResourceLockStatusType lockStatus) throws LockException;
 
 	/**
-	 * 指定された1件のリソースアイテムのロック状態を表すロックモードをを返します.
+	 * 指定された1件のリソースアイテムのロック状態をを返します.
 	 *
 	 * @param syncCommon sync共通データ
 	 * @param itemCommon リソースアイテム共通データ
-	 * @return ロックモード
+	 * @return ロック状態
 	 */
-	public ResourceLockModeType getLockMode(SyncCommonData syncCommon, ResourceItemCommonData itemCommon);
+	public ResourceLockStatusType getCurrentlockStatus(SyncCommonData syncCommon, ResourceItemCommonData itemCommon);
 
 	/**
-	 * 指定されたリソースアイテムのロックを解放します.
+	 * 指定されたリソースアイテムのロックを開放します、ロック状態は{@link ResourceLockStatusType#UNLOCK}になります.
 	 *
 	 * @param syncCommon sync共通データ
 	 * @param itemCommon リソースアイテム共通データ

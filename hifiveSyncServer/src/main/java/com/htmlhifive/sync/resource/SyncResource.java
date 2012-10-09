@@ -146,12 +146,12 @@ public interface SyncResource<I> {
 	ResourceItemConverter<I> itemConverter();
 
 	/**
-	 * リソースのロックモードを設定します.<br>
+	 * このリソースが要求するロック状態を設定します.<br>
 	 * 通常、アプリケーションから使用することはありません.
 	 *
-	 * @param lockMode セットする lockMode
+	 * @param requiredLockStatus セットする requiredLockStatus
 	 */
-	void setLockMode(ResourceLockModeType lockMode);
+	void setRequiredLockStatus(ResourceLockStatusType requiredLockStatus);
 
 	/**
 	 * リソースのロックを管理するマネージャを設定します.<br>

@@ -1,11 +1,11 @@
 package com.htmlhifive.sync.resource;
 
 /**
- * リソースをロックするモードを表す列挙型.
+ * リソースをロック状態を表す列挙型.
  *
  * @author kishigam
  */
-public enum ResourceLockModeType {
+public enum ResourceLockStatusType {
 
 	/**
 	 * ロックなし.
@@ -13,12 +13,12 @@ public enum ResourceLockModeType {
 	UNLOCK,
 
 	/**
-	 * 共有ロックモード.
+	 * 共有ロック.
 	 */
 	SHARED,
 
 	/**
-	 * 排他ロックモード.
+	 * 排他ロック.
 	 */
 	EXCLUSIVE,
 }

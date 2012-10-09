@@ -29,30 +29,30 @@ public class ResourceItemCommonLockStrategy implements LockStrategy {
 	private ResourceItemCommonLockDataRepository repository;
 
 	@Override
-	public void lock(SyncCommonData syncCommon, ResourceItemCommonData itemCommon, ResourceLockModeType lockMode)
+	public void lock(SyncCommonData syncCommon, ResourceItemCommonData itemCommon, ResourceLockStatusType lockStatus)
 			throws LockException {
 
 		try {
 
-			ResourceItemCommonLockData lockData = repository.findByIdAndLockMode(itemCommon.getId(), lockMode);
+			ResourceItemCommonLockData lockData = repository.findByIdAndStatus(itemCommon.getId(), lockStatus);
 
 			if (lockData == null) {
 
 				lockData = new ResourceItemCommonLockData();
-				lockData.setStorageId(syncCommon.getStorageId());
+				lockData.setToken(syncCommon.getLockToken());
 			}
 
-			if (lockData == null || lockData.getStorageId().equals(syncCommon.getStorageId())) {
+			if (lockData == null || lockData.getToken().equals(syncCommon.getLockToken())) {
 
 				// ロック可能
-				lockData.setLockedTime(syncCommon.getSyncTime());
-				lockData.setLockMode(lockMode);
+				lockData.setLimitOfTime(syncCommon.getSyncTime());
+				lockData.setStatus(lockStatus);
 				lockData.setId(itemCommon.getId());
 
 				repository.save(lockData);
 			}
 
-			throw new LockException("locked by : " + lockData.getStorageId());
+			throw new LockException("locked by : " + lockData.getToken());
 
 		} catch (PessimisticLockException e) {
 			throw new LockException(e);
@@ -62,19 +62,19 @@ public class ResourceItemCommonLockStrategy implements LockStrategy {
 
 	@Override
 	public void lock(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonList,
-			ResourceLockModeType lockMode) throws LockException {
+			ResourceLockStatusType lockStatus) throws LockException {
 
 	}
 
 	@Override
 	public List<ResourceItemCommonData> lock(SyncCommonData syncCommon, List<ResourceItemCommonData> commonDataList,
-			List<ResourceQueryConditions> query, ResourceLockModeType lockMode) throws LockException {
+			List<ResourceQueryConditions> query, ResourceLockStatusType lockStatus) throws LockException {
 		return null;
 	}
 
 	@Override
-	public ResourceLockModeType getLockMode(SyncCommonData syncCommon, ResourceItemCommonData commonData) {
-		return ResourceLockModeType.UNLOCK;
+	public ResourceLockStatusType getCurrentlockStatus(SyncCommonData syncCommon, ResourceItemCommonData commonData) {
+		return ResourceLockStatusType.UNLOCK;
 	}
 
 	@Override

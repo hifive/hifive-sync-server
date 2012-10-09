@@ -4,7 +4,7 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import com.htmlhifive.sync.resource.ResourceLockModeType;
+import com.htmlhifive.sync.resource.ResourceLockStatusType;
 
 /**
  * リソースアイテム共通データのロック状態を保持するエンティティ.
@@ -22,19 +22,19 @@ public class ResourceItemCommonLockData {
 	private ResourceItemCommonDataId id;
 
 	/**
-	 * ロックしているクライアントのストレージID.
+	 * ロックトークン.
 	 */
-	private String storageId;
+	private String token;
 
 	/**
-	 * ロックした時刻.
+	 * このロック状態の終了時刻.
 	 */
-	private long lockedTime;
+	private long limitOfTime;
 
 	/**
-	 * ロックモード.
+	 * ロック状態.
 	 */
-	private ResourceLockModeType lockMode;
+	private ResourceLockStatusType status;
 
 	/**
 	 * @return id
@@ -51,44 +51,44 @@ public class ResourceItemCommonLockData {
 	}
 
 	/**
-	 * @return storageId
+	 * @return token
 	 */
-	public String getStorageId() {
-		return storageId;
+	public String getToken() {
+		return token;
 	}
 
 	/**
-	 * @param storageId セットする storageId
+	 * @param token セットする token
 	 */
-	public void setStorageId(String storageId) {
-		this.storageId = storageId;
+	public void setToken(String token) {
+		this.token = token;
 	}
 
 	/**
-	 * @return lockedTime
+	 * @return limitOfTime
 	 */
-	public long getLockedTime() {
-		return lockedTime;
+	public long getLimitOfTime() {
+		return limitOfTime;
 	}
 
 	/**
-	 * @param lockedTime セットする lockedTime
+	 * @param limitOfTime セットする limitOfTime
 	 */
-	public void setLockedTime(long lockedTime) {
-		this.lockedTime = lockedTime;
+	public void setLimitOfTime(long limitOfTime) {
+		this.limitOfTime = limitOfTime;
 	}
 
 	/**
-	 * @return lockMode
+	 * @return status
 	 */
-	public ResourceLockModeType getLockMode() {
-		return lockMode;
+	public ResourceLockStatusType getStatus() {
+		return status;
 	}
 
 	/**
-	 * @param lockMode セットする lockMode
+	 * @param status セットする status
 	 */
-	public void setLockMode(ResourceLockModeType lockMode) {
-		this.lockMode = lockMode;
+	public void setStatus(ResourceLockStatusType status) {
+		this.status = status;
 	}
 }

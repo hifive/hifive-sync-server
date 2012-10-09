@@ -47,9 +47,9 @@ import com.htmlhifive.sync.service.upload.UploadCommonData;
 public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 	/**
-	 * ロックモード.
+	 * このリソースのアイテムが必要とするロックの種類.
 	 */
-	private ResourceLockModeType lockMode;
+	private ResourceLockStatusType requiredLockStatus;
 
 	/**
 	 * ロック方式の実装オブジェクト.<br>
@@ -270,7 +270,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		// 競合判定
 		// 競合がなければ、更新対象は渡されたitemとなる
 		I updateItem = item;
-		if (lockMode == ResourceLockModeType.UNLOCK && conflict(itemCommon, currentCommon)) {
+		if (requiredLockStatus == ResourceLockStatusType.UNLOCK && conflict(itemCommon, currentCommon)) {
 
 			// サーバで保持しているアイテムを取得
 			I currentItem = currentCommon.getAction() == SyncAction.DELETE ? null : doGet(currentCommon
@@ -500,14 +500,14 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	}
 
 	/**
-	 * リソースのロックモードを設定します.<br>
+	 * このリソースが要求するロック状態を設定します.<br>
 	 * 通常、アプリケーションから使用することはありません.
 	 *
-	 * @param lockMode セットする lockMode
+	 * @param requiredLockStatus セットする requiredLockStatus
 	 */
 	@Override
-	public void setLockMode(ResourceLockModeType lockMode) {
-		this.lockMode = lockMode;
+	public void setRequiredLockStatus(ResourceLockStatusType requiredLockStatus) {
+		this.requiredLockStatus = requiredLockStatus;
 	}
 
 	/**

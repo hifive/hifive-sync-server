@@ -41,15 +41,15 @@ public @interface SyncResourceService {
 	String resourceName();
 
 	/**
-	 * リソースが採用するロックモード.
+	 * リソースが採用する(要求する)ロック状態のタイプ.
 	 *
-	 * @return ロックモード
+	 * @return ロック状態タイプ
 	 */
-	ResourceLockModeType lockMode() default ResourceLockModeType.UNLOCK;
+	ResourceLockStatusType requiredLockStatus() default ResourceLockStatusType.UNLOCK;
 
 	/**
 	 * リソースが使用するロック戦略の実装クラス.<br>
-	 * ロックモードが{@link ResourceLockModeType#UNLOCK}の場合は使用されません.
+	 * ロックモードが{@link ResourceLockStatusType#UNLOCK}の場合は使用されません.
 	 *
 	 * @return LockManagerのクラスオブジェクト
 	 */
@@ -57,7 +57,7 @@ public @interface SyncResourceService {
 
 	/**
 	 * リソースが使用する競合発生時のリソースアイテム更新戦略の実装クラス.<br>
-	 * ロックモードが{@link ResourceLockModeType#UNLOCK}の場合のみ使用されます.
+	 * ロックモードが{@link ResourceLockStatusType#UNLOCK}の場合のみ使用されます.
 	 *
 	 * @return LockManagerのクラスオブジェクト
 	 */

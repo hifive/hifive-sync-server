@@ -20,7 +20,7 @@ import javax.persistence.LockModeType;
 
 import org.springframework.data.jpa.repository.Lock;
 
-import com.htmlhifive.sync.resource.ResourceLockModeType;
+import com.htmlhifive.sync.resource.ResourceLockStatusType;
 
 /**
  * リソースアイテム共通ロックデータリポジトリの独自拡張インターフェース.
@@ -30,12 +30,12 @@ public interface ResourceItemCommonLockDataRepositoryCustom {
 	// 	 メソッド名からSpringFrameworkがクエリーを生成
 	/**
 	 * 指定された項目に合致するリソースアイテム共通ロックデータを取得します.<br>
-	 * 悲観的WRITEロックを必要とします.
+	 * 悲観的WRITEロックを行います.
 	 *
-	 * @param resourceName リソース名
-	 * @param targetItemId 共通データの対象リソースアイテムにおけるID
-	 * @return 検索した共通データエンティティ
+	 * @param id リソースアイテム共通データID
+	 * @param status ロック状態
+	 * @return 検索された共通データエンティティ
 	 */
 	@Lock(LockModeType.PESSIMISTIC_WRITE)
-	ResourceItemCommonLockData findByIdAndLockMode(ResourceItemCommonDataId id, ResourceLockModeType lockMode);
+	ResourceItemCommonLockData findByIdAndStatus(ResourceItemCommonDataId id, ResourceLockStatusType status);
 }
