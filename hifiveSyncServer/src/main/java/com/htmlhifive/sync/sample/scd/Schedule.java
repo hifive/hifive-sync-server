@@ -104,6 +104,19 @@ public class Schedule {
 	 * 予定インスタンスを生成します.
 	 */
 	public Schedule() {
+		// リストフィールドに空のリストインスタンスを設定
+		userBeans = new ArrayList<>();
+		dates = new ArrayList<>();
+	}
+
+	/**
+	 * 予定IDを指定して予定インスタンスを生成します.
+	 *
+	 * @param scheduleId
+	 */
+	public Schedule(String scheduleId) {
+		this();
+		this.scheduleId = scheduleId;
 	}
 
 	/**
@@ -161,13 +174,6 @@ public class Schedule {
 	 */
 	public String getScheduleId() {
 		return scheduleId;
-	}
-
-	/**
-	 * @param scheduleId セットする scheduleId
-	 */
-	public void setScheduleId(String scheduleId) {
-		this.scheduleId = scheduleId;
 	}
 
 	/**

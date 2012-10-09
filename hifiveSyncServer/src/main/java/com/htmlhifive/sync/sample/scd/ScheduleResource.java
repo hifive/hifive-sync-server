@@ -179,8 +179,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 			throw new DuplicateIdException(newItem.getScheduleId(), doGet(newItem.getScheduleId()));
 		}
 
-		Schedule newEntity = new Schedule();
-		newEntity.setScheduleId(newItem.getScheduleId());
+		Schedule newEntity = new Schedule(newItem.getScheduleId());
 
 		itemToEntity(newEntity, newItem);
 
@@ -217,49 +216,51 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	 * @param entity Scheduleオブジェクト(Entity)
 	 * @param item Scheduleリソースアイテムオブジェクト
 	 */
-	private void itemToEntity(Schedule updatingEntity, ScheduleResourceItem item) {
+	private void itemToEntity(Schedule entity, ScheduleResourceItem item) {
 
-		List<Person> userIdBeans = updatingEntity.getUserBeans();
+		List<Person> userIdBeans = entity.getUserBeans();
 		userIdBeans.clear();
 		for (String userId : item.getUserIds()) {
 			userIdBeans.add(personRepository.findOne(userId));
 		}
-		updatingEntity.setUserBeans(userIdBeans);
-		updatingEntity.setTitle(item.getTitle());
-		updatingEntity.setCategory(item.getCategory());
+		entity.setUserBeans(userIdBeans);
 
-		// 日付文字列書式を変換してセット
-		updatingEntity.setDates(removeDateSeparator(item.getDates()));
+		entity.setTitle(item.getTitle());
+		entity.setCategory(item.getCategory());
 
-		updatingEntity.setStartTime(item.getStartTime());
-		updatingEntity.setFinishTime(item.getFinishTime());
-		updatingEntity.setDetail(item.getDetail());
-		updatingEntity.setPlace(item.getPlace());
+		List<Integer> dates = entity.getDates();
+		dates.clear();
+		for (String date : item.getDates()) {
+			// 日付文字列書式を変換してセット
+			dates.add(removeDateSeparator(date));
+		}
+		entity.setDates(dates);
+
+		entity.setStartTime(item.getStartTime());
+		entity.setFinishTime(item.getFinishTime());
+		entity.setDetail(item.getDetail());
+		entity.setPlace(item.getPlace());
 	}
 
 	/**
 	 * 日付文字列のセパレータ(スラッシュ)を除去し、8桁数値に変換します.
 	 *
-	 * @param slashSeparatedDateList セパレータ付き日付文字列のリスト
-	 * @return 日付数値のリスト
+	 * @param slashSeparatedDate セパレータ付き日付文字列
+	 * @return 日付数値
 	 */
-	private List<Integer> removeDateSeparator(List<String> slashSeparatedDateList) {
-
-		List<Integer> nonSeparatedList = new ArrayList<>();
+	private Integer removeDateSeparator(String slashSeparatedDate) {
 
 		DateFormat slashSeparation = new SimpleDateFormat(FORMAT_STR_SLASH_SEPARATION);
 		DateFormat int8 = new SimpleDateFormat(FORMAT_STR_INT8);
 
-		for (String date : slashSeparatedDateList) {
-			try {
-				String int8Date = int8.format(slashSeparation.parse(date));
-				nonSeparatedList.add(Integer.parseInt(int8Date));
-			} catch (ParseException e) {
-				throw new SyncException(e);
-			}
+		String dateStr;
+		try {
+			dateStr = int8.format(slashSeparation.parse(slashSeparatedDate));
+		} catch (ParseException e) {
+			throw new SyncException(e);
 		}
 
-		return nonSeparatedList;
+		return Integer.parseInt(dateStr);
 	}
 
 	/**
