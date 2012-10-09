@@ -48,14 +48,4 @@
 	</bean>
 	<tx:annotation-driven transaction-manager="txManager"
 		proxy-target-class="true" />
-
-	<!-- MessageSource -->
-	<bean id="messageSource"
-		class="org.springframework.context.support.ResourceBundleMessageSource">
-		<property name="basenames">
-			<list>
-				<value>messages</value>
-			</list>
-		</property>
-	</bean>
 </beans>
