@@ -488,11 +488,11 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	}
 
 	/**
-	 * リソースアイテム共通データのバージョン比較により、リソースアイテムの更新が実行できるか判定します.<br>
+	 * リソースアイテム共通データのバージョン比較により、リソースアイテムの更新競合が発生しているときtrueを返します.<br>
 	 *
 	 * @param client update(/delete)対象リソースアイテムの共通データ
 	 * @param server サーバで保持している現在の共通データ
-	 * @return update(/delete)できる場合true.
+	 * @return 競合が発生している場合true.
 	 */
 	private boolean conflict(ResourceItemCommonData client, ResourceItemCommonData server, UploadCommonData uploadCommon) {
 
