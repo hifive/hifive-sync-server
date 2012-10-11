@@ -13,7 +13,7 @@
 
 	<authentication-manager>
 		<authentication-provider>
-     	   <user-service properties="classpath:META-INF/config/users.properties" />
+			<user-service properties="WEB-INF/users.properties" />
 		</authentication-provider>
 	</authentication-manager>
 
