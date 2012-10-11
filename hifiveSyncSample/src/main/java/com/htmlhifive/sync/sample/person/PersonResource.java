@@ -30,6 +30,7 @@ import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
 import com.htmlhifive.sync.resource.ClientResolvingStrategy;
+import com.htmlhifive.sync.resource.ResourceQuerySpecifications;
 import com.htmlhifive.sync.resource.SyncResourceService;
 
 /**
@@ -39,132 +40,148 @@ import com.htmlhifive.sync.resource.SyncResourceService;
 @SyncResourceService(resourceName = "person", updateStrategy = ClientResolvingStrategy.class)
 public class PersonResource extends AbstractSyncResource<Person> {
 
-	/**
-	 * エンティティの永続化を担うリポジトリ.
-	 */
-	@Resource
-	private PersonRepository repository;
+    /**
+     * エンティティの永続化を担うリポジトリ.
+     */
+    @Resource
+    private PersonRepository repository;
 
-	/**
-	 * 指定されたIDだけを持つPersonを返します.<br>
-	 * Personが存在しない場合、nullを返します.
-	 *
-	 * @param personId ID
-	 * @return Personオブジェクト
-	 */
-	@Transactional(propagation = Propagation.SUPPORTS)
-	public Person getResourceItemByPersonId(String personId) {
+    /**
+     * エンティティのクエリ仕様.
+     */
+    @Resource(type = PersonQuerySpecifications.class)
+    private ResourceQuerySpecifications<Person> querySpec;
 
-		// Personデータを検索(ロックは考慮しない)
-		// 存在しなければBadRequestExceptionがスローされる
-		return doGet(personId);
-	}
+    /**
+     * 指定されたIDだけを持つPersonを返します.<br>
+     * Personが存在しない場合、nullを返します.
+     *
+     * @param personId
+     *            ID
+     * @return Personオブジェクト
+     */
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public Person getResourceItemByPersonId(String personId) {
 
-	/**
-	 * 単一データreadメソッドのリソース別独自処理を行う抽象メソッド.<br>
-	 * エンティティをリポジトリから取得し、アイテムクラスのオブジェクトに設定して返します.
-	 *
-	 * @param targetItemId 対象リソースアイテムのID
-	 * @return リソースアイテム
-	 */
-	@Override
-	protected Person doGet(String targetItemId) {
+        // Personデータを検索(ロックは考慮しない)
+        // 存在しなければBadRequestExceptionがスローされる
+        return doGet(personId);
+    }
 
-		return findPerson(targetItemId);
-	}
+    /**
+     * 単一データreadメソッドのリソース別独自処理を行う抽象メソッド.<br>
+     * エンティティをリポジトリから取得し、アイテムクラスのオブジェクトに設定して返します.
+     *
+     * @param targetItemId
+     *            対象リソースアイテムのID
+     * @return リソースアイテム
+     */
+    @Override
+    protected Person doGet(String targetItemId) {
 
-	/**
-	 * クエリによってリソースアイテムを取得する抽象メソッド.<br>
-	 * 指定された共通データが対応するリソースアイテムであり、かつデータ項目が指定された条件に合致するものを検索し、返します.
-	 *
-	 * @param commonDataList 共通データリスト
-	 * @param conditions 条件Map(データ項目名,データ項目の条件)
-	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
-	 */
-	@Override
-	protected Map<Person, ResourceItemCommonData> doGetByQuery(List<ResourceItemCommonData> commonDataList,
-			Map<String, String[]> conditions) {
+        return findPerson(targetItemId);
+    }
 
-		Map<Person, ResourceItemCommonData> itemMap = new HashMap<>();
+    /**
+     * クエリによってリソースアイテムを取得する抽象メソッド.<br>
+     * 指定された共通データが対応するリソースアイテムであり、かつデータ項目が指定された条件に合致するものを検索し、返します.
+     *
+     * @param commonDataList
+     *            共通データリスト
+     * @param conditions
+     *            条件Map(データ項目名,データ項目の条件)
+     * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
+     */
+    @Override
+    protected Map<Person, ResourceItemCommonData> doGetByQuery(
+            List<ResourceItemCommonData> commonDataList,
+            Map<String, String[]> conditions) {
 
-		// Specificationsを用いたクエリ実行
-		List<Person> personList = repository.findAll(PersonSpecifications.parseConditions(commonDataList, conditions));
-		for (Person person : personList) {
-			for (ResourceItemCommonData common : commonDataList) {
-				if (common.getTargetItemId().equals(person.getPersonId())) {
-					itemMap.put(person, common);
-				}
-			}
-		}
+        Map<Person, ResourceItemCommonData> itemMap = new HashMap<>();
 
-		return itemMap;
-	}
+        // Specificationsを用いたクエリ実行
+        List<Person> personList =
+                repository.findAll(querySpec.parseConditions(commonDataList, conditions));
+        for (Person person : personList) {
+            for (ResourceItemCommonData common : commonDataList) {
+                if (common.getTargetItemId().equals(person.getPersonId())) {
+                    itemMap.put(person, common);
+                }
+            }
+        }
 
-	/**
-	 * createメソッドのリソース別独自処理. <br>
-	 * エンティティを新規生成、保存し、リソースアイテムのIDを返します.
-	 *
-	 * @param newItem 生成内容を含むリソースアイテム
-	 * @return 採番されたリソースアイテムのID
-	 */
-	@Override
-	protected String doCreate(Person newItem) throws DuplicateIdException {
+        return itemMap;
+    }
 
-		if (repository.exists(newItem.getPersonId())) {
+    /**
+     * createメソッドのリソース別独自処理. <br>
+     * エンティティを新規生成、保存し、リソースアイテムのIDを返します.
+     *
+     * @param newItem
+     *            生成内容を含むリソースアイテム
+     * @return 採番されたリソースアイテムのID
+     */
+    @Override
+    protected String doCreate(Person newItem) throws DuplicateIdException {
 
-			throw new DuplicateIdException(newItem.getPersonId(), doGet(newItem.getPersonId()));
-		}
+        if (repository.exists(newItem.getPersonId())) {
 
-		repository.save(newItem);
+            throw new DuplicateIdException(newItem.getPersonId(), doGet(newItem.getPersonId()));
+        }
 
-		return newItem.getPersonId();
-	}
+        repository.save(newItem);
 
-	/**
-	 * updateメソッドのリソース別独自処理.<br>
-	 *
-	 * @param item 更新内容を含むリソースアイテム
-	 */
-	@Override
-	protected Person doUpdate(Person item) {
+        return newItem.getPersonId();
+    }
 
-		// itemはDTOとしてのPersonなので、永続データにアタッチするために取得、コピーする
+    /**
+     * updateメソッドのリソース別独自処理.<br>
+     *
+     * @param item
+     *            更新内容を含むリソースアイテム
+     */
+    @Override
+    protected Person doUpdate(Person item) {
 
-		Person updatingEntity = findPerson(item.getPersonId());
-		updatingEntity.setName(item.getName());
-		updatingEntity.setAge(item.getAge());
-		updatingEntity.setOrganization(item.getOrganization());
+        // itemはDTOとしてのPersonなので、永続データにアタッチするために取得、コピーする
 
-		return repository.save(updatingEntity);
-	}
+        Person updatingEntity = findPerson(item.getPersonId());
+        updatingEntity.setName(item.getName());
+        updatingEntity.setAge(item.getAge());
+        updatingEntity.setOrganization(item.getOrganization());
 
-	/**
-	 * deleteメソッドのリソース別独自処理. <br>
-	 * 論理削除のため、エンティティは変更せずにIDのみ設定された空のリソースアイテムを返します.
-	 *
-	 * @param targetItemId リソースアイテムのID
-	 */
-	@Override
-	protected Person doDelete(String targetItemId) {
+        return repository.save(updatingEntity);
+    }
 
-		findPerson(targetItemId);
+    /**
+     * deleteメソッドのリソース別独自処理. <br>
+     * 論理削除のため、エンティティは変更せずにIDのみ設定された空のリソースアイテムを返します.
+     *
+     * @param targetItemId
+     *            リソースアイテムのID
+     */
+    @Override
+    protected Person doDelete(String targetItemId) {
 
-		Person emptyPerson = new Person();
-		emptyPerson.setPersonId(targetItemId);
-		return emptyPerson;
-	}
+        findPerson(targetItemId);
 
-	/**
-	 * このリソースのリソースアイテムのIDから1件のエンティティをリポジトリを検索して取得します. <br>
-	 *
-	 * @param personId リソースアイテムのID
-	 * @return Personエンティティ
-	 */
-	private Person findPerson(String personId) {
-		Person found = repository.findOne(personId);
-		if (found == null) {
-			throw new BadRequestException("entity not found :" + personId);
-		}
-		return found;
-	}
+        Person emptyPerson = new Person();
+        emptyPerson.setPersonId(targetItemId);
+        return emptyPerson;
+    }
+
+    /**
+     * このリソースのリソースアイテムのIDから1件のエンティティをリポジトリを検索して取得します. <br>
+     *
+     * @param personId
+     *            リソースアイテムのID
+     * @return Personエンティティ
+     */
+    private Person findPerson(String personId) {
+        Person found = repository.findOne(personId);
+        if (found == null) {
+            throw new BadRequestException("entity not found :" + personId);
+        }
+        return found;
+    }
 }
