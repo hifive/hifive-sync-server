@@ -5,7 +5,7 @@
 	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
 
 	<context:property-placeholder
-		location="classpath:META-INF/spring/database.properties" />
+		location="classpath:META-INF/database.properties" />
 
 	<!-- Data Source -->
 	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
