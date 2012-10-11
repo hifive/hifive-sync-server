@@ -1,0 +1,136 @@
+select {
+	padding: 0.2em;
+	font-size: 1em;
+}
+
+.wrap {
+	width: 100%;
+	min-width: 320px;
+	target-densitydpi: device-dpi;
+}
+
+.column {
+	width: 98% !important;
+	overflow-x: hidden !important;
+	height: 390px;
+	marign: 0 !important;
+}
+
+.column h1 {
+	font-size: 1.2em;
+}
+
+/* 各カラムの設定 */
+
+/* スケジュール */
+#schedule table.calender {
+	margin: 0;
+}
+
+#schedule .table-wrap { /** 6週間分の高さ **/
+	min-height: 300px;
+}
+
+#schedule table.calender td .td_cell {
+	height: 40px;
+}
+
+#schedule {
+	overflow: visible;
+}
+
+#schedule .link {
+	width: 4em;
+	padding: 0;
+	margin: 0;
+}
+
+#schedule #schedule-selected-date ul {
+	width: 200px;
+}
+
+#schedule #schedule-selected-date .date-schedule-box-wrap {
+	width: 290px;
+}
+
+#schedule .link:hover {
+	font-weight: normal;
+}
+
+#schedule #schedule-selected-date .date-schedule-box {
+	width: 80px;
+}
+/** お知らせ **/
+#info {
+	
+}
+
+#info .content {
+	
+}
+
+#info #infoline {
+	height: 290px !important;
+	margin: 0;
+}
+
+#info #infoline ul {
+	width: 270px;
+}
+
+#info #infoline li {
+	padding: 1em !important;
+}
+
+/******** ダイアログ ********/
+#dialog {
+	font-size: 1em;
+}
+
+#dialog #dialog-bar span {
+	font-size: 2em;
+}
+
+#dialog .content>* {
+	width: 320px !important;
+	height: 420px !important;
+}
+
+#dialog textarea {
+	width: 200px !important;
+	height: 120px;
+	margin-right: 10px;
+	margin-top: -20px;
+}
+
+#dialog label {
+	width: 70px;
+	text-align: right;
+	display: inline-block;
+	margin: 10px 10px 0 0;
+}
+
+#dialog label.detail {
+	
+}
+
+#dialog p {
+	width: 200px;
+}
+
+#dialog p.detail {
+	width: 220px;
+}
+
+#dialog input {
+	font-size: 1.0em;
+}
+
+#dialog button {
+	margin: 10px 0 15px 0;
+	font-size: 1em;
+}
+
+#dialog input[name="title"] {
+	width: 280px;
+}

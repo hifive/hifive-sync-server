@@ -1,0 +1,284 @@
+<script type="text/ejs" id="calender">
+	<div id="calender">
+		<input type="hidden" id="view_year" value="[%= year %]" />
+		<input type="hidden" id="view_month" value="[%= month %]" />
+		<h2 class="hearder">[%= year %]年 [%= month %]月 </h2>
+		<span class="preMonth link">前の月へ</span>
+		<span class="nextMonth link">次の月へ</span>
+		<div class="registbutton_wrap">
+				<button class="registbutton">予定を登録</button><br>
+		</div>
+		<div id="schedule-selected-date">
+			<span class="default-message">ここにクリックした日の予定が表示されます</span>
+		</div>
+
+		[%	// 一日のミリ秒数
+			var ms = 86400000;
+			// 指定月を日付オブジェクトに変換
+			var date = new Date(year, month - 1);
+			// 指定月の最初の日のある週の日曜を求める
+			var curDate = new Date(date.getTime() - date.getDay() * ms);
+			// 表示する最後の月の月末日を求める
+			var endDateTime = new Date((month + 1 > 12) ? year+1 : year, month % 12, 0).getTime();
+			if(new Date(endDateTime).getDay() === 6){
+				endDateTime = new Date(endDateTime + 7 * ms).getTime();
+			}
+		%]
+			<table class="calender">
+				<thead>
+					<tr>
+						[%for (var i = 0, week = ['日','月','火','水','木','金','土']; i < week.length; i++) {%]
+							<th class="[% if(i===0){ %]sun[% }else if(i===6){ %]sat[% } %]">[%= week[i] %]</th>
+						[% } %]
+					</tr>
+				</thead>
+			</table>
+		<div class="table-wrap">
+			<table class="calender" style="table-layout:fixed">
+				<tbody>
+					[% while(endDateTime >= curDate.getTime() || curDate.getDay()){ %]
+						[% if (!curDate.getDay()) { %]
+							<tr>
+						[% } %]
+						[% var m = curDate.getMonth();
+							var formatDate = h5.u.str.format('{0}-{1}-{2}', curDate.getFullYear(), curDate.getMonth() + 1, curDate.getDate());
+						 %]
+						<td [%:= (function(){
+							var evenOdd = m%2? 'even-month' : 'odd-month';
+							if(m === month - 1){
+								return 'class="current-month-date date-column ' + evenOdd + '" id="' + formatDate + '"';
+							}
+							return 'class="out-month-date  date-column" id="' + formatDate + '"';
+							})()
+							%]>
+								<div class="td_cell">
+									<div class="scheduleCell"></div>
+									<span class="date">
+										[%= curDate.getDate() %]
+									</span>
+								</div>
+							</td>
+						[% curDate = new Date(curDate.getTime() + ms); %]
+						[% if (!curDate.getDay()) { %]
+							</tr>
+						[% } %]
+					[% } %]
+				</tbody>
+			</table>
+		</div>
+	</div>
+</script>
+
+<script type="text/ejs" id="regist">
+	<div id="schedule_regist" class="dialog_regist">
+		<label class="category">種類</label>
+		<select name="category">
+			[% for(var categoryId in scheduleSample.common.category) { %]
+				<option value="[%= categoryId %]">[%= scheduleSample.common.category[categoryId].name %]</option>
+			[% } %]
+		</select><br>
+		<label class="date">日程</label>[%:= scheduleSample.common.getDateInputForm(dateFrom.date) %]<br>
+		<label class="title">タイトル</label><input type="text" name="title" value="[%= title %]"/><br>
+		<label class="users">参加者</label><input type="text" name="userIds" value="[%= userIds[0] %]"/><br>
+		<label class="detail">詳細</label><textarea name="detail">[%= detail %]</textarea><br>
+		[% if(conflictIndex) { %]
+			<input type="hidden" name="conflictIndex" value="[%= conflictIndex %]"/>
+		[% } %]
+		
+		<div class="button-wrap">
+			<button class="submit">登録</button>
+			<button class="back">戻る</button>
+		</div>
+	</div>
+</script>
+
+<script type="text/ejs" id="edit">
+<div id="schedule_edit" class="dialog_edit">
+	<label class="category">種類</label>
+	<select name="category">
+		[% for(var categoryId in scheduleSample.common.category) { %]
+			<option value="[%= categoryId %]" [%= categoryId === schedule.get('category') ? 'selected': ''%]>[%= scheduleSample.common.category[categoryId].name %]</option>
+		[% } %]
+	</select><br>
+	[% if (conflict && conflict.category) { %]
+		<label></label><p class="conflict">サーバのデータ：[%= scheduleSample.common.category[conflict.category].name %]</p><br>
+	[% } %]
+	<label class="date">日程</label>[%:= scheduleSample.common.getDateInputForm(schedule.get('dates')[0]) %]<br>
+	[% if (conflict && conflict.date) { %]
+		<label></label><p class="conflict">サーバのデータ：[%= conflict.date %]</p><br>
+	[% } %]
+	<label class="title">タイトル</label><input type="text" name="title" value="[%= schedule.get('title') %]"/><br>
+	[% if (conflict && conflict.title) { %]
+		<label></label><p class="conflict">サーバのデータ：[%= conflict.title %]</p><br>
+	[% } %]
+	<label class="users">参加者</label><input type="text" name="userIds" value="[%= schedule.get('userIds')[0] %]"/><br>
+	[% if (conflict && conflict.userIds) { %]
+		<label></label><p class="conflict">サーバのデータ：[%= conflict.userIds[0] %]</p><br>
+	[% } %]
+	<label class="detail">詳細</label><br><textarea name="detail">[%= schedule.get('detail') %]</textarea><br>
+	[% if (conflict && conflict.detail) { %]
+		<label></label><p class="conflict">サーバのデータ：[%= conflict.detail %]</p><br>
+	[% } %]
+
+	<div class="button-wrap">
+		<button class="submit">変更</button>
+		<button class="cancelEdit">キャンセル</button>
+		<input type="hidden" name="scheduleId" value="[%= schedule.get('scheduleId') %]"/>
+		[% if (conflict && conflict.conflictIndex) { %]
+			<input type="hidden" name="conflictIndex" value="[%= conflict.conflictIndex %]"/>
+		[% } %]
+	</div>
+</div>
+</script>
+
+
+<script type="text/ejs" id="detail">
+	<div id="schedule_detail" class="dialog_detail">
+		<p>
+		[% for(var i = 0, l = array.length, preDate = null; i < l; i++){
+			 obj = array[i];
+			 var date =  obj.get('dates')[dateIndex];
+			 if(preDate !== date){
+			 	preDate = date;
+			 	var date = new Date(date);
+			 	%]
+			 		<label class="date">[%= h5.u.str.format('{0}/{1}/{2}({3})'
+			 			,date.getFullYear()
+			 			,date.getMonth()+1
+			 			,date.getDate()
+			 			,scheduleSample.common.numToWeek(date.getDay())) %]</label><br>
+			 [% } %]
+			<hr>
+			<label class="title">タイトル</label><p>[%= obj.get('title') %]</p><br>
+			<label class="category">種類</label><p>[%= scheduleSample.common.category[obj.get('category')].name %]</p><br>
+
+			[% var users = obj.get('users');
+			   if(users && users.length > 0) {
+					var user = users[0];
+					if (user != null) { %]
+						<label class="users">参加者</label><p class="users">[%= user.get('name') %]</p><br>
+					[% } else { %]
+						<label class="users">参加者</label><p class="users">[%= obj.get('userIds')[0] %]</p><br>
+					[% }
+					for (var j=1, len=users.length; j<len; j++) {
+						var user = users[j];
+						if (user != null) { %]
+							<label class="users"></label><p class="users">[%= user.get('name') %]</p><br>
+						[% } else { %]
+							<label class="users"></label><p class="users">[%= obj.get('userIds')[j] %]</p><br>
+						[% }
+					}
+			} %]
+
+			[% if(obj.get('detail')){ %]
+				<label class="detail">詳細</label><p class="detail">[%= obj.get('detail')%]</p><br>
+			[% } %]
+			<label class="createUser">作成者</label><p>[%= obj.get('createUserName') %]</p><br>
+			<button class="editSchedule">この予定を編集</button>
+			<button class="deleteSchedule">この予定を削除</button>
+			<input type="hidden" name="scheduleId" value="[%= obj.get('scheduleId') %]"/>
+		[% } %]
+	<br><br><br><br>[%# スマートフォン用のスペース %]
+	</div>
+</script>
+
+<script type="text/ejs" id="colorBar">
+	<div class="colorBar [%= categoryClassName %]"></div>
+</script>
+
+<script type="text/ejs" id="abstruct-day-schedule">
+	<div class="date-str">
+		[%= date %]<br>
+		<button class="showdetail" [%= existData?'disabled':'' %]>詳細表示</button>
+	<input type="hidden" class="date-hash" value="[%= hash %]">
+	</div>
+	<div class="date-schedule-box-wrap">
+	[% for(var i = 0, l = schedules.length; i < l; i++) { %]
+		<div class="date-schedule-box [%= schedules[i].get('categoryName') %]">[%= schedules[i].get('title') %]<input name="scheduleId" type="hidden" value="[%= schedules[i].get('scheduleId') %]" /></div>
+	[% } %]
+	</div>
+</script>
+
+<script type="text/ejs" id="deadline">
+	<img src="./img/deadline.gif" class="deadline-icon"/>
+</script>
+
+<script type="text/ejs" id="conflict">
+	<div id="schedule_conflict" class="dialog_conflict">
+		<p>衝突したデータ</p>
+		[% for(var i = 0, l = conflictItems.length; i<l; i++){
+			 var serverItem = conflictItems[i].serverItem;
+			 var localItem =  conflictItems[i].localItem;
+		%]
+			<hr>
+			<p>衝突データ[%= i + 1%]</p>
+			<hr>
+			<label class="dataOrigin">サーバのスケジュール</label><br>
+
+			[% if (!serverItem) { %]
+				<p>削除されています</p>
+			[% } else { %]
+				<label>日付</label><p>[%= h5.u.str.format('{0}({1})', serverItem.dates[0], scheduleSample.common.dateToWeek(serverItem.dates[0])) %]</p><br>
+				[% for(var j = 1, l = serverItem.dates.length; j < l; j++){ %]
+					<label></label><p>[%= h5.u.str.format('{0}({1})', serverItem.dates[j], scheduleSample.common.dateToWeek(serverItem.dates[j])) %]</p><br>
+				[% } %]
+				<label class="title">タイトル</label><p>[%= serverItem.title %]</p><br>
+				<label class="category">種類</label><p>[%= scheduleSample.common.category[serverItem.category].name %]</p><br>
+
+				[% var userIds = serverItem.userIds;
+					if(userIds && userIds.length > 0) { %]
+						<label class="users">参加者</label><p class="users">[%= userIds[0] %]</p><br>
+				[%	for (var j=1, len=userIds.length; j<len; j++) { %]
+						<label></label><p class="users">[%= userIds[j] %]</p><br>
+					[% } %]
+				[% } %]
+				[% if(serverItem.detail){ %]
+					<label class="detail">詳細</label><p class="detail">[%= serverItem.detail %]</p><br>
+				[% } %]
+			[% } %]
+			<hr>
+			
+			<label class="dataOrigin">ローカルのスケジュール</label><br>
+
+			[% if (!localItem) { %]
+				<p>削除されています</p><br>
+				<button class="registSchedule">この予定を編集</button>
+			[% } else { %]
+				<label class="dataOrigin">あなたのスケジュール</label><br>
+				<label>日付</label><p>[%= h5.u.str.format('{0}({1})', localItem.get('dates')[0], scheduleSample.common.dateToWeek(localItem.get('dates')[0])) %]</p><br>
+				[% for(var j = 1, l = localItem.get('dates').length; j < l; j++){ %]
+					<label></label><p>[%= h5.u.str.format('{0}({1})', localItem.get('dates')[j], scheduleSample.common.dateToWeek(localItem.get('dates')[j])) %]</p><br>
+				[% } %]
+				<label class="title">タイトル</label><p>[%= localItem.get('title') %]</p><br>
+				<label class="category">種類</label><p>[%= scheduleSample.common.category[localItem.get('category')].name %]</p><br>
+
+				[% var userIds = localItem.get('userIds');
+				   if(userIds && userIds.length > 0) { %]
+						<label class="users">参加者</label><p class="users">[%= userIds[0] %]</p><br>
+						[%	for (var j=1, len=userIds.length; j<len; j++) { %]
+							<label></label><p class="users">[%= userIds[j] %]</p><br>
+						[% } %]
+				[% } %]
+				[% if(localItem.get('detail')){ %]
+					<label class="detail">詳細</label><p class="detail">[%= localItem.get('detail') %]</p><br>
+				[% } %]
+
+				<button class="editSchedule">この予定を編集</button>
+			[% } %]
+				<input type="hidden" name="scheduleId" value="[%= localItem ? localItem.get('scheduleId') : serverItem.scheduleId %]"/>
+			[% if (serverItem) { %]
+				[% for(var j = 0, l = serverItem.dates.length; j < l; j++){ %]
+					<input type="hidden" name="dates" value="[%= serverItem.dates[j] %]"/>
+				[% } %]
+				[% for(var j = 0, l = serverItem.userIds.length; j < l; j++){ %]
+					<input type="hidden" name="userIds" value="[%= serverItem.userIds[j] %]"/>
+				[% } %]
+				<input type="hidden" name="category" value="[%= serverItem.category %]"/>
+				<input type="hidden" name="title" value="[%= serverItem.title %]"/>
+				<input type="hidden" name="detail" value="[%= serverItem.detail %]"/>
+			[% } %]
+			<input type="hidden" name="conflictIndex" value="[%= i %]"/>
+		[% } %]
+	<br><br><br><br>[%# スマートフォン用のスペース %]
+	</div>
+</script>

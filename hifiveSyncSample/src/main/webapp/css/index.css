@@ -1,0 +1,571 @@
+#top * {
+	float: right;
+	padding: 5px;
+}
+
+.wrap {
+	width: 1024px;
+	min-width: 1024px;
+	padding: 0;
+}
+
+.column {
+	overflow-y: auto;
+	display: inline;
+	/* IE7-用 */
+	/* position: relativeでない要素内のposition:relativeである要素はスクロールされても位置が変わらないバグ対策 */
+	position: relative;
+	/* IE7でのレイアウト崩れ対策。(IE6では必要ない) */
+	zoom: 1;
+}
+
+button {
+	font-size: 1em;
+}
+
+/***************** 各カラムの設定 *****************/
+/******** スケジュール ********/
+#schedule {
+	width: 558px;
+	overflow-y: hidden;
+	text-align: center;
+}
+
+#schedule .content h2.hearder {
+	float: none;
+	display: inline;
+}
+
+#schedule .link {
+	text-decoration: underline;
+	padding: 10px;
+}
+
+#schedule .preMonth {
+	float: left;
+}
+
+#schedule .nextMonth {
+	float: right;
+}
+
+#schedule .link:hover {
+	cursor: pointer;
+}
+
+#schedule .registbutton_wrap {
+	clear: both;
+	text-align: right;
+}
+
+#schedule .registbutton_wrap button {
+	margin-left: 10px;
+}
+
+#schedule .table-wrap {
+	padding: 0;
+	margin: 0;
+	height: 0px;
+	overflow-y: auto;
+	position: relative;
+}
+
+#schedule table.calender {
+	width: 100%
+}
+
+#schedule table.calender th {
+	width: 95px;
+	height: 20px;
+	background: #ccc;
+}
+
+#schedule table.calender th.sat {
+	background: #aff;
+}
+
+#schedule table.calender th.sun {
+	background: pink;
+}
+
+#schedule table.calender th.dummyForScrollWidth {
+	width: 17px;
+	overflow-x: visible;
+	background-color: transparent;
+}
+
+#schedule table.calender td .td_cell {
+	height: 60px;
+	overflow: hidden;
+	color: #ddd;
+	font-size: 2em;
+	font-wieht: bold;
+	vertical-align: top;
+}
+
+#schedule table.calender td .category-a {
+	background-color: #0CA;
+}
+
+#schedule table.calender td .category-e {
+	background-color: #09F;
+}
+
+#schedule table.calender td .category-d {
+	background-color: #F39;
+}
+
+#schedule table.calender td .category-c {
+	background-color: #F04040;
+}
+
+#schedule table.calender td .category-b {
+	background-color: #0E0;
+}
+
+#schedule table.calender td .category-a-Temp {
+	background-color: #CFC;
+	/** TODO IE7-でbox-sizing効かないので、配置時にjsで計算する **/
+	box-sizing: border-box;
+	border: 2px dashed #0CA;
+}
+
+#schedule table.calender td .category-e-Temp {
+	background-color: #AFF;
+	box-sizing: border-box;
+	border: 2px dashed #09F;
+}
+
+#schedule table.calender td .category-c-Temp {
+	background-color: #F99;
+	box-sizing: border-box;
+	border: 2px dashed #F04040;
+}
+
+#schedule table.calender td .category-d-Temp {
+	background-color: #FAF;
+	box-sizing: border-box;
+	border: 2px dashed #F04040;
+}
+
+#schedule table.calender td .category-b-Temp {
+	background-color: #AFA;
+	box-sizing: border-box;
+	border: 2px dashed #0E0;
+}
+
+#schedule .date-column:hover {
+	cursor: pointer;
+}
+
+#schedule table.calender td.even-month {
+	background: #ffe;
+}
+
+#schedule table.calender td.odd-month {
+	background: #eff;
+}
+
+#schedule table.calender td.out-month-date {
+	background: #eee;
+}
+
+#schedule table.calender td .scheduleCell {
+	padding: 0;
+	height: 0;
+	/* IE6用 */
+	/* IE6では、overflow:hiddenを指定しないと、日付(この要素の次の要素)がscheduleCellの下に行ってしまう。 */
+	/* IE7+でoverflow:hiddenを指定するとこの要素の中身が表示されない(高さ0のため。) */
+	/* IE6では子要素がposition:relative指定しているとoverflow:hiddenが効かないので中身が表示される */
+	_overflow: hidden;
+}
+
+table.calender td .date {
+	position: relative;
+	top: 10px;
+}
+
+#schedule table.calender td .colorBar {
+	width: 100%;
+	margin-bottom: 2px;
+	position: relative;
+	/* IE6用 */
+	/* font-size:0またはoverflow:hiddenにしないと、小さい高さを指定できないバグ対策 */
+	overflow: hidden;
+}
+
+#schedule table.calender td {
+	border: 1px solid #fff;
+}
+
+#schedule table.calender td.clicked-date {
+	border: 1px solid #f00;
+	background-color: #FA0;
+}
+
+#schedule table.calender td .deadline-icon {
+	width: 20px;
+	height: 20px;
+	border: 1px solid red;
+	position: relative;
+	top: -22px;
+	float: right;
+	z-index: 1;
+}
+
+#schedule #schedule-selected-date {
+	min-height: 5em;
+	height: 5em;
+	border: 2px inset #ddd;
+	font-size: 0.8em;
+	text-align: left;
+	overflow-y: scroll;
+}
+
+#schedule #schedule-selected-date .date {
+	display: inline;
+	padding: 2px;
+}
+
+/* 選択した日付の予定表示エリアの、予定表示ボックス */
+#schedule #schedule-selected-date .date-str {
+	float: left;
+}
+
+#schedule #schedule-selected-date .date-schedule-box-wrap {
+	width: 505px;
+	display: inline;
+}
+
+#schedule #schedule-selected-date .date-schedule-box {
+	display: inline-block;
+	margin: 2px 5px 2px 5px;
+	padding: 5px;
+	width: 90px;
+	height: 40px;
+	color: #fff;
+	font-size: 1.1em;
+	text-decoration: underline;
+	font-weight: bold;
+	float: left;
+	overflow: hidden;
+	/* IE7-にはdisplay:inline-blockがないため、inlineを指定し、zoom:1でhasLayoutをtrueにする */
+	zoom: 1;
+	*display: inline;
+}
+
+#schedule #schedule-selected-date .date-schedule-box:hover {
+	cursor: pointer;
+}
+
+#schedule #schedule-selected-date .category-a {
+	background-color: #0CA;
+}
+
+#schedule #schedule-selected-date .category-e {
+	background-color: #09F;
+}
+
+#schedule #schedule-selected-date .category-d {
+	background-color: #F39;
+}
+
+#schedule #schedule-selected-date .category-c {
+	background-color: #F04040;
+}
+
+#schedule #schedule-selected-date .category-b {
+	background-color: #0E0;
+}
+
+#schedule #schedule-selected-date .deadline {
+	background-color: #fee;
+	border: 3px double black;
+	padding: 2px;
+	color: #009;
+}
+
+#schedule #schedule-selected-date .category-a-Temp {
+	background-color: #CFC;
+	padding: 3px;
+	border: 2px dashed #0CA;
+	color: #0CA;
+}
+
+#schedule #schedule-selected-date .category-e-Temp {
+	background-color: #AFF;
+	padding: 3px;
+	border: 2px dashed #09F;
+	color: #09F;
+}
+
+#schedule #schedule-selected-date .category-c-Temp {
+	background-color: #FBD;
+	padding: 3px;
+	border: 2px dashed #F39;
+	color: #F39;
+}
+
+#schedule #schedule-selected-date .category-d-Temp {
+	background-color: #FAF;
+	padding: 3px;
+	border: 2px dashed #F04040;
+	color: #F04040;
+}
+
+#schedule #schedule-selected-date .category-b-Temp {
+	background-color: #AFA;
+	padding: 3px;
+	border: 2px dashed #0E0;
+	color: #0E0;
+}
+
+#schedule #schedule-selected-date .default-message {
+	font-size: 1.5em;
+	font-weight: bold;
+	color: #ccc;
+}
+
+#schedule #schedule-selected-date ul {
+	float: right;
+	padding-left: 20px;
+	margin: 0px;
+}
+
+#schedule #schedule-selected-date ul li {
+	margin: 2px;
+	text-decoration: underline;
+}
+
+/******** お知らせ ********/
+#person {
+	width: 208px;
+	overflow-x: hidden;
+}
+
+#person #personline {
+	clear: both;;
+	padding-left: 10px;
+	overflow-y: auto;
+	float: clear;
+}
+
+#person #personline ul {
+	padding: 0 0 0 10px;
+	margin: 5px 0 0 0;
+	width: 170px;
+	line-height: 1.5em;
+}
+
+#person #personline ul li {
+	font-size: 80%;
+	margin: 0 0 0 1em;
+	padding: 0;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+#person #personline ul li .new {
+	float: right;
+	color: red;
+	font-weight: bold;
+}
+
+#person span.link {
+	text-decoration: underline;
+	padding: 5px;
+}
+
+#person span.link:hover {
+	cursor: pointer;
+}
+
+/******** ダイアログ ********/
+#dialog {
+	text-align: left;
+	font-size: 1.5em;
+	cursor: auto;
+	font-size: 1.2em;
+}
+
+#dialog .content {
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+#dialog label {
+	width: 80px;
+	text-align: right;
+	display: inline-block;
+	margin: 10px 10px 0 0;
+	/* IE7-用　display:inline-blockが効かないため */
+	*display: inline;
+	*zoom: 1;
+}
+
+#dialog .dialog_detail {
+	width: 500px;
+	height: 600px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	/* IE6でスクロールバーの幅分調整 */
+	_width: 520px;
+}
+
+#dialog .dialog_regist {
+	width: 500px;
+	height: 420px;
+}
+
+#dialog .dialog_conflict {
+	width: 500px;
+	height: 600px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	/* IE6でスクロールバーの幅分調整 */
+	_width: 520px;
+}
+
+#dialog .dialog_conflict label.dataOrigin {
+	width: 300px;
+	text-align: left;
+	font-weight: bold;
+}
+
+#dialog #dialog_scheduleInfo {
+	width: 500px;
+	height: 550px;
+	overflow-y: auto;
+}
+
+#dialog #dialog_scheduleInfo label.date {
+	width: 110px !important;
+}
+
+#dialog #detail label.date {
+	width: 300px;
+	text-align: left;
+	font-weight: bold;
+}
+
+#dialog textarea {
+	width: 400px;
+	height: 150px;
+	float: right;
+	display: block;
+	margin-right: 30px;
+}
+
+#dialog .button-wrap {
+	width: 100%;
+	float: none;
+	clear: both;
+	text-align: center;
+	padding: 10px;
+}
+
+#dialog button {
+	padding: 5px;
+	margin: 10px;
+}
+
+#dialog select {
+	padding: 0.2em;
+	font-size: 1em;
+}
+
+#dialog p {
+	display: inline-block;
+	margin: 12px 0 0 0;
+	/* IE7-用　display:inline-blockが効かないため */
+	*display: inline;
+	*zoom: 1;
+}
+
+#dialog p.detail {
+	display: block;
+	width: 400px;
+	margin-left: 70px;
+}
+
+#dialog input {
+	font-size: 1.0em;
+}
+
+#dialog input[name="title"] {
+	width: 320px;
+}
+
+#dialog #dialog-bar {
+	text-align: right;
+	background-color: #5160C6;
+	border-left: 3px solid #AA94FF;
+	border-right: 3px solid #AA94FF;
+	color: #fff;
+}
+
+#dialog #dialog-bar span {
+	font-size: 2.0em;
+	text-align: right;
+	padding: 40px 0px 40px 40px;
+}
+
+#dialog #dialog-bar span:hover {
+	cursor: pointer;
+}
+
+#dialog input[type="checkbox"] {
+	width: 40px;
+	height: 40px;
+}
+
+#dialog .link {
+	text-decoration: underline;
+	display: block;
+	padding: 10px;
+}
+
+#dialog .link:hover {
+	cursor: pointer
+}
+
+#dialog #dialog_scheduleInfo p,#dialog #dialog_scheduleInfo  label,#dialog #dialog_scheduleInfo span {
+	margin-left: 10px;
+	margin-right: 10px;
+}
+
+#dialog #dialog_scheduleInfo span.date {
+	margin-left: 0px;
+}
+
+#dialog #dialog_scheduleInfo label.change {
+	margin-left: -5px;
+	font-weight: bold;
+}
+
+#dialog #dialog_scheduleInfo .before {
+	background-color: #fcc;
+}
+
+#dialog #dialog_scheduleInfo .after {
+	background-color: #cfc;
+}
+
+#dialog #schedule_regist.tempRegist {
+	height: 500px;
+}
+
+#dialog #schedule_detail span.temp {
+	font-weight: bold;
+}
+
+#dialog #schedule_edit {
+	height: 400px;
+	width: 500px;
+}
+
+#dialog #schedule_regist.editTempRegist {
+	height: 600px;
+	width: 500px;
+	overflow-y: visible;
+}
