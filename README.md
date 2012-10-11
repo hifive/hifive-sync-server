@@ -1,7 +1,7 @@
 hifive-sync-server
 ==================
 
-This is the repository for the hifive sync server.
+This is the repository for hifive sync server,.
 
 This product is licensed under the Apache License, Version 2.0.
 
