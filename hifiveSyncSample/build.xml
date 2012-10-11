@@ -2,11 +2,12 @@
 <project name="hifiveSyncServer" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
 
 	<property name="version" value="1.0.0" />
-	<property name="source" value="./src" />
+	<property name="source" value="./src/main/java" />
+	<property name="lib" value="./lib" />
 	<property name="webapp" value="./src/main/webapp" />
 	<property name="metainf" value="./src/main/resources/META-INF" />
 	<property name="compile" value="./target/classes" />
-	<property name="lib" value="./lib" />
+	<property name="doc" value="./target/doc" />
 	<path id="classpath">
 		<fileset dir="${lib}" includes="**/*.jar" />
 	</path>
@@ -23,6 +24,13 @@
 			<fileset dir="${webapp}" excludes="**/web.xml" />
 			<lib dir="${lib}" includes="runtime/*.jar, hifiveSyncServer/*.jar" />
 		</war>
+	</target>
+	<target name="javadoc" depends="compile">
+		<javadoc destdir="${doc}" encoding="UTF-8" source="1.7" author="true" version="true" access="public" use="true" nonavbar="false" notree="true" nodeprecated="false" nodeprecatedlist="false" noindex="false" splitindex="true" nohelp="true" windowtitle="hifive-sync-sample" docencoding="UTF-8" charset="UTF-8">
+			<link href="http://docs.oracle.com/javase/7/docs/api/" />
+			<sourcepath path="${source}" />
+			<package name="com.htmlhifive.sync.sample.*" />
+		</javadoc>
 	</target>
 	<target name="convertpom">
 		<ivy:convertpom pomFile="pom.xml" ivyFile="ivy.xml" />
