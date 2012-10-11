@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hifiveSyncServer" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<property name="version" value="1.0.0" />
+	<property name="source" value="./src" />
+	<property name="webapp" value="./src/main/webapp" />
+	<property name="metainf" value="./src/main/resources/META-INF" />
+	<property name="compile" value="./target/classes" />
+	<property name="lib" value="./lib" />
+	<path id="classpath">
+		<fileset dir="${lib}" includes="**/*.jar" />
+	</path>
+
+	<target name="compile">
+		<mkdir dir="${compile}" />
+		<javac srcdir="${source}" destdir="${compile}" excludes="com/htmlhifive/sync/test/*.java">
+			<classpath refid="classpath" />
+		</javac>
+	</target>
+	<target name="build" depends="compile">
+		<war destfile="./target/hifive-sync-sample-${version}.war" webxml="${webapp}/WEB-INF/web.xml">
+			<fileset dir="${compile}" />
+			<fileset dir="${webapp}" excludes="**/web.xml" />
+			<lib dir="${lib}" includes="runtime/*.jar, hifiveSyncServer/*.jar" />
+		</war>
+	</target>
+	<target name="convertpom">
+		<ivy:convertpom pomFile="pom.xml" ivyFile="ivy.xml" />
+	</target>
+	<target name="clean">
+		<!-- -->
+	</target>
+
+</project>
