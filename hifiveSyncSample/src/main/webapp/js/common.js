@@ -4,7 +4,7 @@ $(function() {
 		h5.api.storage.local.clear();
 	}
 
-	navigator.__onLine = true;
+	navigator._offLine = false;
 
 	var categoryIds = ['outmeeting', 'meeting', 'trip', 'holiday', 'others','deadline'];
 	var categoryNames = ['社外打ち合わせ', '社内会議', '出張', '休み', 'その他', '締切'];
