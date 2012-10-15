@@ -11772,8 +11772,7 @@ var h5internal = {
 								var dfd = h5.async.deferred();
 
 								// TODO: ネットワークの接続を確認するには別の手段が必要
-//								if (!navigator.onLine) { 
-								if (!navigator.__onLine) { // テスト用コード 
+								if (!navigator.onLine || navigator.__offLine) { // テスト用コード 
 									// オフライン時は何もしない
 									dfd.resolve();
 									return dfd.promise();
@@ -11891,8 +11890,7 @@ var h5internal = {
 							}
 							var dfd = h5.async.deferred();
 
-//							if (!navigator.onLine) { 
-							if (!navigator.__onLine) { // テスト用コード 
+							if (!navigator.onLine || navigator.__offLine) { // テスト用コード 
 								// オフライン時は何もしない
 								dfd.resolve();
 								return dfd.promise();
@@ -11926,8 +11924,7 @@ var h5internal = {
 							}
 
 							var dfd = h5.async.deferred();
-//							if (!navigator.onLine) { 
-							if (!navigator.__onLine) { // テスト用コード 
+							if (!navigator.onLine || navigator.__offLine) { // テスト用コード 
 								// オフライン時は何もしない
 								dfd.resolve();
 								return dfd.promise();

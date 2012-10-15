@@ -63,9 +63,9 @@ $(function() {
 		'#onlineStatus change': function(context) {
 			var value = context.event.target.value;
 			if (value == 'on') {
-				window.navigator.__onLine = true;
+				window.navigator.__offLine = false;
 			} else if (value == 'off') {
-				window.navigator.__onLine = false;
+				window.navigator.__offLine = true;
 			}
 		},
 
