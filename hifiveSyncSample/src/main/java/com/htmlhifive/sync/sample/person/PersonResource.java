@@ -143,14 +143,13 @@ public class PersonResource extends AbstractSyncResource<Person> {
     @Override
     protected Person doUpdate(Person item) {
 
-        // itemはDTOとしてのPersonなので、永続データにアタッチするために取得、コピーする
+        // itemはDTOとしてのPersonなので、永続データとして存在することを確認する
+        if (!repository.exists(item.getPersonId())) {
 
-        Person updatingEntity = findPerson(item.getPersonId());
-        updatingEntity.setName(item.getName());
-        updatingEntity.setAge(item.getAge());
-        updatingEntity.setOrganization(item.getOrganization());
+            throw new BadRequestException("entity not found :" + item.getPersonId());
+        }
 
-        return repository.save(updatingEntity);
+        return repository.save(item);
     }
 
     /**
