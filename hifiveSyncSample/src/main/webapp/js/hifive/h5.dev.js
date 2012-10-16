@@ -12416,11 +12416,11 @@ var h5internal = {
 				var model = dataModelManager.models[modelName];
 				var item = model.create(value.item);
 	
-				// idにsequenceを使っている場合は、
+				// デフォルトのGlobalIdの振り方をしている場合には、
 				// itemのidを振るためのsequenceを現在のitemの最大値＋１とする
-				if (model.__idSequence) {
-					maxIds[modelName] = Math.max(maxIds[modelName], item[model.idKey]
-							.substring(that._storageId.length + 1));
+				var len = manager._storageId.length;
+				if (item.get(model.idKey).substring(0, len) === manager._storageId) {
+					maxIds[modelName] = Math.max(maxIds[modelName], item.get(model.idKey).substring(len + 1));
 				}
 			});
 			
