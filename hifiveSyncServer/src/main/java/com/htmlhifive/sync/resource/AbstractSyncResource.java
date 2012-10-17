@@ -22,12 +22,11 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
-import javax.persistence.EntityExistsException;
 
 import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.common.ResourceItemCommonDataId;
-import com.htmlhifive.sync.common.ResourceItemCommonDataRepository;
-import com.htmlhifive.sync.exception.BadRequestException;
+import com.htmlhifive.sync.common.ResourceItemCommonDataRepositoryService;
+import com.htmlhifive.sync.common.ResourceItemCommonDataService;
 import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.ItemUpdatedException;
 import com.htmlhifive.sync.exception.LockException;
@@ -70,10 +69,10 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	private ResourceItemConverter<I> defaultItemConverter;
 
 	/**
-	 * 共通データのリポジトリ.
+	 * このリソースが受け付けるアイテム型への変換を行うコンバータ.
 	 */
-	@Resource
-	private ResourceItemCommonDataRepository repository;
+	@Resource(type = ResourceItemCommonDataRepositoryService.class)
+	private ResourceItemCommonDataService commonDataService;
 
 	/**
 	 * 指定されたリソースアイテム共通データに対応するリソースアイテムを取得します.
@@ -95,7 +94,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			ResourceItemCommonDataId reCreatedId = new ResourceItemCommonDataId(name(), itemCommonData.getId()
 					.getResourceItemId());
 
-			ResourceItemCommonData common = currentCommonData(reCreatedId);
+			ResourceItemCommonData common = commonDataService.currentCommonData(reCreatedId);
 
 			I item = doGet(common.getTargetItemId());
 
@@ -117,7 +116,8 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 		// TODO 次期バージョンにて実装予定(悲観・排他ロックのチェック)
 
-		List<ResourceItemCommonData> commonDataList = repository.findModified(name(), query.getLastDownloadTime());
+		List<ResourceItemCommonData> commonDataList = commonDataService.modifiedCommonData(name(),
+				query.getLastDownloadTime());
 
 		Map<I, ResourceItemCommonData> items = doGetByQuery(commonDataList, query.getConditions());
 
@@ -151,7 +151,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			// アクション、上り更新実行時刻を設定
 			itemCommon.modify(itemCommon.getAction(), uploadCommon.getSyncTime());
 			// 保存
-			saveNewCommonData(itemCommon);
+			commonDataService.saveNewCommonData(itemCommon);
 
 			// 登録されたリソースアイテム共通データ、アイテムをリターン
 			itemCommon.setConflictType(SyncConflictType.NONE);
@@ -160,8 +160,8 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		} catch (DuplicateIdException e) {
 
 			// キー重複の場合、共通データ、リソースアイテムには現在サーバで管理されているものを設定する
-			ResourceItemCommonData currentCommon = currentCommonData(itemCommon.getId().getResourceName(),
-					e.getDuplicatedTargetItemId());
+			ResourceItemCommonData currentCommon = commonDataService.currentCommonData(itemCommon.getId()
+					.getResourceName(), e.getDuplicatedTargetItemId());
 
 			currentCommon.setConflictType(SyncConflictType.DUPLICATE_ID);
 			return new ResourceItemWrapper<>(currentCommon, itemType().cast(e.getCurrentItem()));
@@ -265,7 +265,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		// TODO 次期バージョンにて実装予定(reservedフラグの確認、悲観・排他/共有ロックのチェック)
 
 		// 更新前共通データの取得
-		ResourceItemCommonData currentCommon = currentCommonData(itemCommon.getId());
+		ResourceItemCommonData currentCommon = commonDataService.currentCommonData(itemCommon.getId());
 
 		// 競合判定
 		// 競合がなければ、更新対象は渡されたitemとなる
@@ -306,7 +306,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		}
 
 		currentCommon.modify(itemCommon.getAction(), uploadCommon.getSyncTime());
-		ResourceItemCommonData commonAfterUpdate = saveUpdatedCommonData(currentCommon);
+		ResourceItemCommonData commonAfterUpdate = commonDataService.saveUpdatedCommonData(currentCommon);
 
 		commonAfterUpdate.setConflictType(SyncConflictType.NONE);
 		return new ResourceItemWrapper<>(commonAfterUpdate, updateItem);
@@ -367,22 +367,6 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	protected abstract I doDelete(String targetItemId);
 
 	/**
-	 * リソースアイテム共通クラスだけを強制的に更新します.
-	 *
-	 * @param resourceItemId リソースアイテムID
-	 * @param action アクション
-	 * @param lastModified 更新時刻
-	 */
-	protected void doUpdateCommonDataForce(String resourceItemId, SyncAction updateAction, long updateTime) {
-
-		ResourceItemCommonData common = currentCommonData(new ResourceItemCommonDataId(name(), resourceItemId));
-
-		common.modify(updateAction, updateTime);
-
-		repository.save(common);
-	}
-
-	/**
 	 * オブジェクトをリソースアイテムの型に変換するためのコンバータオブジェクトを返します.
 	 *
 	 * @return コンバータ
@@ -423,68 +407,6 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 		// この抽象クラスで1つ目の型変数に指定されているのがアイテムの型
 		return (Class<I>) thisType.getActualTypeArguments()[0];
-	}
-
-	/**
-	 * リソースアイテム共通データのIDオブジェクトで共通データエンティティを検索し、返します.<br>
-	 *
-	 * @param id リソースアイテム共通データID
-	 * @return 共通データエンティティ
-	 */
-	private ResourceItemCommonData currentCommonData(ResourceItemCommonDataId id) {
-
-		ResourceItemCommonData common = repository.findOne(id);
-
-		if (common == null) {
-			throw new BadRequestException("itemCommonData not found : " + id.getResourceName() + "-"
-					+ id.getResourceItemId());
-		}
-		return common;
-	}
-
-	/**
-	 * リソース名、そのリソースごとのアイテムにおけるIDで共通データエンティティを検索し、返します.
-	 *
-	 * @param resourceName リソース名
-	 * @param targetItemId 対象リソースアイテムのID
-	 * @return 共通データエンティティ
-	 */
-	private ResourceItemCommonData currentCommonData(String resourceName, String targetItemId) {
-
-		ResourceItemCommonData common = repository.findByTargetItemId(resourceName, targetItemId);
-
-		if (common == null) {
-			throw new BadRequestException("itemCommonData not found : " + resourceName + "-" + targetItemId);
-		}
-		return common;
-	}
-
-	/**
-	 * 新規リソースに対応する共通データを保存します.
-	 *
-	 * @param common リソースアイテム共通データ
-	 * @return 保存された共通データ
-	 */
-	private ResourceItemCommonData saveNewCommonData(ResourceItemCommonData common) {
-
-		if (repository.exists(common.getId())) {
-
-			EntityExistsException cause = new EntityExistsException("duplicated common data : id = " + common.getId());
-			throw new BadRequestException("inconsistent data exists", cause);
-		}
-
-		return repository.save(common);
-	}
-
-	/**
-	 * リソースに対応する共通データを保存します.<br>
-	 *
-	 * @param common リソースアイテム共通データ
-	 * @return 保存された共通データ
-	 */
-	private ResourceItemCommonData saveUpdatedCommonData(ResourceItemCommonData common) {
-
-		return repository.save(common);
 	}
 
 	/**
