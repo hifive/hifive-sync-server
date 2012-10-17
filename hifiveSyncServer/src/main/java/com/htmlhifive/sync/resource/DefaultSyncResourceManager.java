@@ -69,23 +69,41 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	private Map<String, Class<? extends UpdateStrategy>> updateStrategyMap;
 
 	/**
-	 * インスタンスを生成し、Mapフィールドのセットアップを行います.
+	 * フレームワークが利用するデフォルトコンストラクタ.
 	 */
-	public DefaultSyncResourceManager() {
+	@SuppressWarnings("unused")
+	private DefaultSyncResourceManager() {
+	}
+
+	/**
+	 * インスタンスを生成し、Mapフィールドのセットアップを行います.
+	 *
+	 * @param resourceBaseTypeName リソースの基底タイプのクラス名
+	 */
+	public DefaultSyncResourceManager(String resourceBaseTypeName) {
 
 		this.resourceMap = new HashMap<>();
 		this.requiredLockStatusMap = new HashMap<>();
 		this.lockStrategyMap = new HashMap<>();
 		this.updateStrategyMap = new HashMap<>();
 
-		init();
+		init(resourceBaseTypeName);
 	}
 
 	/**
 	 * クラスパス上のリソースを検索し、Mapに保持してこのクラスのインスタンスを生成します.<br>
-	 * {@link SyncResource} インターフェースを実装し、{@link SyncResourceService} アノテーションを付与したクラスをリソースとします.
+	 * resourceBaseTypeNameのサブタイプで、{@link SyncResourceService} アノテーションを付与したクラスをリソースとします.
+	 *
+	 * @param resourceBaseTypeName リソースの基底タイプのクラス名
 	 */
-	private void init() {
+	private void init(String resourceBaseTypeName) {
+
+		Class<?> resourceBaseType;
+		try {
+			resourceBaseType = Class.forName(resourceBaseTypeName);
+		} catch (ClassNotFoundException e) {
+			throw new SyncException("Class of resource base type is not found. : " + resourceBaseTypeName, e);
+		}
 
 		ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
 		scanner.addIncludeFilter(new AnnotationTypeFilter(SyncResourceService.class));
@@ -93,7 +111,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 		Set<BeanDefinition> candidates = scanner.findCandidateComponents("");
 		for (BeanDefinition def : candidates) {
 
-			Class<? extends SyncResource<?>> resourceClass = selectResource(def);
+			Class<? extends SyncResource<?>> resourceClass = extractResource(def, resourceBaseType);
 			if (resourceClass == null) {
 				continue;
 			}
@@ -116,7 +134,6 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 
 			// 更新戦略オブジェクトを特定する
 			updateStrategyMap.put(resourceName, resourceAnnotation.updateStrategy());
-
 		}
 	}
 
@@ -124,22 +141,25 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	 * BeanDefinitionオブジェクトからリソースのクラスオブジェクトを抽出して返します.<br>
 	 *
 	 * @param def リソース候補のクラスのBeanDefinition
-	 * @return クラスオブジェクト
+	 * @param resourceBaseType リソースの基底タイプ
+	 * @return リソースのクラスオブジェクト
 	 */
 	@SuppressWarnings("unchecked")
-	private Class<? extends SyncResource<?>> selectResource(BeanDefinition def) {
+	private Class<? extends SyncResource<?>> extractResource(BeanDefinition def, Class<?> resourceBaseType) {
 
+		Class<?> found;
 		try {
-			// null,interface,SeparatedSyncResourceのサブタイプ以外,abstractのクラスを除外
-			Class<?> found = Class.forName(def.getBeanClassName());
-			if (found == null || found.isInterface() || !SyncResource.class.isAssignableFrom(found)
-					|| Modifier.isAbstract(found.getModifiers())) {
-				return null;
-			} else {
-				return (Class<? extends SyncResource<?>>) found;
-			}
+			found = Class.forName(def.getBeanClassName());
 		} catch (ClassNotFoundException e) {
 			throw new SyncException("An Exception thrown by SyncResourceManager", e);
+		}
+
+		// null,interface, resourceBaseTypeNameで指定された基底タイプのサブタイプ以外, abstractのクラスを除外
+		if (found == null || found.isInterface() || !resourceBaseType.isAssignableFrom(found)
+				|| Modifier.isAbstract(found.getModifiers())) {
+			return null;
+		} else {
+			return (Class<? extends SyncResource<?>>) found;
 		}
 	}
 
