@@ -10,9 +10,17 @@
 		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
 		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
 
+	<context:component-scan base-package="com.htmlhifive.sync.sample" />
+
 	<!-- JPA repository settings -->
 	<jpa:repositories base-package="com.htmlhifive.sync.sample"
 		transaction-manager-ref="txManager" />
+
+	<!-- Resource base configuration -->
+	<bean id="resourceManager" class="com.htmlhifive.sync.resource.DefaultSyncResourceManager">
+		<constructor-arg name="resourceBaseTypeName"
+			value="com.htmlhifive.sync.resource.AbstractSyncResource" />
+	</bean>
 
 	<!-- Synchronizer configuration -->
 	<bean id="synchronizer" class="com.htmlhifive.sync.service.DefaultSynchronizer">
@@ -21,8 +29,6 @@
 		<!-- <property name="continueOnConflictOfDuplicateId" value="true" /> -->
 		<property name="continueOnConflictOfUpdated" value="true" />
 	</bean>
-
-	<context:component-scan base-package="com.htmlhifive.sync.sample" />
 
 	<!-- JPA -->
 	<bean id="jpaVendorAdapter"
