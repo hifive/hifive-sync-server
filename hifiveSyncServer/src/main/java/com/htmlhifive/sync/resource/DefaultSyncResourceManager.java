@@ -78,31 +78,31 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	/**
 	 * インスタンスを生成し、Mapフィールドのセットアップを行います.
 	 *
-	 * @param resourceBaseTypeName リソースの基底タイプのクラス名
+	 * @param syncResourceBaseTypeName リソースの基底タイプのクラス名
 	 */
-	public DefaultSyncResourceManager(String resourceBaseTypeName) {
+	public DefaultSyncResourceManager(String syncResourceBaseTypeName) {
 
 		this.resourceMap = new HashMap<>();
 		this.requiredLockStatusMap = new HashMap<>();
 		this.lockStrategyMap = new HashMap<>();
 		this.updateStrategyMap = new HashMap<>();
 
-		init(resourceBaseTypeName);
+		init(syncResourceBaseTypeName);
 	}
 
 	/**
 	 * クラスパス上のリソースを検索し、Mapに保持してこのクラスのインスタンスを生成します.<br>
 	 * resourceBaseTypeNameのサブタイプで、{@link SyncResourceService} アノテーションを付与したクラスをリソースとします.
 	 *
-	 * @param resourceBaseTypeName リソースの基底タイプのクラス名
+	 * @param syncResourceBaseTypeName リソースの基底タイプのクラス名
 	 */
-	private void init(String resourceBaseTypeName) {
+	private void init(String syncResourceBaseTypeName) {
 
 		Class<?> resourceBaseType;
 		try {
-			resourceBaseType = Class.forName(resourceBaseTypeName);
+			resourceBaseType = Class.forName(syncResourceBaseTypeName);
 		} catch (ClassNotFoundException e) {
-			throw new SyncException("Class of resource base type is not found. : " + resourceBaseTypeName, e);
+			throw new SyncException("Class of resource base type is not found. : " + syncResourceBaseTypeName, e);
 		}
 
 		ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
@@ -141,11 +141,11 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	 * BeanDefinitionオブジェクトからリソースのクラスオブジェクトを抽出して返します.<br>
 	 *
 	 * @param def リソース候補のクラスのBeanDefinition
-	 * @param resourceBaseType リソースの基底タイプ
+	 * @param syncResourceBaseType リソースの基底タイプ
 	 * @return リソースのクラスオブジェクト
 	 */
 	@SuppressWarnings("unchecked")
-	private Class<? extends SyncResource<?>> extractResource(BeanDefinition def, Class<?> resourceBaseType) {
+	private Class<? extends SyncResource<?>> extractResource(BeanDefinition def, Class<?> syncResourceBaseType) {
 
 		Class<?> found;
 		try {
@@ -155,7 +155,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 		}
 
 		// null,interface, resourceBaseTypeNameで指定された基底タイプのサブタイプ以外, abstractのクラスを除外
-		if (found == null || found.isInterface() || !resourceBaseType.isAssignableFrom(found)
+		if (found == null || found.isInterface() || !syncResourceBaseType.isAssignableFrom(found)
 				|| Modifier.isAbstract(found.getModifiers())) {
 			return null;
 		} else {
