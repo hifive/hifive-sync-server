@@ -29,11 +29,6 @@ public enum SyncAction {
 	CREATE,
 
 	/**
-	 * リソースアイテムの参照.
-	 */
-	READ,
-
-	/**
 	 * 既存リソースアイテムの更新.
 	 */
 	UPDATE,
