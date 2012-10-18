@@ -49,7 +49,7 @@ public @interface SyncResourceService {
 
 	/**
 	 * リソースが使用するロック戦略の実装クラス.<br>
-	 * ロックモードが{@link ResourceLockStatusType#UNLOCK}の場合は使用されません.
+	 * requiredLockStatusが{@link ResourceLockStatusType#UNLOCK}の場合は使用されません.
 	 *
 	 * @return LockManagerのクラスオブジェクト
 	 */
@@ -57,7 +57,7 @@ public @interface SyncResourceService {
 
 	/**
 	 * リソースが使用する競合発生時のリソースアイテム更新戦略の実装クラス.<br>
-	 * ロックモードが{@link ResourceLockStatusType#UNLOCK}の場合のみ使用されます.
+	 * requiredLockStatusが{@link ResourceLockStatusType#UNLOCK}の場合のみ使用されます.
 	 *
 	 * @return LockManagerのクラスオブジェクト
 	 */
