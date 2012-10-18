@@ -14,6 +14,19 @@
 	<jpa:repositories base-package="com.htmlhifive.sync.common"
 		transaction-manager-ref="txManager" />
 
+	<!-- JPA Entity Manager settings -->
+	<bean id="abstractEntityManagerFactory"
+		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean"
+		abstract="true">
+		<property name="dataSource" ref="dataSource" />
+		<property name="packagesToScan">
+			<list>
+				<value>com.htmlhifive.sync.common</value>
+				<value>com.htmlhifive.sync.service</value>
+			</list>
+		</property>
+	</bean>
+
 	<!-- hifive-sync-server configuration value for app -->
 	<util:constant id="AVOID_DEADLOCK"
 		static-field="com.htmlhifive.sync.service.SyncModeType.AVOID_DEADLOCK" />
