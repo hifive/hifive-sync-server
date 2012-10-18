@@ -13,6 +13,7 @@
         <webClassPathEntry>/hifiveSyncSample/lib/runtime/antlr-2.7.7.jar</webClassPathEntry>
         <webClassPathEntry>/hifiveSyncSample/lib/runtime/aopalliance-1.0.jar</webClassPathEntry>
         <webClassPathEntry>/hifiveSyncSample/lib/runtime/aspectjrt-1.6.12.jar</webClassPathEntry>
+        <webClassPathEntry>/hifiveSyncSample/lib/runtime/aspectjweaver-1.7.0.jar</webClassPathEntry>
         <webClassPathEntry>/hifiveSyncSample/lib/runtime/cglib-nodep-2.2.jar</webClassPathEntry>
         <webClassPathEntry>/hifiveSyncSample/lib/runtime/commons-collections-3.2.1.jar</webClassPathEntry>
         <webClassPathEntry>/hifiveSyncSample/lib/runtime/commons-dbcp-1.4.jar</webClassPathEntry>

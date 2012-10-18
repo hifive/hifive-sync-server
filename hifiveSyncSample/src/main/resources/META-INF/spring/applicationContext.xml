@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p"
-	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
 	xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
 	xmlns:jpa="http://www.springframework.org/schema/data/jpa" xmlns:util="http://www.springframework.org/schema/util"
 	xsi:schemaLocation="http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
@@ -24,22 +23,40 @@
 		<!-- <property name="continueOnConflictOfDuplicateId" value="true" /> -->
 		<property name="continueOnConflictOfUpdated" value="true" />
 	</bean>
+	<tx:advice id="SynchronizerTxAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<tx:method name="*" timeout="3" />
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:pointcut id="serviceTransactionBoundary"
+			expression="execution(* com.htmlhifive.sync.service.DefaultSynchronizer.*(..))" />
+		<aop:advisor advice-ref="SynchronizerTxAdvice"
+			pointcut-ref="serviceTransactionBoundary" />
+	</aop:config>
 
-	<!-- Context base package settings -->
-	<context:component-scan base-package="com.htmlhifive.sync.sample" />
+	<!-- Application Transaction configuration -->
+	<tx:advice id="personResourceTxAdvice" transaction-manager="txManager">
+		<tx:attributes>
+			<tx:method name="getResourceItemByPersonId" propagation="SUPPORTS"
+				timeout="3" />
+		</tx:attributes>
+	</tx:advice>
+	<aop:config>
+		<aop:pointcut id="personResourceTransactionBoundary"
+			expression="execution(* com.htmlhifive.sync.sample.person.PersonResource.getResourceItemByPersonId(..))" />
+		<aop:advisor advice-ref="personResourceTxAdvice"
+			pointcut-ref="personResourceTransactionBoundary" />
+	</aop:config>
 
-	<!-- JPA repository settings -->
+	<!-- Application JPA repository settings -->
 	<jpa:repositories base-package="com.htmlhifive.sync.sample"
 		transaction-manager-ref="txManager" />
 
-	<!-- JPA TransactionManager settings -->
-	<tx:annotation-driven transaction-manager="txManager"
-		proxy-target-class="true" />
-	<bean id="txManager" class="org.springframework.orm.jpa.JpaTransactionManager"
-		p:dataSource-ref="dataSource">
-	</bean>
+	<!-- Application Context base package settings -->
+	<context:component-scan base-package="com.htmlhifive.sync.sample" />
 
-	<!-- JPA Entity Manager settings -->
+	<!-- JPA EntityManager settings -->
 	<bean id="entityManagerFactory" parent="abstractEntityManagerFactory">
 		<property name="packagesToScan">
 			<list merge="true">

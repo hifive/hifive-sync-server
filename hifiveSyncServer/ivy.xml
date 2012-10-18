@@ -29,56 +29,48 @@
 
 	<dependencies>
 		<dependency org="ch.qos.logback" name="logback-classic"
-			rev="1.0.6"  conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="1.0.6" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="com.h2database" name="h2" rev="1.3.168"
-			 conf="compile->compile(*),master(*);runtime->runtime(*)" />
-		<dependency org="cglib" name="cglib-nodep" rev="2.2" 
+			conf="compile->compile(*),master(*);runtime->runtime(*)" />
+		<dependency org="org.aspectj" name="aspectjweaver" rev="1.7.0"
+			conf="compile->compile(*),master(*);runtime->runtime(*)" />
+		<dependency org="cglib" name="cglib-nodep" rev="2.2"
 			conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="commons-dbcp" name="commons-dbcp" rev="1.4"
-			 conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.apache.commons" name="commons-lang3"
-			rev="3.1"  conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="3.1" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.hibernate" name="hibernate-core" rev="4.0.1.Final"
-			 conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.hibernate" name="hibernate-entitymanager"
-			rev="4.0.1.Final" 
-			conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="4.0.1.Final" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.springframework.data" name="spring-data-jpa"
-			rev="1.1.2.RELEASE" 
-			conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="1.1.2.RELEASE" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.springframework.data" name="spring-data-commons-core"
-			rev="1.3.2.RELEASE" 
-			conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="1.3.2.RELEASE" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.codehaus.jackson" name="jackson-mapper-asl"
-			rev="1.9.9"  conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="1.9.9" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.codehaus.jackson" name="jackson-jaxrs"
-			rev="1.9.9"  conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="1.9.9" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.springframework" name="spring-web"
-			rev="3.1.2.RELEASE" 
-			conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="3.1.2.RELEASE" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.springframework" name="spring-webmvc"
-			rev="3.1.2.RELEASE" 
-			conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="3.1.2.RELEASE" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.springframework.security" name="spring-security-core"
-			rev="3.1.2.RELEASE" 
-			conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="3.1.2.RELEASE" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.springframework.security" name="spring-security-config"
-			rev="3.1.2.RELEASE" 
-			conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="3.1.2.RELEASE" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.springframework.security" name="spring-security-web"
-			rev="3.1.2.RELEASE" 
-			conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="3.1.2.RELEASE" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.springframework.security" name="spring-security-taglibs"
-			rev="3.1.2.RELEASE" 
-			conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="3.1.2.RELEASE" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.springframework.security" name="spring-security-acl"
-			rev="3.1.2.RELEASE" 
-			conf="compile->compile(*),master(*);runtime->runtime(*)" />
+			rev="3.1.2.RELEASE" conf="compile->compile(*),master(*);runtime->runtime(*)" />
 		<dependency org="org.springframework" name="spring-test"
-			rev="3.1.2.RELEASE"  conf="test->runtime(*),master(*)" />
+			rev="3.1.2.RELEASE" conf="test->runtime(*),master(*)" />
 		<dependency org="org.dspace.dependencies.jmockit" name="dspace-jmockit"
-			rev="0.999.4"  conf="test->runtime(*),master(*)" />
-		<dependency org="junit" name="junit" rev="4.10" 
+			rev="0.999.4" conf="test->runtime(*),master(*)" />
+		<dependency org="junit" name="junit" rev="4.10"
 			conf="test->runtime(*),master(*)" />
 	</dependencies>
 </ivy-module>

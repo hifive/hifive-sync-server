@@ -22,6 +22,7 @@
 	<classpathentry kind="lib" path="lib/runtime/antlr-2.7.7.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/aopalliance-1.0.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/aspectjrt-1.6.12.jar"/>
+	<classpathentry kind="lib" path="lib/runtime/aspectjweaver-1.7.0.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/cglib-nodep-2.2.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/commons-collections-3.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/runtime/commons-dbcp-1.4.jar"/>

@@ -1,20 +1,25 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context"
 	xmlns:jpa="http://www.springframework.org/schema/data/jpa" xmlns:util="http://www.springframework.org/schema/util"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+        http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd
         http://www.springframework.org/schema/data/jpa http://www.springframework.org/schema/data/jpa/spring-jpa-1.0.xsd
         http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
         http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd">
 
+	<!-- AOP settings -->
+	<aop:config proxy-target-class="true" />
+
 	<context:component-scan base-package="com.htmlhifive.sync" />
 
-	<jpa:repositories base-package="com.htmlhifive.sync.service"
-		transaction-manager-ref="txManager" />
-	<jpa:repositories base-package="com.htmlhifive.sync.common"
-		transaction-manager-ref="txManager" />
+	<!-- JPA TrnsactionManager settings -->
+	<bean id="txManager" class="org.springframework.orm.jpa.JpaTransactionManager"
+		p:dataSource-ref="dataSource">
+	</bean>
 
-	<!-- JPA Entity Manager settings -->
+	<!-- JPA EntityManager settings (must override) -->
 	<bean id="abstractEntityManagerFactory"
 		class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean"
 		abstract="true">
@@ -27,8 +32,25 @@
 		</property>
 	</bean>
 
-	<!-- hifive-sync-server configuration value for app -->
-	<util:constant id="AVOID_DEADLOCK"
-		static-field="com.htmlhifive.sync.service.SyncModeType.AVOID_DEADLOCK" />
+	<!-- JPA repository settings -->
+	<jpa:repositories base-package="com.htmlhifive.sync.service"
+		transaction-manager-ref="txManager" />
+	<jpa:repositories base-package="com.htmlhifive.sync.common"
+		transaction-manager-ref="txManager" />
+
+	<!-- hifive-sync-server configuration constants -->
+	<util:constant id="DOWNLOAD_CTRL_READ_LOCK"
+		static-field="com.htmlhifive.sync.service.download.DownloadControlType.READ_LOCK" />
+	<util:constant id="DOWNLOAD_CTRL_VERIFY"
+		static-field="com.htmlhifive.sync.service.download.DownloadControlType.VERIFY" />
+	<util:constant id="DOWNLOAD_CTRL_NONE"
+		static-field="com.htmlhifive.sync.service.download.DownloadControlType.NONE" />
+
+	<util:constant id="UPLOAD_CTRL_RESERVE"
+		static-field="com.htmlhifive.sync.service.upload.UploadControlType.RESERVE" />
+	<util:constant id="UPLOAD_CTRL_AVOID_DEADLOCK"
+		static-field="com.htmlhifive.sync.service.upload.UploadControlType.AVOID_DEADLOCK" />
+	<util:constant id="UPLOAD_CTRL_NONE"
+		static-field="com.htmlhifive.sync.service.upload.UploadControlType.NONE" />
 
 </beans>
