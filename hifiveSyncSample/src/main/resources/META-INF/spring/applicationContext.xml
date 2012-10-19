@@ -17,29 +17,32 @@
 	</bean>
 
 	<!-- Synchronizer configuration -->
-	<bean id="synchronizer" class="com.htmlhifive.sync.service.DefaultSynchronizer">
-		<property name="bufferTimeForDownload" value="60000" />
-		<!-- <property name="syncMode" value="AVOID_DEADLOCK" /> -->
-		<!-- <property name="continueOnConflictOfDuplicateId" value="true" /> -->
+	<bean id="syncConfiguration"
+		class="com.htmlhifive.sync.service.DefaultSynchronizerConfiguration">
+		<property name="bufferTimeForDownload">
+			<util:property-path path="txManager.defaultTimeout" />
+		</property>
+		<property name="uploadControlType" value="NONE" />
+		<property name="downloadControlType" value="NONE" />
+		<!-- <property name="continueOnConflictOfDuplicateId" value="false" /> -->
 		<property name="continueOnConflictOfUpdated" value="true" />
 	</bean>
-	<tx:advice id="SynchronizerTxAdvice" transaction-manager="txManager">
+	<tx:advice id="synchronizerTxAdvice" transaction-manager="txManager">
 		<tx:attributes>
-			<tx:method name="*" timeout="3" />
+			<tx:method name="*" />
 		</tx:attributes>
 	</tx:advice>
 	<aop:config>
 		<aop:pointcut id="serviceTransactionBoundary"
 			expression="execution(* com.htmlhifive.sync.service.DefaultSynchronizer.*(..))" />
-		<aop:advisor advice-ref="SynchronizerTxAdvice"
+		<aop:advisor advice-ref="synchronizerTxAdvice"
 			pointcut-ref="serviceTransactionBoundary" />
 	</aop:config>
 
 	<!-- Application Transaction configuration -->
 	<tx:advice id="personResourceTxAdvice" transaction-manager="txManager">
 		<tx:attributes>
-			<tx:method name="getResourceItemByPersonId" propagation="SUPPORTS"
-				timeout="3" />
+			<tx:method name="getResourceItemByPersonId" propagation="SUPPORTS" />
 		</tx:attributes>
 	</tx:advice>
 	<aop:config>

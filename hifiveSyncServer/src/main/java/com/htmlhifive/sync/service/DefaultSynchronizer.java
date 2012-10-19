@@ -28,7 +28,6 @@ import javax.annotation.Resource;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.BadRequestException;
@@ -40,6 +39,7 @@ import com.htmlhifive.sync.resource.SyncConflictType;
 import com.htmlhifive.sync.resource.SyncResource;
 import com.htmlhifive.sync.resource.SyncResourceManager;
 import com.htmlhifive.sync.service.download.DownloadCommonData;
+import com.htmlhifive.sync.service.download.DownloadControlType;
 import com.htmlhifive.sync.service.download.DownloadRequest;
 import com.htmlhifive.sync.service.download.DownloadResponse;
 import com.htmlhifive.sync.service.lock.LockCommonData;
@@ -47,6 +47,7 @@ import com.htmlhifive.sync.service.lock.LockRequest;
 import com.htmlhifive.sync.service.lock.LockResponse;
 import com.htmlhifive.sync.service.upload.UploadCommonData;
 import com.htmlhifive.sync.service.upload.UploadCommonDataRepository;
+import com.htmlhifive.sync.service.upload.UploadControlType;
 import com.htmlhifive.sync.service.upload.UploadRequest;
 import com.htmlhifive.sync.service.upload.UploadResponse;
 
@@ -56,33 +57,14 @@ import com.htmlhifive.sync.service.upload.UploadResponse;
  *
  * @author kishigam
  */
-@Transactional
 @Service
 public class DefaultSynchronizer implements Synchronizer {
 
 	/**
-	 * クライアントに返す今回の同期時刻を、実際の同期実行時刻の何ミリ秒前とするかを設定します.<br>
-	 * (デフォルト：0)
+	 * 同期制御の設定情報.
 	 */
-	private long bufferTimeForDownload = 0L;
-
-	/**
-	 * 上り更新、および下り更新の同期モード.<br>
-	 * (デフォルト：リソースを順序不定で直接更新)
-	 */
-	private SyncModeType syncMode = SyncModeType.DIRECT_UPDATE;
-
-	/**
-	 * DUPLICATE_ID競合発生時の処理継続可否.<br>
-	 * (デフォルト：継続しない)
-	 */
-	private boolean continueOnConflictOfDuplicateId = false;
-
-	/**
-	 * DUPLICATE_ID競合発生時の処理継続可否.<br>
-	 * (デフォルト：継続しない)
-	 */
-	private boolean continueOnConflictOfUpdated = false;
+	@Resource(type = DefaultSynchronizerConfiguration.class)
+	private SyncConfiguration syncConfiguration;
 
 	/**
 	 * リソースへのインターフェースを取得するためのマネージャ.
@@ -112,8 +94,8 @@ public class DefaultSynchronizer implements Synchronizer {
 
 		ResultMapBuilder resultBuilder = new ResultMapBuilder();
 
-		// AVOID_DEADLOCKモードの場合、リソースアイテムをreserve
-		if (this.syncMode == SyncModeType.AVOID_DEADLOCK) {
+		// READ_LOCKの場合、リソースアイテムをreserve
+		if (this.syncConfiguration.downloadControl() == DownloadControlType.READ_LOCK) {
 
 			// TODO 次期バージョンにて実装予定
 			//
@@ -138,7 +120,8 @@ public class DefaultSynchronizer implements Synchronizer {
 		DownloadCommonData responseCommon = new DownloadCommonData(requestCommon.getStorageId());
 
 		// リクエストの処理時刻でレスポンスの最終下り更新時刻を更新(同タイミングで上り更新されたデータを読み出すためのバッファを考慮)
-		responseCommon.setLastDownloadTime(requestCommon.getSyncTime() - bufferTimeForDownload);
+		responseCommon.setLastDownloadTime(requestCommon.getSyncTime() - syncConfiguration.bufferTimeForDownload()
+				* 1000L);
 
 		// 下り更新レスポンスに結果を設定
 		DownloadResponse response = new DownloadResponse(responseCommon);
@@ -177,8 +160,8 @@ public class DefaultSynchronizer implements Synchronizer {
 			return new UploadResponse(responseCommon);
 		}
 
-		// AVOID_DEADLOCKモードの場合
-		if (this.syncMode == SyncModeType.AVOID_DEADLOCK) {
+		// RESERVEモードの場合
+		if (this.syncConfiguration.uploadControl() == UploadControlType.RESERVE) {
 
 			// TODO 次期バージョンにて実装予定
 			// AVOID_DEADLOCK(sort,reserve)
@@ -362,10 +345,10 @@ public class DefaultSynchronizer implements Synchronizer {
 	private boolean continueOnConflict(SyncConflictType resultType) {
 
 		if (resultType == SyncConflictType.DUPLICATE_ID)
-			return continueOnConflictOfDuplicateId;
+			return this.syncConfiguration.isContinueOnConflictOfDuplicateId();
 
 		if (resultType == SyncConflictType.UPDATED)
-			return continueOnConflictOfUpdated;
+			return this.syncConfiguration.isContinueOnConflictOfUpdated();
 
 		return true;
 	}
@@ -479,45 +462,5 @@ public class DefaultSynchronizer implements Synchronizer {
 		}
 
 		return map;
-	}
-
-	/**
-	 * 設定用setterメソッド.<br>
-	 * アプリケーションから使用することはありません.
-	 *
-	 * @param bufferTimeForDownload セットする bufferTimeForDownload
-	 */
-	public void setBufferTimeForDownload(long bufferTimeForDownload) {
-		this.bufferTimeForDownload = bufferTimeForDownload;
-	}
-
-	/**
-	 * 設定用setterメソッド.<br>
-	 * アプリケーションから使用することはありません.
-	 *
-	 * @param syncMode セットする syncMode
-	 */
-	public void setSyncMode(SyncModeType syncMode) {
-		this.syncMode = syncMode;
-	}
-
-	/**
-	 * 設定用setterメソッド.<br>
-	 * アプリケーションから使用することはありません.
-	 *
-	 * @param continueOnConflictOfDuplicateId セットする continueOnConflictOfDuplicateId
-	 */
-	public void setContinueOnConflictOfDuplicateId(boolean continueOnConflictOfDuplicateId) {
-		this.continueOnConflictOfDuplicateId = continueOnConflictOfDuplicateId;
-	}
-
-	/**
-	 * 設定用setterメソッド.<br>
-	 * アプリケーションから使用することはありません.
-	 *
-	 * @param continueOnConflictOfUpdated セットする continueOnConflictOfUpdated
-	 */
-	public void setContinueOnConflictOfUpdated(boolean continueOnConflictOfUpdated) {
-		this.continueOnConflictOfUpdated = continueOnConflictOfUpdated;
 	}
 }
