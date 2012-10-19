@@ -28,7 +28,7 @@ import com.htmlhifive.sync.common.ResourceItemCommonData;
  *
  * @param <I> リソースアイテムの型
  */
-public class ResourceItemWrapper<I> {
+public class ResourceItemWrapper<I> implements Comparable<ResourceItemWrapper<I>> {
 
 	/**
 	 * リソースアイテム共通データ.
@@ -56,6 +56,16 @@ public class ResourceItemWrapper<I> {
 	public ResourceItemWrapper(ResourceItemCommonData itemCommonData, I item) {
 		this.itemCommonData = itemCommonData;
 		this.item = item;
+	}
+
+	/**
+	 * リソースアイテム共通データが持つリソースアイテムIDの順序で比較します.
+	 */
+	@Override
+	public int compareTo(ResourceItemWrapper<I> o) {
+
+		return this.itemCommonData.getId().getResourceItemId()
+				.compareTo(o.getItemCommonData().getId().getResourceItemId());
 	}
 
 	/**
