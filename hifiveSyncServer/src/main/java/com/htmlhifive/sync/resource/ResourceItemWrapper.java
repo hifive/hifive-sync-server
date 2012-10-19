@@ -59,13 +59,12 @@ public class ResourceItemWrapper<I> implements Comparable<ResourceItemWrapper<I>
 	}
 
 	/**
-	 * リソースアイテム共通データが持つリソースアイテムIDの順序で比較します.
+	 * リソースアイテム共通データ順序で比較します.
 	 */
 	@Override
 	public int compareTo(ResourceItemWrapper<I> o) {
 
-		return this.itemCommonData.getId().getResourceItemId()
-				.compareTo(o.getItemCommonData().getId().getResourceItemId());
+		return this.itemCommonData.compareTo(o.getItemCommonData());
 	}
 
 	/**

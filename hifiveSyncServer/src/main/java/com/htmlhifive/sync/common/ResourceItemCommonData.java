@@ -42,7 +42,7 @@ import com.htmlhifive.sync.resource.SyncConflictType;
  */
 @Entity
 @Table(name = "RESOURCE_ITEM_COMMON_DATA")
-public class ResourceItemCommonData {
+public class ResourceItemCommonData implements Comparable<ResourceItemCommonData> {
 
 	/**
 	 * IDオブジェクト.<br>
@@ -104,6 +104,15 @@ public class ResourceItemCommonData {
 
 		this.id = id;
 		this.targetItemId = targetItemId;
+	}
+
+	/**
+	 * 共通データIDに含まれるリソースアイテムIDの順序で比較します.
+	 */
+	@Override
+	public int compareTo(ResourceItemCommonData o) {
+
+		return this.id.getResourceItemId().compareTo(o.getId().getResourceItemId());
 	}
 
 	/**
