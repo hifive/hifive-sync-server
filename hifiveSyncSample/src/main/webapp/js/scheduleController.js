@@ -236,15 +236,13 @@ $(function() {
 			var date = schedule.dates[0];
 			var promise = this.logic.regist(schedule);
 			
-			scheduleSample.common.showIndicator(this, promise, 'データを登録中');
+//			scheduleSample.common.showIndicator(this, promise, 'データを登録中');
 
-			promise.done( function() {
+			promise.always( function() {
 					that.plotSchedule();
 					that.showScheduleByDate(date);
 					that.closeDialog();
 					alert('登録しました');
-			}).fail(function(e) {
-				that.log.error(e);
 			});
 		},
 
@@ -269,13 +267,11 @@ $(function() {
 			
 			scheduleSample.common.showIndicator(this, promise, 'データを更新中');
 			
-			promise.done(function() {
+			promise.always(function() {
 				that.plotSchedule();
 				that.showScheduleByDate(date);
 				that.closeDialog();
 				alert('スケジュールを変更しました。');
-			}).fail(function(e) {
-				that.log.error(e);
 			});
 		},
 
@@ -295,13 +291,11 @@ $(function() {
 			
 			scheduleSample.common.showIndicator(this, promise, 'データを削除中');
 			
-			promise.done( function() {
+			promise.always( function() {
 					that.plotSchedule();
 					that.showScheduleByDate(date);
 					alert('削除しました。');
 					scheduleSample.common.closeDialog();
-			}).fail(function(e) {
-				that.log.error(e);
 			});
 		},
 
