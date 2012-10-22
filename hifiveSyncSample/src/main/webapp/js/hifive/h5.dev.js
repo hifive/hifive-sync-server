@@ -12412,12 +12412,12 @@ var h5internal = {
 				// itemのidを振るためのsequenceを現在のitemの最大値＋１とする
 				var len = manager._storageId.length;
 				if (item.get(model.idKey).substring(0, len) === manager._storageId) {
-					maxIds[modelName] = Math.max(maxIds[modelName], item.get(model.idKey).substring(len + 1));
+					maxIds[modelName] = Math.max(maxIds[modelName] || 0, item.get(model.idKey).substring(len + 1));
 				}
 			});
 			
 			for (var modelName in maxIds) {
-				dataModelManager.models[modelName].__idSequence = h5.core.data.createSequence(maxIds[modelName], null, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+				dataModelManager.models[modelName].__idSequence = h5.core.data.createSequence(maxIds[modelName]+1, null, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 			}
 			
 			for (var i=0, len=removeKeys.length; i<len; i++) {

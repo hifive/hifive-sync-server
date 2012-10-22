@@ -5,7 +5,6 @@
 		
 		this.scheduleDataModel = scheduleDataModel;
 		this.personDataModel = scheduleSample.data.manager.models.person;
-		this.scheduleDataModel.idSequence = h5.core.data.createSequence(0,1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 		this.syncManager = scheduleSample.sync.manager;
 		this.loginPersonId = null;
 		
@@ -80,8 +79,7 @@
 		
 		regist: function(schedule) {
 			// スケジュールIDの生成
-			// すべてのクライアントで重複しないように作る
-			schedule.scheduleId = this.syncManager.getGlobalItemId(this.scheduleDataModel.idSequence.next());	
+			schedule.scheduleId = this.syncManager.getGlobalItemId(this.scheduleDataModel);	
 			this._removeEmptyUserIds(schedule);
 			this.scheduleDataModel.create(schedule);
 	
