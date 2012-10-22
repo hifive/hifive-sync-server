@@ -12026,7 +12026,7 @@ var h5internal = {
 									continue;
 								}
 								
-								for ( var j = conditionList.length-1 j >= 0; j--) {
+								for ( var j = conditionList.length-1; j >= 0; j--) {
 									if (query.conditions === conditionList[j]) {
 										conditionList.splice(j, 1);
 										break;
@@ -12102,24 +12102,25 @@ var h5internal = {
 
 
 						/**
-						 *
+						 * 
 						 */
 						_dispatchConflictEvent: function(data) {
 							// 衝突あり
-							var eventType;
+							
+							var eventType;  // 競合イベントタイプ 
+							var conflicted; // 競合アイテムリスト
+
 							if (data.uploadCommonData.conflictType === CONFLICT_TYPE_DUPLICATE_ID) {
 								// IDの重複が起きたとき
 								eventType = EVENT_DUPLICATE_ID;
+								conflicted = this._getItemsOfDuplicatedIds(data.resourceItems);
 							} else if (data.uploadCommonData.conflictType === CONFLICT_TYPE_UPDATED) {
 								// 更新しようとして競合が起きたとき
 								eventType = EVENT_UPDATED;
+								conflicted = this._getConflictItems(data.resourceItems);
 							} else {
 								throw new Error(ERR_MSG_INVALID_CONFLICT_TYPE);
 							}
-
-							// 競合したitemを取得する
-							var conflicted = this._getConflictItems(data.resourceItems,
-									data.uploadCommonData.conflictType);
 
 							// モデルごとに競合イベントを発生させる
 							// TODO: このconflictedはすでに競合が起こっていてまだ未解決なものも加える？
@@ -12138,25 +12139,49 @@ var h5internal = {
 							});
 						},
 
+
+						/**
+						 * 送られてきた競合結果のリストをもとに、重複したIDのサーバ側のアイテムとローカルのアイテムのリストを得る
+						 * 
+						 * @param serverItems 競合したアイテムのサーバ側のデータリスト
+						 * @returns {Array} 重複したIDのサーバ側のアイテムとローカルのアイテムを含むリスト
+						 */
+						_getItemsOfDuplicatedIds: function(serverItems) {
+							var conflicted = {};
+							for ( var modelName in serverItems) {
+								conflicted[modelName] = [];
+								
+								var items = serverItems[modelName];
+								for ( var i = 0, len = items.length; i < len; i++) {
+									var serverItem = items[i].item;
+
+									var model = this.dataModelManager.models[items[i].itemCommonData.resourceName];
+
+									conflicted[modelName].push({
+										model: model,
+										localItem: model.get(serverItem[model.idKey]),
+										serverItem: serverItem
+									});
+								}
+							}
+							return conflicted;
+						},
+
 						/**
 						 * 送られてきた競合結果のリストをもとに、競合オブジェクトのリストを得る
 						 * 
 						 * @param serverItems 競合したアイテムのサーバ側のデータリスト
 						 * @returns {Array} 競合オブジェクトのリスト
 						 */
-						_getConflictItems: function(serverItems, conflictType) {
+						_getConflictItems: function(serverItems) {
 							var conflicted = {};
 							for ( var modelName in serverItems) {
-								if (conflictType === CONFLICT_TYPE_UPDATED) {
-									// 更新による競合の場合は、
-									// サーバの更新アイテムと削除アイテムをそれぞれリストで返す
-									conflicted[modelName] = {
-											removed: [],
-											changed: []
-									};
-								} else if (conflictType === CONFLICT_TYPE_DUPLICATE_ID) {
-									conflicted[modelName] = [];
-								}
+								// 更新による競合の場合は、
+								// サーバの更新アイテムと削除アイテムをそれぞれリストで返す
+								conflicted[modelName] = {
+										removed: [],
+										changed: []
+								};
 								
 								var items = serverItems[modelName];
 								for ( var i = 0, len = items.length; i < len; i++) {
@@ -12165,8 +12190,22 @@ var h5internal = {
 
 									var model = this.dataModelManager.models[itemCommonData.resourceName];
 
+									conflictItem = {
+										model: model,
+										localItem: model.get(serverItem[model.idKey])
+									};
+
+									if (itemCommonData.action === ACTION_TYPE_DELETE) {
+										conflictItem.serverItem = null;
+										conflicted[modelName]['removed'].push(conflictItem);
+									} else {
+										conflictItem.serverItem = serverItem;
+										conflicted[modelName]['changed'].push(conflictItem);
+									}
+									
 									// itemのlastModifiedを更新する
 									// itemの共通データはredoログに参照が入っているので、そこを更新すれば十分である
+									// (削除されている場合、データモデルの管理下から外れてしまうため)
 									for ( var j = 0, l = this.redoLogs.length; j < l; j++) {
 										var redoLog = this.redoLogs[j];
 										if (redoLog.itemCommonData.resoureceItemId === itemCommonData.resoureceItemId) {
@@ -12175,29 +12214,11 @@ var h5internal = {
 											break;
 										}
 									}
-
-									conflictItem = {
-										model: model,
-										localItem: model.get(serverItem[model.idKey])
-									};
-
-									if (conflictType === CONFLICT_TYPE_UPDATED) {
-										if (itemCommonData.action === ACTION_TYPE_DELETE) {
-											conflictItem.serverItem = null;
-											conflicted[modelName]['removed'].push(conflictItem);
-										} else {
-											conflictItem.serverItem = serverItem;
-											conflicted[modelName]['changed'].push(conflictItem);
-										}
-									} else if (conflictType === CONFLICT_TYPE_DUPLICATE_ID) {
-										conflictItem.serverItem = serverItem;
-										conflicted[modelName].push(conflictItem);
-									}
 								}
 							}
 							return conflicted;
 						},
-
+						
 						/**
 						 * redoログリストからサーバに送る更新情報のリストを作成する
 						 */
