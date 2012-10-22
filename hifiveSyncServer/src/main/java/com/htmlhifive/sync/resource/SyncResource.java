@@ -18,11 +18,12 @@ package com.htmlhifive.sync.resource;
 
 import java.util.List;
 
-import com.htmlhifive.sync.common.ResourceItemCommonData;
-import com.htmlhifive.sync.common.ResourceItemCommonDataId;
 import com.htmlhifive.sync.exception.LockException;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.lock.LockStrategy;
+import com.htmlhifive.sync.resource.lock.ResourceLockStatusType;
+import com.htmlhifive.sync.resource.update.UpdateStrategy;
 import com.htmlhifive.sync.service.SyncCommonData;
-import com.htmlhifive.sync.service.download.DownloadCommonData;
 import com.htmlhifive.sync.service.lock.LockCommonData;
 import com.htmlhifive.sync.service.upload.UploadCommonData;
 
@@ -33,17 +34,18 @@ import com.htmlhifive.sync.service.upload.UploadCommonData;
  *
  * @param <I> アイテムのデータ型
  */
+@SuppressWarnings("deprecation")
 public interface SyncResource<I> {
 
 	/**
 	 * 指定されたリソースアイテム共通データに対応するリソースアイテムをそれぞれ取得します.
 	 *
-	 * @param downloadCommon 下り更新共通データ
+	 * @param syncCommon 同期共通データ
 	 * @param itemCommonDataList リソースアイテム共通データのリスト
 	 * @return リソースアイテムのラッパーオブジェクトのリスト
 	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
-	List<ResourceItemWrapper<I>> get(DownloadCommonData downloadCommon, List<ResourceItemCommonData> itemCommonDataList);
+	List<ResourceItemWrapper<I>> get(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonDataList);
 
 	/**
 	 * クエリの条件に合致する全リソースアイテムを取得します.
@@ -88,41 +90,48 @@ public interface SyncResource<I> {
 	ResourceItemWrapper<I> delete(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon);
 
 	/**
-	 * 指定されたリソースアイテムをロックします.
+	 * 指定されたリソースアイテムをロックします.<br>
+	 * TODO: 次期バージョンにて実装予定
 	 *
 	 * @param lockCommon ロック取得共通データ
-	 * @param itemCommon リソースアイテム共通データ
+	 * @param itemCommonDataList リソースアイテム共通データのリスト
+	 * @return ロックしたアイテムの情報を含むラッパーオブジェクトのリスト
 	 * @throws LockException ロックできなかった場合
 	 */
-	void lock(LockCommonData lockCommon, ResourceItemCommonData itemCommon);
+	@Deprecated
+	List<ResourceItemWrapper<I>> lock(LockCommonData lockCommon, List<ResourceItemCommonData> itemCommonDataList);
 
 	/**
-	 * 指定されたリソースアイテムのロックを開放します.
+	 * 指定されたリソースアイテムのロックを開放します.<br>
+	 * TODO: 次期バージョンにて実装予定
 	 *
-	 * @param lockCommonData ロック取得共通データ
-	 * @param itemCommon リソースアイテム共通データ
-	 * @throws LockException 対象リソースアイテムがロックされていた場合
+	 * @param lockCommon ロック取得共通データ
+	 * @param itemCommonList リソースアイテム共通データのリスト
+	 * @throws LockException ロックの開放に失敗した場合
 	 */
-	void releaseLock(LockCommonData lockCommonData, ResourceItemCommonData itemCommon);
+	@Deprecated
+	void releaseLock(LockCommonData lockCommon, List<ResourceItemCommonData> itemCommonList);
 
 	/**
 	 * ロックされている全リソースアイテムの共通データを返します.<br>
+	 * TODO: 次期バージョンにて実装予定
 	 *
 	 * @param lockCommonData ロック取得共通データ
 	 * @return リソースアイテム共通データのリスト
 	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
-	List<ResourceItemCommonData> lockedItemInfo(LockCommonData lockCommonData);
+	@Deprecated
+	List<ResourceItemCommonData> lockedItemsList(LockCommonData lockCommonData);
 
 	/**
-	 * 指定されたリソースアイテムのアクセス権を確保します.<br>
-	 * 更新やロックの対象とする全てのリソースアイテムのアクセス権を正しい順序で確保することで、デッドロックによる処理失敗の可能性をなくすことができます.
+	 * 他のリクエストの影響を防止するために、指定されたリソースアイテムを"for update"状態にします.<br>
+	 * この操作は、常にリソースおよびリソースアイテムの順序で実行する必要があります.
 	 *
-	 * @param id リソースアイテム共通データID
-	 * @return アクセス権を取得したリソースアイテム共通データ
+	 * @param itemCommonList リソースアイテム共通データのリスト
+	 * @return アクセス権を取得したリソースアイテム共通データのリスト
 	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
-	ResourceItemCommonData forUpdate(ResourceItemCommonDataId id);
+	List<ResourceItemCommonData> forUpdate(List<ResourceItemCommonData> itemCommonList);
 
 	/**
 	 * このリソースのリソース名を返します.
@@ -137,6 +146,13 @@ public interface SyncResource<I> {
 	 * @return アイテムの型を表すClassオブジェクト
 	 */
 	Class<I> itemType();
+
+	/**
+	 * このリソースへアクセスする際に要求されるロック方式を返します.<br>
+	 *
+	 * @return リソースロック状態タイプ
+	 */
+	ResourceLockStatusType requiredLockStatus();
 
 	/**
 	 * このリソースのアイテム型に変換するためのコンバータオブジェクトを返します.
@@ -155,10 +171,11 @@ public interface SyncResource<I> {
 
 	/**
 	 * リソースのロックを管理するマネージャを設定します.<br>
-	 * 通常、アプリケーションから使用することはありません.
+	 * 通常、アプリケーションから使用することはありません. TODO: 次期バージョンにて実装予定
 	 *
 	 * @param lockManager セットする lockManager
 	 */
+	@Deprecated
 	void setLockStrategy(LockStrategy lockManager);
 
 	/**

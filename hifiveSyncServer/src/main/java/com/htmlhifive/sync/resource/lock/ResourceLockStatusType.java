@@ -1,4 +1,4 @@
-package com.htmlhifive.sync.resource;
+package com.htmlhifive.sync.resource.lock;
 
 /**
  * リソースをロック状態を表す列挙型.

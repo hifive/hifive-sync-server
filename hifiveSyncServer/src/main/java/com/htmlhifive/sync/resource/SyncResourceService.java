@@ -23,11 +23,18 @@ import java.lang.annotation.Target;
 
 import org.springframework.stereotype.Service;
 
+import com.htmlhifive.sync.resource.lock.LockStrategy;
+import com.htmlhifive.sync.resource.lock.ResourceItemCommonLockStrategy;
+import com.htmlhifive.sync.resource.lock.ResourceLockStatusType;
+import com.htmlhifive.sync.resource.update.ClientResolvingStrategy;
+import com.htmlhifive.sync.resource.update.UpdateStrategy;
+
 /**
  * リソースとしてのサービスを提供するクラスであることを指示するアノテーション.<br>
  *
  * @author kishigam
  */
+@SuppressWarnings("deprecation")
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Service
@@ -49,10 +56,12 @@ public @interface SyncResourceService {
 
 	/**
 	 * リソースが使用するロック戦略の実装クラス.<br>
-	 * requiredLockStatusが{@link ResourceLockStatusType#UNLOCK}の場合は使用されません.
+	 * requiredLockStatusが{@link ResourceLockStatusType#UNLOCK}の場合は使用されません.<br>
+	 * TODO 次期バージョンにて実装予定
 	 *
 	 * @return LockManagerのクラスオブジェクト
 	 */
+	@Deprecated
 	Class<? extends LockStrategy> lockStrategy() default ResourceItemCommonLockStrategy.class;
 
 	/**

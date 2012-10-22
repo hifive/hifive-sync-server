@@ -20,7 +20,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.htmlhifive.sync.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 
 /**
  * リソースアイテム1件の情報を保持するデータラッパー.<br>

@@ -18,21 +18,24 @@ package com.htmlhifive.sync.resource;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
 
-import com.htmlhifive.sync.common.ResourceItemCommonData;
-import com.htmlhifive.sync.common.ResourceItemCommonDataId;
-import com.htmlhifive.sync.common.ResourceItemCommonDataRepositoryService;
-import com.htmlhifive.sync.common.ResourceItemCommonDataService;
+import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.ItemUpdatedException;
 import com.htmlhifive.sync.exception.LockException;
 import com.htmlhifive.sync.exception.SyncException;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonDataId;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonDataService;
+import com.htmlhifive.sync.resource.lock.LockStrategy;
+import com.htmlhifive.sync.resource.lock.ResourceLockStatusType;
+import com.htmlhifive.sync.resource.update.UpdateStrategy;
 import com.htmlhifive.sync.service.SyncCommonData;
-import com.htmlhifive.sync.service.download.DownloadCommonData;
 import com.htmlhifive.sync.service.lock.LockCommonData;
 import com.htmlhifive.sync.service.upload.UploadCommonData;
 
@@ -43,6 +46,7 @@ import com.htmlhifive.sync.service.upload.UploadCommonData;
  * @author kishigam
  * @param <I> リソースアイテムの型
  */
+@SuppressWarnings("deprecation")
 public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 	/**
@@ -52,8 +56,9 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 	/**
 	 * ロック方式の実装オブジェクト.<br>
-	 * TODO: 次期バージョンにて使用予定
+	 * TODO 次期バージョンの実装で使用予定
 	 */
+	@Deprecated
 	@SuppressWarnings("unused")
 	private LockStrategy lockStrategy;
 
@@ -65,36 +70,47 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	/**
 	 * このリソースが受け付けるアイテム型への変換を行うコンバータ.
 	 */
-	@Resource(type = JsonResourceItemConverter.class)
+	@Resource
 	private ResourceItemConverter<I> defaultItemConverter;
 
 	/**
-	 * このリソースが受け付けるアイテム型への変換を行うコンバータ.
+	 * リソースアイテム共通データを管理するサービス.
 	 */
-	@Resource(type = ResourceItemCommonDataRepositoryService.class)
+	@Resource
 	private ResourceItemCommonDataService commonDataService;
 
 	/**
 	 * 指定されたリソースアイテム共通データに対応するリソースアイテムを取得します.
 	 *
-	 * @param downloadCommon 下り更新共通データ
+	 * @param syncCommon 同期共通データ
 	 * @param itemCommonData リソースアイテム共通データ
 	 * @return リソースアイテムのラッパーオブジェクト
 	 */
 	@Override
-	public List<ResourceItemWrapper<I>> get(DownloadCommonData downloadCommon,
-			List<ResourceItemCommonData> itemCommonDataList) {
-
-		// TODO 次期バージョンにて実装予定(reservedフラグの確認、悲観・排他ロックのチェック)
+	public List<ResourceItemWrapper<I>> get(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonDataList) {
 
 		List<ResourceItemWrapper<I>> resultList = new ArrayList<>();
-		for (ResourceItemCommonData itemCommonData : itemCommonDataList) {
+		for (ResourceItemCommonData itemCommon : itemCommonDataList) {
 
-			// 引数の共通データにはリソース名が含まれていない可能性があるため、ここでIDを再生成
-			ResourceItemCommonDataId reCreatedId = new ResourceItemCommonDataId(name(), itemCommonData.getId()
-					.getResourceItemId());
+			// TODO 次期バージョンにて実装予定
+			//			if (requiredLockStatus == ResourceLockStatusType.EXCLUSIVE) {
+			//				lockStrategy.checkLockStatus(syncCommon, itemCommon, ResourceLockStatusType.EXCLUSIVE);
+			//			}
 
-			ResourceItemCommonData common = commonDataService.currentCommonData(reCreatedId);
+			// for updateで取得済みでない場合は取得(非 for update)
+			ResourceItemCommonData common = itemCommon;
+			if (!itemCommon.isForUpdate()) {
+
+				// 引数の共通データにはリソース名が含まれていない可能性があるため、ここでIDを再生成
+				ResourceItemCommonDataId id = new ResourceItemCommonDataId(name(), itemCommon.getId()
+						.getResourceItemId());
+
+				common = commonDataService.currentCommonData(id);
+				if (common == null) {
+					throw new BadRequestException("itemCommonData not found : " + id.getResourceName() + "-"
+							+ id.getResourceItemId());
+				}
+			}
 
 			I item = doGet(common.getTargetItemId());
 
@@ -114,10 +130,15 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	@Override
 	public List<ResourceItemWrapper<I>> getByQuery(SyncCommonData syncCommon, ResourceQueryConditions query) {
 
-		// TODO 次期バージョンにて実装予定(悲観・排他ロックのチェック)
-
 		List<ResourceItemCommonData> commonDataList = commonDataService.modifiedCommonData(name(),
 				query.getLastDownloadTime());
+
+		// TODO 次期バージョンにて実装予定
+		//		if (requiredLockStatus == ResourceLockStatusType.EXCLUSIVE) {
+		//			for (ResourceItemCommonData itemCommon : commonDataList) {
+		//				lockStrategy.checkLockStatus(syncCommon, itemCommon, ResourceLockStatusType.EXCLUSIVE);
+		//			}
+		//		}
 
 		Map<I, ResourceItemCommonData> items = doGetByQuery(commonDataList, query.getConditions());
 
@@ -145,6 +166,12 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 			// 成功すると共通データで管理する各リソースアイテムのIDが返され、登録を行ったアイテムがサーバで管理される
 			String targetItemId = doCreate(item);
+
+			// 共通データは存在しないはず
+			if (commonDataService.currentCommonData(itemCommon.getId()) != null) {
+				throw new SyncException("Inconsistent ResourceItemCommonData.: " + itemCommon.getId().getResourceName()
+						+ "-" + itemCommon.getId().getResourceItemId());
+			}
 
 			// 対象リソースアイテムのIDを設定し、リソースアイテム共通データを新規生成
 			itemCommon.setTargetItemId(targetItemId);
@@ -197,59 +224,6 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	}
 
 	/**
-	 * 指定されたリソースアイテムをロックします.
-	 *
-	 * @param lockCommon ロック取得共通データ
-	 * @param itemWrapper リソースアイテムラッパーオブジェクト
-	 * @throws LockException ロックできなかった場合
-	 */
-	@Override
-	public void lock(LockCommonData lockCommon, ResourceItemCommonData itemCommon) {
-		// TODO 次期バージョンにて実装予定
-
-	}
-
-	/**
-	 * 指定されたリソースアイテムのロックを開放します.
-	 *
-	 * @param lockCommonData ロック取得共通データ
-	 * @param itemWrapper リソースアイテムラッパーオブジェクト
-	 * @throws LockException 対象リソースアイテムがロックされていた場合
-	 */
-	@Override
-	public void releaseLock(LockCommonData lockCommonData, ResourceItemCommonData itemCommon) {
-		// TODO 次期バージョンにて実装予定
-
-	}
-
-	/**
-	 * ロックされている全リソースアイテムの共通データを返します.<br>
-	 *
-	 * @param lockCommonData ロック取得共通データ
-	 * @return リソースアイテム共通データのリスト
-	 * @throws LockException 対象リソースアイテムがロックされていた場合
-	 */
-	@Override
-	public List<ResourceItemCommonData> lockedItemInfo(LockCommonData lockCommonData) {
-		// TODO 次期バージョンにて実装予定
-		return null;
-	}
-
-	/**
-	 * 指定されたリソースアイテムのアクセス権を確保します.<br>
-	 * 更新やロックの対象とする全てのリソースアイテムのアクセス権を正しい順序で確保することで、デッドロックによる処理失敗の可能性をなくすことができます.
-	 *
-	 * @param id リソースアイテム共通データID
-	 * @return アクセス権を取得したリソースアイテム共通データ
-	 * @throws LockException 対象リソースアイテムがロックされていた場合
-	 */
-	@Override
-	public ResourceItemCommonData forUpdate(ResourceItemCommonDataId id) {
-		// TODO 次期バージョンにて実装予定
-		return null;
-	}
-
-	/**
 	 * 更新、削除共通のデータ更新ロジックを実行します.<br>
 	 * 更新および削除は、競合が発生した際の解決結果によって実際に行う更新処理が変わります.<br>
 	 * (更新が実行される中で実際には削除処理が実行される、あるいはその逆)
@@ -262,59 +236,151 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	private ResourceItemWrapper<I> updateOrDelete(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon,
 			I item) {
 
-		// TODO 次期バージョンにて実装予定(reservedフラグの確認、悲観・排他/共有ロックのチェック)
+		try {
+			// TODO 次期バージョンにて実装予定
+			//		if (requiredLockStatus != ResourceLockStatusType.UNLOCK) {
+			//			lockStrategy.checkLockStatus(uploadCommon, itemCommon, requiredLockStatus);
+			//		}
 
-		// 更新前共通データの取得
-		ResourceItemCommonData currentCommon = commonDataService.currentCommonData(itemCommon.getId());
-
-		// 競合判定
-		// 競合がなければ、更新対象は渡されたitemとなる
-		I updateItem = item;
-		if (requiredLockStatus == ResourceLockStatusType.UNLOCK && conflict(itemCommon, currentCommon, uploadCommon)) {
-
-			// サーバで保持しているアイテムを取得。論理削除のため、削除済みリソースアイテム(IDのみ設定)の取得にdoDeleteを使用できる
-			I currentItem = currentCommon.getAction() == SyncAction.DELETE ? doDelete(currentCommon.getTargetItemId())
-					: doGet(currentCommon.getTargetItemId());
-
-			try {
-				// 競合解決、更新アイテムを決定し、更新対象のリソースアイテムを上書き
-				updateItem = updateStrategy.resolveConflict(itemCommon, item, currentCommon, currentItem);
-
-			} catch (ItemUpdatedException e) {
-
-				// 更新を行わず、競合タイプ設定してリターン
-				currentCommon.setConflictType(SyncConflictType.UPDATED);
-				return new ResourceItemWrapper<>(currentCommon, currentItem);
-			}
-		}
-
-		if (updateItem == null) {
-
-			itemCommon.setAction(SyncAction.DELETE);
-			doDelete(currentCommon.getTargetItemId());
-		} else {
-			itemCommon.setAction(SyncAction.UPDATE);
-			if (currentCommon.getAction() == SyncAction.DELETE) {
-				try {
-					doCreate(updateItem);
-				} catch (DuplicateIdException e) {
-					// データ不整合のため、CONFLICTを返さない
-					throw new SyncException("inconsistent data. Deleted", e);
+			// for updateで取得済みでない場合は取得(非 for update)
+			ResourceItemCommonData currentCommon = itemCommon;
+			if (itemCommon.isForUpdate()) {
+				currentCommon = commonDataService.currentCommonData(itemCommon.getId());
+				if (currentCommon == null) {
+					throw new BadRequestException("itemCommonData not found : " + itemCommon.getId().getResourceName()
+							+ "-" + itemCommon.getId().getResourceItemId());
 				}
 			}
-			doUpdate(updateItem);
+			// 競合判定
+			// 競合がなければ、更新対象は渡されたitemとなる
+			I updateItem = item;
+			if (requiredLockStatus == ResourceLockStatusType.UNLOCK
+					&& conflict(itemCommon, currentCommon, uploadCommon)) {
+
+				// サーバで保持しているアイテムを取得。論理削除のため、削除済みリソースアイテム(IDのみ設定)の取得にdoDeleteを使用できる
+				I currentItem = currentCommon.getAction() == SyncAction.DELETE ? doDelete(currentCommon
+						.getTargetItemId()) : doGet(currentCommon.getTargetItemId());
+
+				try {
+					// 競合解決、更新アイテムを決定し、更新対象のリソースアイテムを上書き
+					updateItem = updateStrategy.resolveConflict(itemCommon, item, currentCommon, currentItem);
+
+				} catch (ItemUpdatedException e) {
+
+					// 更新を行わず、競合タイプ設定してリターン
+					currentCommon.setConflictType(SyncConflictType.UPDATED);
+					return new ResourceItemWrapper<>(currentCommon, currentItem);
+				}
+			}
+
+			if (updateItem == null) {
+
+				itemCommon.setAction(SyncAction.DELETE);
+				doDelete(currentCommon.getTargetItemId());
+			} else {
+				itemCommon.setAction(SyncAction.UPDATE);
+				if (currentCommon.getAction() == SyncAction.DELETE) {
+					try {
+						doCreate(updateItem);
+					} catch (DuplicateIdException e) {
+						// データ不整合のため、CONFLICTを返さない
+						throw new SyncException("inconsistent data. Deleted", e);
+					}
+				}
+				doUpdate(updateItem);
+			}
+
+			currentCommon.modify(itemCommon.getAction(), uploadCommon.getSyncTime());
+			ResourceItemCommonData commonAfterUpdate = commonDataService.saveUpdatedCommonData(currentCommon);
+
+			commonAfterUpdate.setConflictType(SyncConflictType.NONE);
+			return new ResourceItemWrapper<>(commonAfterUpdate, updateItem);
+
+		} finally {
+			// TODO 次期バージョンにて実装予定
+			//			lockStrategy.unlock(uploadCommon, itemCommon);
+		}
+	}
+
+	/**
+	 * 指定されたリソースアイテムをロックします.
+	 *
+	 * @param lockCommon ロック取得共通データ
+	 * @param itemCommonDataList リソースアイテム共通データのリスト
+	 * @return ロックしたアイテムの情報を含むラッパーオブジェクトのリスト
+	 * @throws LockException ロックできなかった場合
+	 */
+	@Deprecated
+	@Override
+	public List<ResourceItemWrapper<I>> lock(LockCommonData lockCommon, List<ResourceItemCommonData> itemCommonDataList) {
+
+		// TODO 次期バージョンにて実装予定
+		return null;
+
+	}
+
+	/**
+	 * 指定されたリソースアイテムのロックを開放します.
+	 *
+	 * @param lockCommon ロック取得共通データ
+	 * @param itemCommonList リソースアイテム共通データのリスト
+	 * @throws LockException ロックの開放に失敗した場合
+	 */
+	@Deprecated
+	@Override
+	public void releaseLock(LockCommonData lockCommon, List<ResourceItemCommonData> itemCommonList) {
+
+		// TODO 次期バージョンにて実装予定
+	}
+
+	/**
+	 * ロックされている全リソースアイテムの共通データを返します.<br>
+	 *
+	 * @param lockCommonData ロック取得共通データ
+	 * @return リソースアイテム共通データのリスト
+	 * @throws LockException 対象リソースアイテムがロックされていた場合
+	 */
+	@Deprecated
+	@Override
+	public List<ResourceItemCommonData> lockedItemsList(LockCommonData lockCommonData) {
+
+		// TODO 次期バージョンにて実装予定
+		return null;
+	}
+
+	/**
+	 * 他のリクエストの影響を防止するために、指定されたリソースアイテムを「予約」状態にします.<br>
+	 * 更新やロックの対象とする全てのリソースアイテムを予約することで、デッドロックによる処理失敗の可能性をなくすことができます.
+	 *
+	 * @param itemCommonList リソースアイテム共通データのリスト
+	 * @return アクセス権を取得したリソースアイテム共通データのリスト
+	 * @throws LockException 対象リソースアイテムがロックされていた場合
+	 */
+	@Override
+	public List<ResourceItemCommonData> forUpdate(List<ResourceItemCommonData> itemCommonList) {
+
+		// 予約対象をリソースアイテムIDでソートしたリストを生成(コピー)
+		List<ResourceItemCommonData> sortedItemsList = new ArrayList<>(itemCommonList);
+		Collections.sort(sortedItemsList);
+
+		List<ResourceItemCommonData> reservedCommonDataList = new ArrayList<>();
+		for (ResourceItemCommonData itemCommon : sortedItemsList) {
+
+			// 引数の共通データにはリソース名が含まれていない可能性があるため、ここでIDを再生成
+			ResourceItemCommonDataId id = new ResourceItemCommonDataId(name(), itemCommon.getId().getResourceItemId());
+
+			// for updateで取得
+			ResourceItemCommonData currentForUpdate = commonDataService.currentCommonDataForUpdate(id);
+			if (currentForUpdate == null) {
+				throw new BadRequestException("itemCommonData not found : " + id.getResourceName() + "-"
+						+ id.getResourceItemId());
+			}
+
+			currentForUpdate.setForUpdate(true);
+			reservedCommonDataList.add(currentForUpdate);
 		}
 
-		currentCommon.modify(itemCommon.getAction(), uploadCommon.getSyncTime());
-		ResourceItemCommonData commonAfterUpdate = commonDataService.saveUpdatedCommonData(currentCommon);
-
-		commonAfterUpdate.setConflictType(SyncConflictType.NONE);
-		return new ResourceItemWrapper<>(commonAfterUpdate, updateItem);
-
-		// TODO 次期バージョンにて実装予定(悲観・排他/共有ロックのリリース)
-		//		} finally {
-		//			lockStrategy.unlock(uploadCommon, currentCommon, item);
-		//		}
+		return reservedCommonDataList;
 	}
 
 	/**
@@ -410,6 +476,17 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	}
 
 	/**
+	 * このリソースへアクセスする際に要求されるロック方式を返します.<br>
+	 *
+	 * @return リソースロック状態タイプ
+	 */
+	@Override
+	public ResourceLockStatusType requiredLockStatus() {
+
+		return this.getClass().getAnnotation(SyncResourceService.class).requiredLockStatus();
+	}
+
+	/**
 	 * リソースアイテム共通データのバージョン比較により、リソースアイテムの更新競合が発生しているときtrueを返します.<br>
 	 *
 	 * @param client update(/delete)対象リソースアイテムの共通データ
@@ -440,10 +517,12 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 	/**
 	 * リソースのロック方式を実装したロック戦略実装を設定します.<br>
-	 * 通常、アプリケーションから使用することはありません.
+	 * 通常、アプリケーションから使用することはありません.<br>
+	 * TODO 次期バージョンにて実装予定
 	 *
 	 * @param lockManager セットする lockManager
 	 */
+	@Deprecated
 	@Override
 	public void setLockStrategy(LockStrategy lockStrategy) {
 		this.lockStrategy = lockStrategy;

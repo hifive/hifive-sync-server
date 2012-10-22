@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.common;
+package com.htmlhifive.sync.resource.common;
 
 import java.util.List;
 
@@ -32,6 +32,14 @@ public interface ResourceItemCommonDataService {
 	 * @return 共通データエンティティ
 	 */
 	ResourceItemCommonData currentCommonData(ResourceItemCommonDataId id);
+
+	/**
+	 * リソースアイテム共通データのIDオブジェクトで共通データエンティティを"for update"で検索し、返します.<br>
+	 *
+	 * @param id リソースアイテム共通データID
+	 * @return 共通データエンティティ
+	 */
+	ResourceItemCommonData currentCommonDataForUpdate(ResourceItemCommonDataId id);
 
 	/**
 	 * 指定されたリソースで、指定された時刻以降に更新されたリソースアイテムの共通データを検索し、返します.

@@ -32,6 +32,9 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
 import com.htmlhifive.sync.exception.SyncException;
+import com.htmlhifive.sync.resource.lock.LockStrategy;
+import com.htmlhifive.sync.resource.lock.ResourceLockStatusType;
+import com.htmlhifive.sync.resource.update.UpdateStrategy;
 
 /**
  * アプリケーション内に存在するリソースを管理するサービス実装.<br>
@@ -39,6 +42,7 @@ import com.htmlhifive.sync.exception.SyncException;
  *
  * @author kishigam
  */
+@SuppressWarnings("deprecation")
 @Service
 public class DefaultSyncResourceManager implements SyncResourceManager {
 
@@ -59,8 +63,10 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	private Map<String, ResourceLockStatusType> requiredLockStatusMap;
 
 	/**
-	 * リソースごとのロック戦略オブジェクトを保持するMap
+	 * リソースごとのロック戦略オブジェクトを保持するMap<br>
+	 * TODO 次期バージョンにて実装予定
 	 */
+	@Deprecated
 	private Map<String, Class<? extends LockStrategy>> lockStrategyMap;
 
 	/**
@@ -84,7 +90,10 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 
 		this.resourceMap = new HashMap<>();
 		this.requiredLockStatusMap = new HashMap<>();
+
+		//	  TODO 次期バージョンにて実装予定
 		this.lockStrategyMap = new HashMap<>();
+
 		this.updateStrategyMap = new HashMap<>();
 
 		init(syncResourceBaseTypeName);
@@ -130,6 +139,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 			requiredLockStatusMap.put(resourceName, resourceAnnotation.requiredLockStatus());
 
 			// ロックマネージャを特定する
+			//	  TODO 次期バージョンにて実装予定
 			lockStrategyMap.put(resourceName, resourceAnnotation.lockStrategy());
 
 			// 更新戦略オブジェクトを特定する
@@ -183,7 +193,10 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 
 		// LockStrategy,UpdateStrategyのセット
 		sr.setRequiredLockStatus(requiredLockStatusMap.get(resourceName));
+
+		// TODO 次期バージョンにて実装予定
 		sr.setLockStrategy(context.getBean(lockStrategyMap.get(resourceName)));
+
 		sr.setUpdateStrategy(context.getBean(updateStrategyMap.get(resourceName)));
 
 		return sr;
