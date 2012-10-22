@@ -11822,6 +11822,49 @@ var h5internal = {
 							// TODO: 未実装
 							throw new Error('まだ使用できません。');
 						},
+						
+						/**
+						 * 現在ローカルストレージにあるデータを削除し、新たにサーバのデータを取得する。
+						 * サーバに送っていない更新データがある場合には、先にアップロードを行う。
+						 * 
+						 * @memberOf SyncManager
+						 * @return Promiseオブジェクト
+						 */
+						resync: function() {
+							var dfd = h5.async.deferred();
+							
+							var that = this;
+							this.upload().done(function() {
+								// ローカルのアイテムを削除する。
+								that.dataModelManager.beginUpdate();
+								var models = that.dataModelManager.models;								
+								
+								for (var modelName in that._quries) {
+									var model = models[modelName];
+									for (var id in model) {
+										var item = model.remove(id);
+										item._isServerUpdate = true;											
+									}
+
+									// クエリのlastDownloadTimeも削除
+									var conditions = that._queries[modelName];
+									for (var i=0, len=conditions.length; i<len; i++){
+										delete conditions[i].lastModified;
+									}
+									
+								}							
+								that.dataModelManager.endUpdate();								
+								
+								that.download().done(function() {
+									dfd.resolve();
+								}).fail(function(obj) {
+									dfd.reject(obj);
+								})
+							}).fail(function(obj) {
+								dfd.reject(obj);
+							});
+							return dfd.promise();
+						},
 
 						/**
 						 * データモデルごとに重複しないIDを取得します。
