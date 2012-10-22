@@ -165,12 +165,10 @@ $(function() {
 
 			var that = this;
 
-			promise.done( function() {
+			promise.always( function() {
 					that.plotPerson();
 					scheduleSample.common.closeDialog();
 					alert('登録しました');
-			}).fail(function(e) {
-				that.log.error(e);
 			});
 		},
 
@@ -189,7 +187,7 @@ $(function() {
 			
 			scheduleSample.common.showIndicator(this, promise, 'データを更新中');
 			
-			promise.done(function() {
+			promise.always(function() {
 				that.plotPerson();
 				scheduleSample.common.closeDialog();
 				alert('ユーザ情報を変更しました。');
@@ -213,17 +211,10 @@ $(function() {
 			
 			scheduleSample.common.showIndicator(this, promise, 'データを削除中')
 			
-			promise.done( function() {
+			promise.always( function() {
 					that.plotPerson();
 					alert('削除しました。');
 					$('#dialog .closebutton').trigger('click');
-			}).fail(function(e) {
-				if (e.status == 409) {
-					that.plotPerson();
-				} else {
-					that.log.error(e);
-					alert(e.message);
-				}
 			});
 		},
 		
