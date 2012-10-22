@@ -11367,10 +11367,7 @@ var h5internal = {
 /* ------ h5.core.sync ------ */
 (function() {
 
-	// TODO: サーバの変更に合わせて変えるところ多数
 	// リクエストボディの中身は3種類実装
-	// マルチスレッド対応
-	// オフラインの判定
 
 	// =========================================================================
 	//
@@ -11648,6 +11645,7 @@ var h5internal = {
 								if (!navigator.onLine || that._lastUploadAjaxPromise 
 										|| navigator.__offLine) { // テスト用コード 
 									// オフライン時、または前のリクエストが返ってきていないときはデータを送らない
+									// TODO: オフラインであることを伝える
 									dfd.resolve();
 									return dfd.promise();
 								}
@@ -11683,6 +11681,7 @@ var h5internal = {
 									cache: false
 								};
 
+								// uploadのpromiseオブジェクトを保存して、終わったかどうかをチェックする
 								that._lastUploadAjaxPromise = that.ajax(options);
 								
 								that._lastUploadAjaxPromise.always(function(){
@@ -11895,15 +11894,28 @@ var h5internal = {
 							
 						},
 						
+						/**
+						 * IDの重複を解決した場合に、redoログの古いIDを新しいIDに置き換える。
+						 * また、redoログ内のアイテムIDのリストを持ったresolveDuplicateIdイベントをあげる。
+						 * 
+						 * @param newId 置き換えた後のID
+						 * @param oldId 置き換える前のID
+						 * @param model 対象のアイテムを持つデータモデル
+						 * @memberOf SyncManager
+						 * 
+						 */
 						resolveDuplicate: function(newId, oldId, model) {
-							var updateIdLog = {}; // redoLogをモデルごとに集約したもの
+							var updateIdLog = {}; // redoLogをモデルごとに集約したIdのリスト
 							
 							var isOldItemDeleted = false;
 							
 							for (var i=0, len=this.redoLogs.length; i<len; i++) {
 								var redoLog = this.redoLogs[i];
 								if (redoLog.item[model.idKey] === oldId && redoLog.modelName === model.name) {
+									// 対象のアイテムが見つかった場合
 									if (redoLog.action === ACTION_TYPE_DELETE) {
+										// 重複を解決したときに、クライアントでアイテムを削除している可能性があるので、
+										// その場合は、redoログから除いておく。
 										this.redoLogs.splice(i,1);
 										i--;
 										isOldItemDeleted = true;
@@ -11914,6 +11926,7 @@ var h5internal = {
 									redoLog.itemCommonData.resourceItemId = newId;
 								}
 								
+								// アイテムのIDをリストに追加する
 								if (!updateIdLog[redoLog.modelName]) {
 									updateIdLog[redoLog.modelName] = [];
 								}
@@ -11923,12 +11936,14 @@ var h5internal = {
 								}
 							}
 							
+							// 古いアイテムは削除しておく
 							if (!isOldItemDeleted) {
 								var item = model.get(oldId);
 								item._isServerUpdate = true;
 								model.remove(oldId);
 							}
 														
+							// 新旧のIDとredoログ内のアイテムのIDのリストをもったイベントをあげる
 							this.dispatchEvent({
 								type : 'resolveDuplicateId',
 								target : model.get(newId),
@@ -12134,6 +12149,8 @@ var h5internal = {
 							var conflicted = {};
 							for ( var modelName in serverItems) {
 								if (conflictType === CONFLICT_TYPE_UPDATED) {
+									// 更新による競合の場合は、
+									// サーバの更新アイテムと削除アイテムをそれぞれリストで返す
 									conflicted[modelName] = {
 											removed: [],
 											changed: []
@@ -12433,6 +12450,7 @@ var h5internal = {
 	
 			// ストレージIDがローカルストレージから取得できれいれば、
 			// ローカルストレージのデータをメモリに挙げる
+			// 1.1との統合次第でここから消す
 			h5.api.storage.local.each(function(index, key, value) {
 				if (!h5.u.str.startsWith(key, HEAD_OF_SYNC_ITEM_KEY)) {
 					return;
