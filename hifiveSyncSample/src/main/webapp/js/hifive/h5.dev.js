@@ -11909,7 +11909,7 @@ var h5internal = {
 							
 							var isOldItemDeleted = false;
 							
-							for (var i=0, len=this.redoLogs.length; i<len; i++) {
+							for (var i=this.redoLogs.length-1; i>=0; i--) {
 								var redoLog = this.redoLogs[i];
 								if (redoLog.item[model.idKey] === oldId && redoLog.modelName === model.name) {
 									// 対象のアイテムが見つかった場合
@@ -11917,7 +11917,6 @@ var h5internal = {
 										// 重複を解決したときに、クライアントでアイテムを削除している可能性があるので、
 										// その場合は、redoログから除いておく。
 										this.redoLogs.splice(i,1);
-										i--;
 										isOldItemDeleted = true;
 										continue;
 									}
@@ -12027,7 +12026,7 @@ var h5internal = {
 									continue;
 								}
 								
-								for ( var j = 0, l = conditionList.length; j < l; j++) {
+								for ( var j = conditionList.length-1 j >= 0; j--) {
 									if (query.conditions === conditionList[j]) {
 										conditionList.splice(j, 1);
 										break;
@@ -12308,22 +12307,28 @@ var h5internal = {
 										// 更新時
 										redoLog.item = getPlainItem(item); // itemのコピーを保持しておく(参照だと変更されてしまう可能性があるため)
 									} else if (action === ACTION_TYPE_DELETE) {
-										var isCreated = false;
-										for (var i=0, len=that.redoLogs.length; i<len;) {
-											// redoログの中にcreateのログが残っている場合は、このアイテムのログはなかったことにする。
+										// redoログの中にcreateのログが残っている場合は、このアイテムのログはなかったことにする。
+										var indexOfCreateItem = that.redoLogs.length;
+										for (var i=0, len=that.redoLogs.length; i<len;i++) {
 											var existingRedoLog = that.redoLogs[j];
-											if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	&& existingRedoLog.modelName === model.name) {
-												if (isCreated) {
-													that.redoLogs.splice(i,1);
-													len--;
-												} else if (existingRedoLog.action === ACTION_TYPE_CREATE) {
-													isCreated = true;
-													that.redoLogs.splice(i,1);
-													len--;								
-												} else {
-													i++;
+											if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	
+													&& existingRedoLog.modelName === model.name
+													&& existingRedoLog.action === ACTION_TYPE_CREATE) {
+												indexOfCreateItem = i;
+												break;
+											}
+										}
+
+										if (indexOfCreateItem < that.redoLogs.length) {
+											// 後ろからたどって、このアイテムのログを削除していく(createしたところまで)
+											for (var j=that.redoLogs.length-1; j>=indexOfCreateItem; j--) {
+												if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	
+														&& existingRedoLog.modelName === model.name ){
+													that.redoLogs.splice(j,1);
 												}
 											}
+											// 保存しないで終了
+											return;
 										}
 										
 										// 削除時はidのみ保存
