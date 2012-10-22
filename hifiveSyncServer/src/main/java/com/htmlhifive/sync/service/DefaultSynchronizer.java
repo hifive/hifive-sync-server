@@ -26,12 +26,15 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import javax.annotation.Resource;
+import javax.persistence.LockTimeoutException;
+import javax.persistence.PessimisticLockException;
 
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.ConflictException;
+import com.htmlhifive.sync.exception.LockException;
 import com.htmlhifive.sync.resource.DefaultSyncResourceManager;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.ResourceQueryConditions;
@@ -545,7 +548,13 @@ public class DefaultSynchronizer implements Synchronizer {
 		for (String resourceName : sortedItemsMap.keySet()) {
 
 			SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-			reservedCommonDataMap.put(resourceName, resource.forUpdate(sortedItemsMap.get(resourceName)));
+			try {
+				reservedCommonDataMap.put(resourceName, resource.forUpdate(sortedItemsMap.get(resourceName)));
+			} catch (PessimisticLockException | LockTimeoutException e) {
+
+				// for update操作のタイムアウト
+				throw new LockException("Failed to get readLock for download or reserve for upload.", e);
+			}
 		}
 
 		return reservedCommonDataMap;
