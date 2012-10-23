@@ -11511,16 +11511,14 @@ var h5internal = {
 	
 	function asyncInOrder(func1, func2, context) {
 		var dfd = h5.async.deferred();
-		func1.call(context).done(function() {
-			func2.call(context).done(function() {
-				dfd.resolve();
-			}).fail(function(obj) {
-				dfd.reject(obj);
-			});
-		}).fail(function(obj) {
-			dfd.reject(obj);
+		var dfd1 = dfd.pipe(function() {
+			return func1.call(context);
 		});
-		return dfd.promise();
+		var dfd2 = dfd1.pipe(function() {
+			return func2.call(context);
+		});
+		dfd.resolve();
+		return dfd2;
 	}
 
 
