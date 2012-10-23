@@ -11827,39 +11827,28 @@ var h5internal = {
 						 * @return Promiseオブジェクト
 						 */
 						resync: function() {
-							var dfd = h5.async.deferred();
-							
-							var that = this;
-							this.upload().done(function() {
+							return asyncInOrder(this.upload, function(){
 								// ローカルのアイテムを削除する。
-								that.dataModelManager.beginUpdate();
-								var models = that.dataModelManager.models;								
+								this.dataModelManager.beginUpdate();
+								var models = this.dataModelManager.models;								
 								
-								for (var modelName in that._quries) {
+								for (var modelName in this._queries) {
 									var model = models[modelName];
-									for (var id in model) {
+									for (var id in model.items) {
 										var item = model.remove(id);
-										item._isServerUpdate = true;											
+										item._isServerUpdate = true; // redoログに登録させない									
 									}
 
 									// クエリのlastDownloadTimeも削除
-									var conditions = that._queries[modelName];
+									var conditions = this._queries[modelName];
 									for (var i=0, len=conditions.length; i<len; i++){
-										delete conditions[i].lastModified;
+										delete conditions[i].lastDownloadTime;
 									}
 									
 								}							
-								that.dataModelManager.endUpdate();								
-								
-								that.download().done(function() {
-									dfd.resolve();
-								}).fail(function(obj) {
-									dfd.reject(obj);
-								})
-							}).fail(function(obj) {
-								dfd.reject(obj);
-							});
-							return dfd.promise();
+								this.dataModelManager.endUpdate();								
+								return this.download();
+							}, this);
 						},
 
 						/**
