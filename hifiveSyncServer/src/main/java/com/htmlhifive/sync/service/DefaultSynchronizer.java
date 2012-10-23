@@ -17,6 +17,7 @@
 package com.htmlhifive.sync.service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -335,11 +336,18 @@ public class DefaultSynchronizer implements Synchronizer {
 			reserveUploadingWrappedItems(request.getResourceItems());
 		}
 
+		// AVOID_DEADLOCKタイプの場合は更新順をソートした結果に変更する
+		List<? extends ResourceItemWrapper<? extends Map<String, Object>>> itemsToUpload = request.getResourceItems();
+		if (this.syncConfiguration.uploadControl() == UploadControlType.AVOID_DEADLOCK) {
+			itemsToUpload = new ArrayList<>(request.getResourceItems());
+			Collections.sort(itemsToUpload);
+		}
+
 		// 競合の種類ごとに、競合しているリソースアイテムを収集
 		Map<SyncConflictType, ResourceItemsMapBuilder<ResourceItemWrapper<?>>> resultBuilderMap = createBuilderMap();
 
 		// リソースアイテムごとに処理(上り更新リクエストデータでは、ResourceItemWrapperにリソース名を持つ)
-		for (ResourceItemWrapper<? extends Map<String, Object>> uploadingItemWrapper : request.getResourceItems()) {
+		for (ResourceItemWrapper<? extends Map<String, Object>> uploadingItemWrapper : itemsToUpload) {
 
 			String resourceName = uploadingItemWrapper.getItemCommonData().getId().getResourceName();
 
@@ -354,7 +362,7 @@ public class DefaultSynchronizer implements Synchronizer {
 
 			// 処理継続を判断、継続しない場合ConflictExceptionをスロー
 			if (!continueOnConflict(conflictType)) {
-				throwConflictException(conflictType, resultBuilderMap.get(conflictType).build());
+				throwConflictException(conflictType, resultBuilderMap);
 			}
 
 			// 継続の場合ステータスに設定
@@ -363,11 +371,10 @@ public class DefaultSynchronizer implements Synchronizer {
 
 		// 以下の優先順で競合アイテムリストをConflictExceptionに含めスロー
 		if (responseCommon.getConflictType() == SyncConflictType.DUPLICATE_ID) {
-			throwConflictException(SyncConflictType.DUPLICATE_ID, resultBuilderMap.get(SyncConflictType.DUPLICATE_ID)
-					.build());
+			throwConflictException(SyncConflictType.DUPLICATE_ID, resultBuilderMap);
 		}
 		if (responseCommon.getConflictType() == SyncConflictType.UPDATED) {
-			throwConflictException(SyncConflictType.UPDATED, resultBuilderMap.get(SyncConflictType.UPDATED).build());
+			throwConflictException(SyncConflictType.UPDATED, resultBuilderMap);
 		}
 
 		// リクエストの処理時刻でレスポンスの最終下り更新時刻を更新し、保存
@@ -477,16 +484,16 @@ public class DefaultSynchronizer implements Synchronizer {
 	 * 上り更新レスポンスを競合発生時の例外に設定し、スローします.
 	 *
 	 * @param conflictType 競合タイプ
-	 * @param conflictItemMap 競合したリソースアイテムの情報を保持しているMap
+	 * @param resultBuilderMap 競合したリソースアイテムの情報を保持しているMap
 	 */
 	private void throwConflictException(SyncConflictType conflictType,
-			Map<String, List<ResourceItemWrapper<?>>> conflictItemMap) {
+			Map<SyncConflictType, ResourceItemsMapBuilder<ResourceItemWrapper<?>>> resultBuilderMap) {
 
 		UploadCommonData conflictCommon = new UploadCommonData();
 		conflictCommon.setConflictType(conflictType);
 
 		UploadResponse response = new UploadResponse(conflictCommon);
-		response.setResourceItems(conflictItemMap);
+		response.setResourceItems(resultBuilderMap.get(conflictType).build());
 
 		throw new ConflictException(response);
 	}

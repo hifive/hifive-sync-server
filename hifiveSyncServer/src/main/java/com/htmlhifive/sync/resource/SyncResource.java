@@ -17,6 +17,7 @@
 package com.htmlhifive.sync.resource;
 
 import java.util.List;
+import java.util.Properties;
 
 import com.htmlhifive.sync.exception.LockException;
 import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
@@ -160,6 +161,15 @@ public interface SyncResource<I> {
 	 * @return アイテムの型を表すClassオブジェクト
 	 */
 	ResourceItemConverter<I> itemConverter();
+
+	/**
+	 * 全てのリソースに共通の設定情報を適用します.<br>
+	 * リソース実装クラス(あるいはその抽象スーパークラス)では、この設定情報を参照することができます. <br>
+	 * 通常、アプリケーションから使用することはありません.<br>
+	 *
+	 * @param resourceConfigurations 適用する設定情報
+	 */
+	void applyResourceConfigurations(Properties resourceConfigurations);
 
 	/**
 	 * このリソースが要求するロック状態を設定します.<br>

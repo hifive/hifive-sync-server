@@ -21,8 +21,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.annotation.Resource;
+
+import org.springframework.security.authentication.LockedException;
 
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
@@ -80,6 +83,14 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	private ResourceItemCommonDataService commonDataService;
 
 	/**
+	 * この抽象クラスに対して設定されている{@link this#get(SyncCommonData, List)}、{@link this#getByQuery(SyncCommonData,
+	 * ResourceQueryConditions)}メソッド実行時のデータ検証回数.<br>
+	 * 共通データとアイテムデータの整合性を指定された回数検証します.<br>
+	 * 検証により不整合となった場合、{@link LockException}がスローされます.
+	 */
+	private int countOfVerification;
+
+	/**
 	 * 指定されたリソースアイテム共通データに対応するリソースアイテムを取得します.
 	 *
 	 * @param syncCommon 同期共通データ
@@ -117,7 +128,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			resultList.add(new ResourceItemWrapper<>(common, item));
 		}
 
-		return resultList;
+		return countOfVerification == 0 ? resultList : verify(resultList, countOfVerification);
 	}
 
 	/**
@@ -148,7 +159,57 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			resultList.add(new ResourceItemWrapper<>(items.get(item), item));
 		}
 
-		return resultList;
+		return countOfVerification == 0 ? resultList : verify(resultList, countOfVerification);
+	}
+
+	/**
+	 * {@link this#countOfVerification}に設定された回数だけ共通データとアイテムデータの整合性を検証します.<br>
+	 * 検証できなかった場合、{@link LockException}がスローされます.<br>
+	 * 検証は、共通データを再取得し、前回取得した共通データと一致した場合に成功します.<br>
+	 * 失敗した場合、指定回数に達していなければさらに再取得を行います.<br>
+	 * 最終的に、検証に成功した共通データに対応するアイテムデータが返されます.
+	 *
+	 * @param itemWrapperList 検証するリソースアイテム(ラッパーオブジェクト)のリスト
+	 * @param count 検証回数
+	 * @return 検証後のリソースアイテム(ラッパーオブジェクト)のリスト
+	 * @throws LockedException 検証できなかった場合
+	 */
+	private List<ResourceItemWrapper<I>> verify(List<ResourceItemWrapper<I>> itemWrapperList, int count) {
+
+		boolean isVerified = true;
+
+		// TODO: 共通データの一括取得
+		List<ResourceItemCommonData> comparisonCommonList = new ArrayList<>();
+		for (ResourceItemWrapper<I> itemWrapper : itemWrapperList) {
+
+			ResourceItemCommonData comparisonCommon = commonDataService.currentCommonData(itemWrapper
+					.getItemCommonData().getId());
+			comparisonCommonList.add(comparisonCommon);
+
+			// 再取得した共通データとの差異がある場合検証失敗
+			if (!comparisonCommon.equals(itemWrapper.getItemCommonData())) {
+				isVerified = false;
+			}
+		}
+
+		// 全てのリソースアイテムで検証成功したら終了
+		if (isVerified) {
+			return itemWrapperList;
+		}
+
+		// 最後まで検証できなかった場合、例外
+		count--;
+		if (count == 0) {
+			throw new LockException("Item verification is failed.");
+		}
+
+		// 検証回数残がある場合、リソースアイテムを再取得
+		List<ResourceItemWrapper<I>> nextList = new ArrayList<>();
+		for (ResourceItemCommonData common : comparisonCommonList) {
+			nextList.add(new ResourceItemWrapper<>(common, doGet(common.getTargetItemId())));
+		}
+
+		return verify(nextList, count);
 	}
 
 	/**
@@ -502,6 +563,23 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		// 同一リクエスト内で同一リソースアイテムを更新する場合は競合でない
 		// 上記条件はサーバ側バージョン(最終更新時刻)と今回のリクエスト時刻が等しいかどうかで判断する
 		return server.getLastModified() != uploadCommon.getSyncTime();
+	}
+
+	/**
+	 * 全てのリソースに共通の設定情報を適用します.<br>
+	 * リソース実装クラス(あるいはその抽象スーパークラス)では、この設定情報を参照することができます. <br>
+	 * 通常、アプリケーションから使用することはありません.<br>
+	 *
+	 * @param resourceConfigurations 適用する設定情報
+	 */
+	@Override
+	public void applyResourceConfigurations(Properties resourceConfigurations) {
+
+		Object propVal_countOfVerification = resourceConfigurations.get("AbstractSyncResource.countOfVerification");
+
+		if (propVal_countOfVerification != null) {
+			this.countOfVerification = Integer.valueOf((String) propVal_countOfVerification);
+		}
 	}
 
 	/**
