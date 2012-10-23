@@ -11586,139 +11586,11 @@ var h5internal = {
 
 		/** 前回uploadで送ろうとして失敗したredoLogsの最後の要素を表すindex */
 		this._unsentRedoLogsIndex = 0;
-		
-		var that = this;
-		
+				
 		/** アイテムの追加、変更、削除が行われたときに、同期準備を行うためのリスナー。
 		 *  インスタンスを共通にするためにここで定義する 
 		 */
-		this._itemsChangeListener = function(event) {
-			/**
-			 * redoLogリストに更新情報を登録。 redoLogの要素は{item(plain), itemCommonData,
-			 * resourceName, action}の構成
-			 */
-			function addRedoLog(item, model, action) {
-				//TODO: 更新順序の保存は要検討。現在はアイテムをそのままの順で保存するのみ（重複可）。
-
-				var redoLog = {};
-				
-				if (action === ACTION_TYPE_UPDATE) {
-					// 更新時
-					redoLog.item = getPlainItem(item); // itemのコピーを保持しておく(参照だと変更されてしまう可能性があるため)
-				} else if (action === ACTION_TYPE_DELETE) {
-					var isCreated = false;
-					for (var i=0, len=that.redoLogs.length; i<len;) {
-						// redoログの中にcreateのログが残っている場合は、このアイテムのログはなかったことにする。
-						var existingRedoLog = that.redoLogs[j];
-						if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	&& existingRedoLog.modelName === model.name) {
-							if (isCreated) {
-								that.redoLogs.splice(i,1);
-								len--;
-							} else if (existingRedoLog.action === ACTION_TYPE_CREATE) {
-								isCreated = true;
-								that.redoLogs.splice(i,1);
-								len--;								
-							} else {
-								i++;
-							}
-						}
-					}
-					
-					// 削除時はidのみ保存
-					redoLog.item = {};
-					redoLog.item[model.idKey] = item.get(model.idKey);
-				} else {
-					// 作成時
-					for (var j=0, len=that.redoLogs.length; j<len; j++) {
-						var existingRedoLog = that.redoLogs[j];
-						if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	&& existingRedoLog.modelName === model.name) {
-							// アイテムがcreateされたとき、redoログ内に同じモデルの同じidを持つアイテムがあるときは、
-							// ローカルでアイテムを削除して、競合が起きたのでそれを解決するためにアイテムを作成しなおしたときか、
-							// 重複IDしたデータを再度登録するときである。
-							// 削除していた（競合していた）場合は、削除のログを消して、更新データとしてログを登録する。
-							// IDの重複のときは、redoログ内の旧アイテムのID部分を変更し、同じく更新としてログに登録する。
-							// ただし、IDの変更は、FWに旧IDと新IDを教えておくことで対応している(resolveDuplicateメソッド内)。
-							// したがって、ユーザはresolveDuplicateをアイテム再生成の前に呼び出しておく必要がある。
-							// TODO: 方法については要再検討
-
-							if(existingRedoLog.action === ACTION_TYPE_DELETE) {
-								// 一度削除されてまだサーバに送信されていない場合は、
-								// 削除したことをなくし、更新としてサーバに伝える
-								that.redoLogs.splice(j,1);
-								
-							}
-							item._commonData = existingRedoLog.itemCommonData;
-							action = ACTION_TYPE_UPDATE;
-							break;
-						}
-					}
-					redoLog.item = getPlainItem(item);
-				} 
-
-				$.extend(redoLog, {
-						itemCommonData: item._commonData,
-						modelName: model.name,
-						action: action
-				});
-				
-				that.redoLogs.push(redoLog);
-				if (h5.api.storage.isSupported) {
-					h5.api.storage.local.setItem(REDOLOG_LIST_KEY, that.redoLogs);
-				}
-			};
-			
-			var model = event.target;
-			
-			// アイテムを挿入
-			var created = event.created;
-			for ( var i = 0, len = created.length; i < len; i++) {
-				// ローカルに保存
-				setItemToStorage(created[i]);
-
-				if (created[i]._isServerUpdate) {
-					delete created[i]._isServerUpdate;
-					continue;
-				}
-				
-				var itemId = created[i].get(model.idKey);
-				created[i]._commonData = {
-						resourceItemId: itemId ? itemId : that.getGlobalItemId(model)
-				};
-				// クライアントでの更新時は、redoログに追加
-				addRedoLog(created[i], model, ACTION_TYPE_CREATE);
-			}
-
-			// アイテムを変更
-			var changed = event.changed;
-			for ( var i = 0, len = changed.length; i < len; i++) {
-				var item = changed[i].target;
-				// ローカルに変更結果を保存
-				setItemToStorage(item);
-
-				if (item._isServerUpdate) {
-					delete item._isServerUpdate;
-					continue;
-				}
-
-				// クライアントの操作での更新の場合は、redoログに追加
-				addRedoLog(item, model, ACTION_TYPE_UPDATE);
-			}
-
-			// アイテムを削除
-			var removed = event.removed;
-			for ( var i = 0, len = removed.length; i < len; i++) {
-				// ローカルのデータを削除
-				removeItemFromStorage(removed[i], model);
-
-				if (removed[i]._isServerUpdate) {
-					delete removed[i]._isServerUpdate;
-					continue;
-				}
-
-				// クライアントでの更新時は、redoログに追加
-				addRedoLog(removed[i], model, ACTION_TYPE_DELETE);
-			}
-		};
+		this._itemsChangeListener = this._createItemsChangeListener();
 	}
 
 	SyncManager.prototype = new EventDispatcher();
@@ -12371,6 +12243,139 @@ var h5internal = {
 							}
 							
 							return items;
+						},
+						
+						_createItemsChangeListener: function() {
+								var that = this;
+							
+								/**
+								 * redoLogリストに更新情報を登録。 redoLogの要素は{item(plain), itemCommonData,
+								 * resourceName, action}の構成
+								 */
+								function addRedoLog(item, model, action) {
+									//TODO: 更新順序の保存は要検討。現在はアイテムをそのままの順で保存するのみ（重複可）。
+
+									var redoLog = {};
+									
+									if (action === ACTION_TYPE_UPDATE) {
+										// 更新時
+										redoLog.item = getPlainItem(item); // itemのコピーを保持しておく(参照だと変更されてしまう可能性があるため)
+									} else if (action === ACTION_TYPE_DELETE) {
+										var isCreated = false;
+										for (var i=0, len=that.redoLogs.length; i<len;) {
+											// redoログの中にcreateのログが残っている場合は、このアイテムのログはなかったことにする。
+											var existingRedoLog = that.redoLogs[j];
+											if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	&& existingRedoLog.modelName === model.name) {
+												if (isCreated) {
+													that.redoLogs.splice(i,1);
+													len--;
+												} else if (existingRedoLog.action === ACTION_TYPE_CREATE) {
+													isCreated = true;
+													that.redoLogs.splice(i,1);
+													len--;								
+												} else {
+													i++;
+												}
+											}
+										}
+										
+										// 削除時はidのみ保存
+										redoLog.item = {};
+										redoLog.item[model.idKey] = item.get(model.idKey);
+									} else {
+										// 作成時
+										for (var j=0, len=that.redoLogs.length; j<len; j++) {
+											var existingRedoLog = that.redoLogs[j];
+											if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	&& existingRedoLog.modelName === model.name) {
+												// アイテムがcreateされたとき、redoログ内に同じモデルの同じidを持つアイテムがあるときは、
+												// ローカルでアイテムを削除して、競合が起きたのでそれを解決するためにアイテムを作成しなおしたときか、
+												// 重複IDしたデータを再度登録するときである。
+												// 削除していた（競合していた）場合は、削除のログを消して、更新データとしてログを登録する。
+												// IDの重複のときは、redoログ内の旧アイテムのID部分を変更し、同じく更新としてログに登録する。
+												// ただし、IDの変更は、FWに旧IDと新IDを教えておくことで対応している(resolveDuplicateメソッド内)。
+												// したがって、ユーザはresolveDuplicateをアイテム再生成の前に呼び出しておく必要がある。
+												// TODO: 方法については要再検討
+
+												if(existingRedoLog.action === ACTION_TYPE_DELETE) {
+													// 一度削除されてまだサーバに送信されていない場合は、
+													// 削除したことをなくし、更新としてサーバに伝える
+													that.redoLogs.splice(j,1);
+													
+												}
+												item._commonData = existingRedoLog.itemCommonData;
+												action = ACTION_TYPE_UPDATE;
+												break;
+											}
+										}
+										redoLog.item = getPlainItem(item);
+									} 
+
+									$.extend(redoLog, {
+											itemCommonData: item._commonData,
+											modelName: model.name,
+											action: action
+									});
+									
+									that.redoLogs.push(redoLog);
+									if (h5.api.storage.isSupported) {
+										h5.api.storage.local.setItem(REDOLOG_LIST_KEY, that.redoLogs);
+									}
+								};
+								
+								function itemsChangeListener(event) {
+									var model = event.target;
+									
+									// アイテムを挿入
+									var created = event.created;
+									for ( var i = 0, len = created.length; i < len; i++) {
+										// ローカルに保存
+										setItemToStorage(created[i]);
+	
+										if (created[i]._isServerUpdate) {
+											delete created[i]._isServerUpdate;
+											continue;
+										}
+										
+										var itemId = created[i].get(model.idKey);
+										created[i]._commonData = {
+												resourceItemId: itemId ? itemId : that.getGlobalItemId(model)
+										};
+										// クライアントでの更新時は、redoログに追加
+										addRedoLog(created[i], model, ACTION_TYPE_CREATE);
+									}
+	
+									// アイテムを変更
+									var changed = event.changed;
+									for ( var i = 0, len = changed.length; i < len; i++) {
+										var item = changed[i].target;
+										// ローカルに変更結果を保存
+										setItemToStorage(item);
+	
+										if (item._isServerUpdate) {
+											delete item._isServerUpdate;
+											continue;
+										}
+	
+										// クライアントの操作での更新の場合は、redoログに追加
+										addRedoLog(item, model, ACTION_TYPE_UPDATE);
+									}
+	
+									// アイテムを削除
+									var removed = event.removed;
+									for ( var i = 0, len = removed.length; i < len; i++) {
+										// ローカルのデータを削除
+										removeItemFromStorage(removed[i], model);
+	
+										if (removed[i]._isServerUpdate) {
+											delete removed[i]._isServerUpdate;
+											continue;
+										}
+	
+										// クライアントでの更新時は、redoログに追加
+										addRedoLog(removed[i], model, ACTION_TYPE_DELETE);
+									}
+								}
+								return itemsChangeListener;
 						}
 					});
 
