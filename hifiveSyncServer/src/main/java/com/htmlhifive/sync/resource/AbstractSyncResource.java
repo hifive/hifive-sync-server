@@ -303,10 +303,10 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			//			lockStrategy.checkWriteLockStatus(uploadCommon, itemCommon, requiredLockStatus);
 			//		}
 
-			// for updateで取得済みでない場合は取得(非 for update)
+			// for updateで取得済みでない場合は取得(ここでfor updateによって取得)
 			ResourceItemCommonData currentCommon = itemCommon;
 			if (!itemCommon.isForUpdate()) {
-				currentCommon = commonDataService.currentCommonData(itemCommon.getId());
+				currentCommon = commonDataService.currentCommonDataForUpdate(itemCommon.getId());
 				if (currentCommon == null) {
 					throw new BadRequestException("itemCommonData not found : " + itemCommon.getId().getResourceName()
 							+ "-" + itemCommon.getId().getResourceItemId());
