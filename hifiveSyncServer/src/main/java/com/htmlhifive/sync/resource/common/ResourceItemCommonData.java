@@ -16,6 +16,8 @@
  */
 package com.htmlhifive.sync.resource.common;
 
+import java.io.Serializable;
+
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -42,7 +44,9 @@ import com.htmlhifive.sync.resource.SyncConflictType;
  */
 @Entity
 @Table(name = "RESOURCE_ITEM_COMMON_DATA")
-public class ResourceItemCommonData implements Comparable<ResourceItemCommonData> {
+public class ResourceItemCommonData implements Serializable, Comparable<ResourceItemCommonData> {
+
+	private static final long serialVersionUID = 5255673990208411208L;
 
 	/**
 	 * IDオブジェクト.<br>
@@ -116,12 +120,12 @@ public class ResourceItemCommonData implements Comparable<ResourceItemCommonData
 	}
 
 	/**
-	 * 共通データIDに含まれるリソースアイテムIDの順序で比較します.
+	 * 共通データIDの順序で比較します.
 	 */
 	@Override
 	public int compareTo(ResourceItemCommonData o) {
 
-		return this.id.getResourceItemId().compareTo(o.getId().getResourceItemId());
+		return this.id.compareTo(o.getId());
 	}
 
 	/**
@@ -135,7 +139,11 @@ public class ResourceItemCommonData implements Comparable<ResourceItemCommonData
 		if (!(obj instanceof ResourceItemCommonData))
 			return false;
 
-		return EqualsBuilder.reflectionEquals(this, ((ResourceItemCommonData) obj));
+		ResourceItemCommonData common = (ResourceItemCommonData) obj;
+
+		// 一時的な状態を保持するフィールド以外を比較
+		return new EqualsBuilder().append(this.id, common.id).append(this.targetItemId, common.targetItemId)
+				.append(this.action, common.action).append(this.lastModified, common.lastModified).isEquals();
 	}
 
 	/**
@@ -144,7 +152,8 @@ public class ResourceItemCommonData implements Comparable<ResourceItemCommonData
 	@Override
 	public int hashCode() {
 
-		return HashCodeBuilder.reflectionHashCode(this);
+		return new HashCodeBuilder(17, 37).append(id).append(this.targetItemId).append(this.action)
+				.append(this.lastModified).hashCode();
 	}
 
 	/**
