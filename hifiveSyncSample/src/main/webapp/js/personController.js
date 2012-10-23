@@ -165,9 +165,12 @@ $(function() {
 
 			var that = this;
 
-			promise.always( function() {
+			promise.always( function(obj) {
 					that.plotPerson();
 					scheduleSample.common.closeDialog();
+					if (obj && obj.status === 409) {
+						return;
+					}
 					alert('登録しました');
 			});
 		},
@@ -191,8 +194,6 @@ $(function() {
 				that.plotPerson();
 				scheduleSample.common.closeDialog();
 				alert('ユーザ情報を変更しました。');
-			}).fail(function(e) {
-				that.log.error(e);
 			});
 		},
 

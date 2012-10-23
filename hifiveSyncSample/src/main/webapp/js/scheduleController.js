@@ -271,7 +271,10 @@ $(function() {
 				that.plotSchedule();
 				that.showScheduleByDate(date);
 				that.closeDialog();
-				alert('スケジュールを変更しました。');
+				if (obj && obj.status === 409) {
+					return;
+				}
+				alert('スケジュールを変更しました。');					
 			});
 		},
 
@@ -291,9 +294,12 @@ $(function() {
 			
 			scheduleSample.common.showIndicator(this, promise, 'データを削除中');
 			
-			promise.always( function() {
+			promise.always( function(obj) {
 					that.plotSchedule();
 					that.showScheduleByDate(date);
+					if (obj && obj.status === 409) {
+						return;
+					}
 					alert('削除しました。');
 					scheduleSample.common.closeDialog();
 			});
