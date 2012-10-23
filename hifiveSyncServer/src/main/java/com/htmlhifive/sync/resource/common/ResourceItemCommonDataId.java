@@ -30,12 +30,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  * @author kishigam
  */
 @Embeddable
-public class ResourceItemCommonDataId implements Serializable {
+public class ResourceItemCommonDataId implements Serializable, Comparable<ResourceItemCommonDataId> {
 
-	/**
-	 * シリアルバージョンUID.
-	 */
-	private static final long serialVersionUID = -3582140249142802398L;
+	private static final long serialVersionUID = -4867979788750226686L;
 
 	/**
 	 * リソース名.<br>
@@ -55,9 +52,29 @@ public class ResourceItemCommonDataId implements Serializable {
 	private ResourceItemCommonDataId() {
 	}
 
+	/**
+	 * リソース名とリソースアイテムIDからリソースアイテム共通データIDオブジェクトを生成します.
+	 *
+	 * @param resourceName リソース名
+	 * @param resourceItemId リソースアイテムID
+	 */
 	public ResourceItemCommonDataId(String resourceName, String resourceItemId) {
 		this.resourceName = resourceName;
 		this.resourceItemId = resourceItemId;
+	}
+
+	/**
+	 * リソース名、リソースアイテムIDの順序で比較します.
+	 *
+	 * @param o 比較対象
+	 * @return 比較結果
+	 */
+	@Override
+	public int compareTo(ResourceItemCommonDataId o) {
+
+		int compare1 = this.resourceName.compareTo(o.resourceName);
+
+		return compare1 != 0 ? compare1 : this.resourceItemId.compareTo(o.resourceItemId);
 	}
 
 	/**
@@ -71,7 +88,10 @@ public class ResourceItemCommonDataId implements Serializable {
 		if (!(obj instanceof ResourceItemCommonDataId))
 			return false;
 
-		return EqualsBuilder.reflectionEquals(this, ((ResourceItemCommonDataId) obj));
+		ResourceItemCommonDataId id = (ResourceItemCommonDataId) obj;
+
+		return new EqualsBuilder().append(this.resourceName, id.resourceName)
+				.append(this.resourceItemId, id.resourceItemId).isEquals();
 	}
 
 	/**
@@ -80,7 +100,7 @@ public class ResourceItemCommonDataId implements Serializable {
 	@Override
 	public int hashCode() {
 
-		return HashCodeBuilder.reflectionHashCode(this);
+		return new HashCodeBuilder(17, 37).append(this.resourceName).append(this.resourceItemId).hashCode();
 	}
 
 	/**
