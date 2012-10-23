@@ -20,7 +20,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.htmlhifive.sync.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 
 /**
  * リソースアイテム1件の情報を保持するデータラッパー.<br>
@@ -28,7 +28,7 @@ import com.htmlhifive.sync.common.ResourceItemCommonData;
  *
  * @param <I> リソースアイテムの型
  */
-public class ResourceItemWrapper<I> {
+public class ResourceItemWrapper<I> implements Comparable<ResourceItemWrapper<I>> {
 
 	/**
 	 * リソースアイテム共通データ.
@@ -56,6 +56,15 @@ public class ResourceItemWrapper<I> {
 	public ResourceItemWrapper(ResourceItemCommonData itemCommonData, I item) {
 		this.itemCommonData = itemCommonData;
 		this.item = item;
+	}
+
+	/**
+	 * リソースアイテム共通データ順序で比較します.
+	 */
+	@Override
+	public int compareTo(ResourceItemWrapper<I> o) {
+
+		return this.itemCommonData.compareTo(o.getItemCommonData());
 	}
 
 	/**

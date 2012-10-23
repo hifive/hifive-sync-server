@@ -14,10 +14,10 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.resource;
+package com.htmlhifive.sync.resource.update;
 
-import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.ItemUpdatedException;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 
 /**
  * リソースアイテムの競合解決ロジッククラスのインターフェース.<br>

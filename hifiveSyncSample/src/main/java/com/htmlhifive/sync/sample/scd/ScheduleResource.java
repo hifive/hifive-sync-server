@@ -16,9 +16,6 @@
  */
 package com.htmlhifive.sync.sample.scd;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -30,14 +27,13 @@ import javax.annotation.Resource;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
-import com.htmlhifive.sync.exception.SyncException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
-import com.htmlhifive.sync.resource.ClientResolvingStrategy;
 import com.htmlhifive.sync.resource.ResourceQuerySpecifications;
 import com.htmlhifive.sync.resource.SyncResourceService;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.update.ClientResolvingStrategy;
 import com.htmlhifive.sync.sample.person.Person;
 import com.htmlhifive.sync.sample.person.PersonRepository;
 
@@ -49,16 +45,6 @@ import com.htmlhifive.sync.sample.person.PersonRepository;
  */
 @SyncResourceService(resourceName = "schedule", updateStrategy = ClientResolvingStrategy.class)
 public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem> {
-
-    /**
-     * 日付書式変換のためのフォーマット文字列(整数8桁文字列)
-     */
-    private static final String FORMAT_STR_INT8 = "yyyyMMdd";
-
-    /**
-     * 日付書式変換のためのフォーマット文字列(スラッシュ区切りゼロ埋めなし)
-     */
-    private static final String FORMAT_STR_SLASH_SEPARATION = "y/M/d";
 
     /**
      * エンティティの永続化を担うリポジトリ.
@@ -136,8 +122,10 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
      */
     private ScheduleResourceItem entityToItem(Schedule bean) {
 
-        DateFormat slashSeparation = new SimpleDateFormat(FORMAT_STR_SLASH_SEPARATION);
-        DateFormat int8 = new SimpleDateFormat(FORMAT_STR_INT8);
+        ScheduleDateFormatConverter formatterHolder =
+                new ScheduleDateFormatConverter(
+                        ScheduleDateFormatConverter.FORMAT_INT8,
+                        ScheduleDateFormatConverter.FORMAT_SLASH_SEPARATION);
 
         ScheduleResourceItem item = new ScheduleResourceItem(bean.getScheduleId());
 
@@ -152,7 +140,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
         List<String> dates = new ArrayList<>();
         for (ScheduleDate date : bean.getDateBeans()) {
-            dates.add(convertDateFormat(int8, slashSeparation, String.valueOf(date.getDate())));
+            dates.add(formatterHolder.convertFormat(String.valueOf(date.getDate())));
         }
         item.setDates(dates);
 
@@ -284,8 +272,10 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
      */
     private List<ScheduleDate> itemDatesToEntityDates(Schedule entity, List<String> itemDates) {
 
-        DateFormat slashSeparation = new SimpleDateFormat(FORMAT_STR_SLASH_SEPARATION);
-        DateFormat int8 = new SimpleDateFormat(FORMAT_STR_INT8);
+        ScheduleDateFormatConverter formatterHolder =
+                new ScheduleDateFormatConverter(
+                        ScheduleDateFormatConverter.FORMAT_SLASH_SEPARATION,
+                        ScheduleDateFormatConverter.FORMAT_INT8);
 
         List<ScheduleDate> resultDatesList = new ArrayList<>();
 
@@ -295,41 +285,17 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
             // 日付のマッチングは行わず、取得順に再設定する
             if (dateItr.hasNext()) {
                 ScheduleDate oldDateBean = dateBean;
-                oldDateBean.setDate(Integer.parseInt(convertDateFormat(
-                        slashSeparation, int8, dateItr.next())));
+                oldDateBean.setDate(Integer.parseInt(formatterHolder.convertFormat(dateItr.next())));
                 resultDatesList.add(oldDateBean);
             }
         }
 
         // 元より多い分は新規
         while (dateItr.hasNext()) {
-            resultDatesList.add(new ScheduleDate(entity, Integer.parseInt(convertDateFormat(
-                    slashSeparation, int8, dateItr.next()))));
+            resultDatesList.add(new ScheduleDate(
+                    entity, Integer.parseInt(formatterHolder.convertFormat(dateItr.next()))));
         }
         return resultDatesList;
-    }
-
-    /**
-     * 日付フォーマットを変換します.
-     *
-     * @param from
-     *            変換前日付フォーマット
-     * @param to
-     *            変換後日付フォーマット
-     * @param dateStr
-     *            変換前日付文字列
-     * @return 変換後日付文字列
-     */
-    private String convertDateFormat(DateFormat from, DateFormat to, String dateStr) {
-
-        String resultStr;
-        try {
-            resultStr = to.format(from.parse(dateStr));
-        } catch (ParseException e) {
-            throw new SyncException(e);
-        }
-
-        return resultStr;
     }
 
     /**

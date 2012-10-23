@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.annotation.Resource;
@@ -32,6 +33,9 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
 import com.htmlhifive.sync.exception.SyncException;
+import com.htmlhifive.sync.resource.lock.LockStrategy;
+import com.htmlhifive.sync.resource.lock.ResourceLockStatusType;
+import com.htmlhifive.sync.resource.update.UpdateStrategy;
 
 /**
  * アプリケーション内に存在するリソースを管理するサービス実装.<br>
@@ -39,6 +43,7 @@ import com.htmlhifive.sync.exception.SyncException;
  *
  * @author kishigam
  */
+@SuppressWarnings("deprecation")
 @Service
 public class DefaultSyncResourceManager implements SyncResourceManager {
 
@@ -59,8 +64,10 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	private Map<String, ResourceLockStatusType> requiredLockStatusMap;
 
 	/**
-	 * リソースごとのロック戦略オブジェクトを保持するMap
+	 * リソースごとのロック戦略オブジェクトを保持するMap<br>
+	 * TODO 次期バージョンにて実装予定
 	 */
+	@Deprecated
 	private Map<String, Class<? extends LockStrategy>> lockStrategyMap;
 
 	/**
@@ -69,23 +76,52 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	private Map<String, Class<? extends UpdateStrategy>> updateStrategyMap;
 
 	/**
-	 * インスタンスを生成し、Mapフィールドのセットアップを行います.
+	 * リソース全体に適用するプロパティ.
 	 */
-	public DefaultSyncResourceManager() {
+	private Properties resourceConfigurations;
+
+	/**
+	 * フレームワークが利用するデフォルトコンストラクタ.
+	 */
+	@SuppressWarnings("unused")
+	private DefaultSyncResourceManager() {
+	}
+
+	/**
+	 * インスタンスを生成し、Mapフィールドのセットアップを行います.
+	 *
+	 * @param syncResourceBaseTypeName リソースの基底タイプのクラス名
+	 * @param resourceConfigurations 全リソース共通設定情報
+	 */
+	public DefaultSyncResourceManager(String syncResourceBaseTypeName, Properties resourceConfigurations) {
 
 		this.resourceMap = new HashMap<>();
 		this.requiredLockStatusMap = new HashMap<>();
+
+		//	  TODO 次期バージョンにて実装予定
 		this.lockStrategyMap = new HashMap<>();
+
 		this.updateStrategyMap = new HashMap<>();
 
-		init();
+		this.resourceConfigurations = resourceConfigurations;
+
+		init(syncResourceBaseTypeName);
 	}
 
 	/**
 	 * クラスパス上のリソースを検索し、Mapに保持してこのクラスのインスタンスを生成します.<br>
-	 * {@link SyncResource} インターフェースを実装し、{@link SyncResourceService} アノテーションを付与したクラスをリソースとします.
+	 * resourceBaseTypeNameのサブタイプで、{@link SyncResourceService} アノテーションを付与したクラスをリソースとします.
+	 *
+	 * @param syncResourceBaseTypeName リソースの基底タイプのクラス名
 	 */
-	private void init() {
+	private void init(String syncResourceBaseTypeName) {
+
+		Class<?> resourceBaseType;
+		try {
+			resourceBaseType = Class.forName(syncResourceBaseTypeName);
+		} catch (ClassNotFoundException e) {
+			throw new SyncException("Class of resource base type is not found. : " + syncResourceBaseTypeName, e);
+		}
 
 		ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
 		scanner.addIncludeFilter(new AnnotationTypeFilter(SyncResourceService.class));
@@ -93,7 +129,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 		Set<BeanDefinition> candidates = scanner.findCandidateComponents("");
 		for (BeanDefinition def : candidates) {
 
-			Class<? extends SyncResource<?>> resourceClass = selectResource(def);
+			Class<? extends SyncResource<?>> resourceClass = extractResource(def, resourceBaseType);
 			if (resourceClass == null) {
 				continue;
 			}
@@ -112,11 +148,11 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 			requiredLockStatusMap.put(resourceName, resourceAnnotation.requiredLockStatus());
 
 			// ロックマネージャを特定する
+			//	  TODO 次期バージョンにて実装予定
 			lockStrategyMap.put(resourceName, resourceAnnotation.lockStrategy());
 
 			// 更新戦略オブジェクトを特定する
 			updateStrategyMap.put(resourceName, resourceAnnotation.updateStrategy());
-
 		}
 	}
 
@@ -124,22 +160,25 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	 * BeanDefinitionオブジェクトからリソースのクラスオブジェクトを抽出して返します.<br>
 	 *
 	 * @param def リソース候補のクラスのBeanDefinition
-	 * @return クラスオブジェクト
+	 * @param syncResourceBaseType リソースの基底タイプ
+	 * @return リソースのクラスオブジェクト
 	 */
 	@SuppressWarnings("unchecked")
-	private Class<? extends SyncResource<?>> selectResource(BeanDefinition def) {
+	private Class<? extends SyncResource<?>> extractResource(BeanDefinition def, Class<?> syncResourceBaseType) {
 
+		Class<?> found;
 		try {
-			// null,interface,SeparatedSyncResourceのサブタイプ以外,abstractのクラスを除外
-			Class<?> found = Class.forName(def.getBeanClassName());
-			if (found == null || found.isInterface() || !SyncResource.class.isAssignableFrom(found)
-					|| Modifier.isAbstract(found.getModifiers())) {
-				return null;
-			} else {
-				return (Class<? extends SyncResource<?>>) found;
-			}
+			found = Class.forName(def.getBeanClassName());
 		} catch (ClassNotFoundException e) {
 			throw new SyncException("An Exception thrown by SyncResourceManager", e);
+		}
+
+		// null,interface, resourceBaseTypeNameで指定された基底タイプのサブタイプ以外, abstractのクラスを除外
+		if (found == null || found.isInterface() || !syncResourceBaseType.isAssignableFrom(found)
+				|| Modifier.isAbstract(found.getModifiers())) {
+			return null;
+		} else {
+			return (Class<? extends SyncResource<?>>) found;
 		}
 	}
 
@@ -159,14 +198,20 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 			return null;
 		}
 
-		SyncResource<?> sr = context.getBean(resourceClass);
+		SyncResource<?> resource = context.getBean(resourceClass);
 
 		// LockStrategy,UpdateStrategyのセット
-		sr.setRequiredLockStatus(requiredLockStatusMap.get(resourceName));
-		sr.setLockStrategy(context.getBean(lockStrategyMap.get(resourceName)));
-		sr.setUpdateStrategy(context.getBean(updateStrategyMap.get(resourceName)));
+		resource.setRequiredLockStatus(requiredLockStatusMap.get(resourceName));
 
-		return sr;
+		// TODO 次期バージョンにて実装予定
+		resource.setLockStrategy(context.getBean(lockStrategyMap.get(resourceName)));
+
+		resource.setUpdateStrategy(context.getBean(updateStrategyMap.get(resourceName)));
+
+		// リソース設定情報を適用する
+		resource.applyResourceConfigurations(resourceConfigurations);
+
+		return resource;
 	}
 
 	/**

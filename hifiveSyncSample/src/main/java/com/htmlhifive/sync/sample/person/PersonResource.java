@@ -22,16 +22,13 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
-import com.htmlhifive.sync.resource.ClientResolvingStrategy;
 import com.htmlhifive.sync.resource.ResourceQuerySpecifications;
 import com.htmlhifive.sync.resource.SyncResourceService;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.update.ClientResolvingStrategy;
 
 /**
  * personリソースの情報を同期リソースとして公開するためのリソースクラス.<br>
@@ -60,7 +57,6 @@ public class PersonResource extends AbstractSyncResource<Person> {
      *            ID
      * @return Personオブジェクト
      */
-    @Transactional(propagation = Propagation.SUPPORTS)
     public Person getResourceItemByPersonId(String personId) {
 
         // Personデータを検索(ロックは考慮しない)

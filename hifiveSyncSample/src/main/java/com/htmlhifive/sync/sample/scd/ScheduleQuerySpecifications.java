@@ -31,8 +31,8 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.domain.Specifications;
 import org.springframework.stereotype.Service;
 
-import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.resource.ResourceQuerySpecifications;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 
 /**
  * Scheduleをリソースクエリによって検索するためのSpring Specification定義クラス.

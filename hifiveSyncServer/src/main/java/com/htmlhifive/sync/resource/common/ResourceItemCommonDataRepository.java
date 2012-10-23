@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.common;
+package com.htmlhifive.sync.resource.common;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

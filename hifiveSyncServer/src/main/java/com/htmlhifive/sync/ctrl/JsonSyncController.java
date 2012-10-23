@@ -151,16 +151,19 @@ public class JsonSyncController {
 
 	/**
 	 * リソースアイテムをロックするクライアントからのリクエストを処理し、結果をレスポンスとして返します.<br>
+	 * TODO 次期バージョンにて実装予定
 	 *
 	 * @param request ロック取得リクエストデータ
 	 * @return ロックレスポンスデータ(JSON形式)
 	 */
+	@Deprecated
 	@RequestMapping(value = "/getlock", method = RequestMethod.POST, params = {}, headers = {
 			"Content-Type=application/json", "Accept=application/json" })
 	public ResponseEntity<LockResponse> getLock(@RequestBody LockRequest request) {
 
 		try {
 			// ロック取得サービスを呼び出し
+			@SuppressWarnings("deprecation")
 			LockResponse response = synchronizer.getLock(request);
 
 			// ストレージIDをレスポンスデータから除外するためnullをセット
@@ -177,10 +180,13 @@ public class JsonSyncController {
 
 	/**
 	 * ロックを開放するクライアントからのリクエストを処理し、結果をレスポンスとして返します.<br>
+	 * TODO 次期バージョンにて実装予定
 	 *
 	 * @param request ロックリクエストデータ
 	 * @return ロックレスポンスデータ(JSON形式)
 	 */
+	@SuppressWarnings("deprecation")
+	@Deprecated
 	@RequestMapping(value = "/releaselock", method = RequestMethod.POST, params = {}, headers = {
 			"Content-Type=application/json", "Accept=application/json" })
 	public ResponseEntity<Void> releaseLock(@RequestBody LockRequest request) {

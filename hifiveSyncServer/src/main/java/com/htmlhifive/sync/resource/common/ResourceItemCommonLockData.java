@@ -1,16 +1,20 @@
-package com.htmlhifive.sync.common;
+package com.htmlhifive.sync.resource.common;
 
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import com.htmlhifive.sync.resource.ResourceLockStatusType;
+import com.htmlhifive.sync.exception.LockException;
+import com.htmlhifive.sync.resource.lock.ResourceLockStatusType;
+import com.htmlhifive.sync.service.SyncCommonData;
 
 /**
- * リソースアイテム共通データのロック状態を保持するエンティティ.
+ * リソースアイテム共通データのロック状態を保持するエンティティ.<br>
+ * TODO 次期バージョンにて実装予定
  *
  * @author kishigam
  */
+@Deprecated
 @Entity
 @Table(name = "RESOURCE_ITEM_COMMON_LOCK")
 public class ResourceItemCommonLockData {
@@ -35,6 +39,25 @@ public class ResourceItemCommonLockData {
 	 * ロック状態.
 	 */
 	private ResourceLockStatusType status;
+
+	/**
+	 * 指定されたいずれかのロック状態でロックされている場合、{@link LockException}をスローします.<br>
+	 * {@link ResourceLockStatusType#UNLOCK}の場合は例外はスローされません.
+	 *
+	 * @param statusForCheck チェックするロック状態
+	 * @throws LockException ロックされている場合
+	 */
+	public void checkStatus(SyncCommonData syncCommon, ResourceLockStatusType... statusForCheck) {
+
+		for (ResourceLockStatusType forCheck : statusForCheck) {
+			if (status == ResourceLockStatusType.UNLOCK || forCheck != status)
+				continue;
+
+			if (!token.equals(syncCommon.getLockToken())) {
+				throw new LockException("Resource item is locked by another. : " + id);
+			}
+		}
+	}
 
 	/**
 	 * @return id

@@ -14,70 +14,78 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.resource;
+package com.htmlhifive.sync.resource.lock;
 
 import java.util.List;
 
-import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.LockException;
+import com.htmlhifive.sync.resource.ResourceQueryConditions;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonLockData;
 import com.htmlhifive.sync.service.SyncCommonData;
 
 /**
- * リソースごとのロック取得ロジックを実装するクラスのインタフェース.
+ * リソースごとのロック取得ロジックを実装するクラスのインタフェース.<br>
+ * TODO 次期バージョンにて実装予定
  *
- * @author kawaguch
+ * @author kishigam
  */
+@SuppressWarnings("deprecation")
+@Deprecated
 public interface LockStrategy {
+
+	/**
+	 * リソースアイテムの現在のロック状態をチェックし、指定されたロックトークンで指定されたロックを持っていない場合{@link LockException}をスローします.<br>
+	 *
+	 * @param syncCommon 同期共通データ
+	 * @param itemCommon リソースアイテム共通データ
+	 * @return リソースアイテム共通ロックデータ
+	 */
+	void checkLockStatus(SyncCommonData syncCommon, ResourceItemCommonData itemCommon, ResourceLockStatusType required);
 
 	/**
 	 * 1件のリソースアイテムを指定されたロック状態でロックします.
 	 *
-	 * @param syncCommon sync共通データ
+	 * @param syncCommon 同期共通データ
 	 * @param itemCommon リソースアイテム共通データ
 	 * @param lockStatus ロック状態
+	 * @return リソースアイテム共通ロックデータ
 	 * @throws LockException ロックが取得できなかったとき
 	 */
-	public void lock(SyncCommonData syncCommon, ResourceItemCommonData itemCommon, ResourceLockStatusType lockStatus)
-			throws LockException;
+	ResourceItemCommonLockData lock(SyncCommonData syncCommon, ResourceItemCommonData itemCommon,
+			ResourceLockStatusType lockStatus) throws LockException;
 
 	/**
 	 * Mapで指定されたすべてのリソースアイテムを指定されたロック状態でロックします.
 	 *
-	 * @param syncCommon sync共通データ
+	 * @param syncCommon 同期共通データ
 	 * @param itemCommonList リソースアイテム共通データのリスト
 	 * @param lockStatus ロック状態
+	 * @return リソースアイテム共通ロックデータ
 	 * @throws LockException ロックが取得できなかったとき
 	 */
-	public void lock(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonList,
+	ResourceItemCommonLockData lock(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonList,
 			ResourceLockStatusType lockStatus) throws LockException;
 
 	/**
 	 * リソースアイテム共通データのリストに含まれる対象アイテムのうち、クエリの条件を満たすリソースアイテムを、指定されたロック状態でロックします.
 	 *
-	 * @param syncCommon sync共通データ
+	 * @param syncCommon 同期共通データ
 	 * @param itemCommonList リソースアイテム共通データのリスト
 	 * @param query クエリ
 	 * @param lockStatus ロック状態
-	 * @return クエリの条件を満たすリソースアイテム共通データのリスト
+	 * @return クエリの条件を満たすリソースアイテム共通ロックデータのリスト
 	 * @throws LockException ロックが取得できなかったとき
 	 */
-	public List<ResourceItemCommonData> lock(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonList,
+	List<ResourceItemCommonLockData> lock(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonList,
 			List<ResourceQueryConditions> query, ResourceLockStatusType lockStatus) throws LockException;
 
 	/**
-	 * 指定された1件のリソースアイテムのロック状態をを返します.
+	 * 指定されたリソースアイテムのロックを開放します.<br>
+	 * ロック状態は{@link ResourceLockStatusType#UNLOCK}になります.
 	 *
-	 * @param syncCommon sync共通データ
-	 * @param itemCommon リソースアイテム共通データ
-	 * @return ロック状態
-	 */
-	public ResourceLockStatusType getCurrentlockStatus(SyncCommonData syncCommon, ResourceItemCommonData itemCommon);
-
-	/**
-	 * 指定されたリソースアイテムのロックを開放します、ロック状態は{@link ResourceLockStatusType#UNLOCK}になります.
-	 *
-	 * @param syncCommon sync共通データ
+	 * @param syncCommon 同期共通データ
 	 * @param itemCommon リソースアイテム共通データ
 	 */
-	public void unlock(SyncCommonData syncCommon, ResourceItemCommonData itemCommon);
+	void unlock(SyncCommonData syncCommon, ResourceItemCommonData itemCommon);
 }

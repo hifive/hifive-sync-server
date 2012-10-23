@@ -14,20 +14,20 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.resource;
+package com.htmlhifive.sync.resource.update;
 
 import org.springframework.stereotype.Service;
 
-import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.ItemUpdatedException;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 
 /**
- * サーバー側の更新を強制的に上書きし、今回の更新を有効にする更新戦略実装クラス.<br>
+ * 更新を行わず、クライアントに判断を求める更新戦略実装クラス.<br>
  *
  * @author kishigam
  */
 @Service
-public class ForceUpdateStrategy implements UpdateStrategy {
+public class ClientResolvingStrategy implements UpdateStrategy {
 
 	/**
 	 * 競合を解決せず、ItemUpdateExceptionをスローします.
@@ -36,7 +36,7 @@ public class ForceUpdateStrategy implements UpdateStrategy {
 	public <T> T resolveConflict(ResourceItemCommonData itemCommon, T item, ResourceItemCommonData serverCommon,
 			T serverItem) throws ItemUpdatedException {
 
-		return serverItem;
+		throw new ItemUpdatedException("return client to resolve.");
 	}
 
 }

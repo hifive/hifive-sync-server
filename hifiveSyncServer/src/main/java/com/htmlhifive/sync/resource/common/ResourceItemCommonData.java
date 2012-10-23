@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.common;
+package com.htmlhifive.sync.resource.common;
 
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
@@ -42,7 +42,7 @@ import com.htmlhifive.sync.resource.SyncConflictType;
  */
 @Entity
 @Table(name = "RESOURCE_ITEM_COMMON_DATA")
-public class ResourceItemCommonData {
+public class ResourceItemCommonData implements Comparable<ResourceItemCommonData> {
 
 	/**
 	 * IDオブジェクト.<br>
@@ -87,6 +87,15 @@ public class ResourceItemCommonData {
 	private long lastModified;
 
 	/**
+	 * この共通データが"for update"状態となっていることを示すフラグ.<br>
+	 * このフィールドはクライアントへのレスポンスに含みません.<br>
+	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.<br>
+	 * また、永続化の対象外です.
+	 */
+	@Transient
+	private boolean forUpdate;
+
+	/**
 	 * フレームワーク、ライブラリが使用するプライベートデフォルトコンストラクタ.
 	 */
 	@SuppressWarnings("unused")
@@ -104,6 +113,15 @@ public class ResourceItemCommonData {
 
 		this.id = id;
 		this.targetItemId = targetItemId;
+	}
+
+	/**
+	 * 共通データIDに含まれるリソースアイテムIDの順序で比較します.
+	 */
+	@Override
+	public int compareTo(ResourceItemCommonData o) {
+
+		return this.id.getResourceItemId().compareTo(o.getId().getResourceItemId());
 	}
 
 	/**
@@ -237,5 +255,22 @@ public class ResourceItemCommonData {
 	 */
 	public void setLastModified(long lastModified) {
 		this.lastModified = lastModified;
+	}
+
+	/**
+	 * リクエスト、レスポンスから除外するため、{@link JsonIgnore}を追加しています.
+	 *
+	 * @return forUpdate
+	 */
+	@JsonIgnore
+	public boolean isForUpdate() {
+		return forUpdate;
+	}
+
+	/**
+	 * @param forUpdate セットする forUpdate
+	 */
+	public void setForUpdate(boolean forUpdate) {
+		this.forUpdate = forUpdate;
 	}
 }

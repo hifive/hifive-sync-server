@@ -14,16 +14,19 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.common;
+package com.htmlhifive.sync.resource.common;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
 /**
  * リソースアイテム共通ロックデータエンティティを永続化するためのリポジトリ.<br>
  * SpringFrameworkの標準的なリポジトリ、独自拡張メソッドを定義した{@link ResourceItemCommonLockDataRepositoryCustom}インターフェースを継承します.<br>
+ * TODO 次期バージョンにて実装予定
  *
  * @author kishigam
  */
+@SuppressWarnings("deprecation")
+@Deprecated
 public interface ResourceItemCommonLockDataRepository extends
-		JpaRepository<ResourceItemCommonLockData, ResourceItemCommonDataId>, ResourceItemCommonLockDataRepositoryCustom {
+		JpaRepository<ResourceItemCommonLockData, ResourceItemCommonDataId> {
 }
