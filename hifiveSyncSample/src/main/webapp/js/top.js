@@ -39,13 +39,8 @@ $(function() {
 			var promise = scheduleSample.sync.manager.sync();
 			var that = this;
 
-			promise.done(function() {
+			promise.always(function() {
 					that.$find('.column').trigger('_plot');
-					dfd.resolve();
-			}).fail(function(e) {
-					if (e.status === 409) {
-						that.$find('.column').trigger('_plot');					
-					}
 					dfd.resolve();
 			});
 
@@ -76,14 +71,12 @@ $(function() {
 			
 			var $column = this.$find('.column');
 
-			promise.done(function() {
+			promise.always(function(obj) {
 				$column.trigger('_plot');
-			}).fail(function(e) {
-				if (e.status == 409) {
-					$column.trigger('_plot');
-				} else {
-					that.log.error(e);
+				if (obj && obj.status === 409) {
+					return;
 				}
+				alert('同期しました')
 			});
 		},
 

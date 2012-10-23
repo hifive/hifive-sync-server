@@ -152,11 +152,9 @@ $(function() {
 							+ ("0" + d.getDate()).slice(-2);
 				}
 				return '<input type="date" name="date" value="' + dateStr + '" />';
-			} else {
-				dateStr = date || '';
-				return '<input type="text" class="datepicker" name="date" value="' + dateStr
-						+ '"/>';
 			}
+			dateStr = date || '';
+			return '<input type="text" class="datepicker" name="date" value="' + dateStr + '"/>';
 		},
 
 		/**

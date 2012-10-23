@@ -1,15 +1,10 @@
 (function() {	
 	
 	function ScheduleLogic() {
-		var scheduleDataModel = scheduleSample.data.manager.models.schedule;
-		
-		this.scheduleDataModel = scheduleDataModel;
+		this.scheduleDataModel = scheduleSample.data.manager.models.schedule;
 		this.personDataModel = scheduleSample.data.manager.models.person;
-		this.scheduleDataModel.idSequence = h5.core.data.createSequence(0,1, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 		this.syncManager = scheduleSample.sync.manager;
 		this.loginPersonId = null;
-		
-		
 		
 		this.syncManager.addEventListener('resolveDuplicateId', function(event) {
 			var updateIds = event.updateIdLog.schedule;
@@ -19,7 +14,7 @@
 			}
 			
 			for (var i=0, len=updateIds.length; i<len; i++) {
-				var item = scheduleDataModel.get(updateIds[i]);
+				var item = this.scheduleDataModel.get(updateIds[i]);
 				var userIds = item.get('userIds');
 				var index = userIds.indexOf(event.oldId);
 				if (index !== -1) {
@@ -80,8 +75,7 @@
 		
 		regist: function(schedule) {
 			// スケジュールIDの生成
-			// すべてのクライアントで重複しないように作る
-			schedule.scheduleId = this.syncManager.getGlobalItemId(this.scheduleDataModel.idSequence.next());	
+			schedule.scheduleId = this.syncManager.getGlobalItemId(this.scheduleDataModel);	
 			this._removeEmptyUserIds(schedule);
 			this.scheduleDataModel.create(schedule);
 	
