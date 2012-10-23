@@ -1,14 +1,10 @@
 (function() {	
 	
 	function ScheduleLogic() {
-		var scheduleDataModel = scheduleSample.data.manager.models.schedule;
-		
-		this.scheduleDataModel = scheduleDataModel;
+		this.scheduleDataModel = scheduleSample.data.manager.models.schedule;
 		this.personDataModel = scheduleSample.data.manager.models.person;
 		this.syncManager = scheduleSample.sync.manager;
 		this.loginPersonId = null;
-		
-		
 		
 		this.syncManager.addEventListener('resolveDuplicateId', function(event) {
 			var updateIds = event.updateIdLog.schedule;
@@ -18,7 +14,7 @@
 			}
 			
 			for (var i=0, len=updateIds.length; i<len; i++) {
-				var item = scheduleDataModel.get(updateIds[i]);
+				var item = this.scheduleDataModel.get(updateIds[i]);
 				var userIds = item.get('userIds');
 				var index = userIds.indexOf(event.oldId);
 				if (index !== -1) {
