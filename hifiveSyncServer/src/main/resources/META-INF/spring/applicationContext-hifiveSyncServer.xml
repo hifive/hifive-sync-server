@@ -42,8 +42,6 @@
 	<!-- hifive-sync-server configuration constants -->
 	<util:constant id="DOWNLOAD_CTRL_READ_LOCK"
 		static-field="com.htmlhifive.sync.service.download.DownloadControlType.READ_LOCK" />
-	<util:constant id="DOWNLOAD_CTRL_VERIFY"
-		static-field="com.htmlhifive.sync.service.download.DownloadControlType.VERIFY" />
 	<util:constant id="DOWNLOAD_CTRL_NONE"
 		static-field="com.htmlhifive.sync.service.download.DownloadControlType.NONE" />
 

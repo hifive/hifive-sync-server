@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 
 import javax.annotation.Resource;
@@ -75,6 +76,11 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	private Map<String, Class<? extends UpdateStrategy>> updateStrategyMap;
 
 	/**
+	 * リソース全体に適用するプロパティ.
+	 */
+	private Properties resourceConfigurations;
+
+	/**
 	 * フレームワークが利用するデフォルトコンストラクタ.
 	 */
 	@SuppressWarnings("unused")
@@ -85,8 +91,9 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	 * インスタンスを生成し、Mapフィールドのセットアップを行います.
 	 *
 	 * @param syncResourceBaseTypeName リソースの基底タイプのクラス名
+	 * @param resourceConfigurations 全リソース共通設定情報
 	 */
-	public DefaultSyncResourceManager(String syncResourceBaseTypeName) {
+	public DefaultSyncResourceManager(String syncResourceBaseTypeName, Properties resourceConfigurations) {
 
 		this.resourceMap = new HashMap<>();
 		this.requiredLockStatusMap = new HashMap<>();
@@ -95,6 +102,8 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 		this.lockStrategyMap = new HashMap<>();
 
 		this.updateStrategyMap = new HashMap<>();
+
+		this.resourceConfigurations = resourceConfigurations;
 
 		init(syncResourceBaseTypeName);
 	}
@@ -189,17 +198,20 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 			return null;
 		}
 
-		SyncResource<?> sr = context.getBean(resourceClass);
+		SyncResource<?> resource = context.getBean(resourceClass);
 
 		// LockStrategy,UpdateStrategyのセット
-		sr.setRequiredLockStatus(requiredLockStatusMap.get(resourceName));
+		resource.setRequiredLockStatus(requiredLockStatusMap.get(resourceName));
 
 		// TODO 次期バージョンにて実装予定
-		sr.setLockStrategy(context.getBean(lockStrategyMap.get(resourceName)));
+		resource.setLockStrategy(context.getBean(lockStrategyMap.get(resourceName)));
 
-		sr.setUpdateStrategy(context.getBean(updateStrategyMap.get(resourceName)));
+		resource.setUpdateStrategy(context.getBean(updateStrategyMap.get(resourceName)));
 
-		return sr;
+		// リソース設定情報を適用する
+		resource.applyResourceConfigurations(resourceConfigurations);
+
+		return resource;
 	}
 
 	/**
