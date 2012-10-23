@@ -14,10 +14,13 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.common;
+package com.htmlhifive.sync.resource.common;
 
 import java.util.List;
 
+import javax.persistence.LockModeType;
+
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -26,10 +29,19 @@ import org.springframework.data.repository.query.Param;
  */
 public interface ResourceItemCommonDataRepositoryCustom {
 
-	// TODO: 次期バージョンにて実装予定(reserve用finder)
+	/**
+	 * IDでリソースアイテムの共通データを返します.<br>
+	 *
+	 * @param resourceName リソース名
+	 * @param since データを検索する時刻(指定時刻以降の更新データを検索)
+	 * @return 検索した共通データエンティティのList
+	 */
+	@Lock(LockModeType.PESSIMISTIC_WRITE)
+	@Query("SELECT d FROM ResourceItemCommonData d WHERE d.id = :id")
+	ResourceItemCommonData findOneForUpdate(@Param("id") ResourceItemCommonDataId id);
 
 	/**
-	 * リソース名が合致し、ある時刻以降に更新されたリソースの共通データを返します.<br>
+	 * リソース名が合致し、ある時刻以降に更新されたリソースアイテムの共通データを返します.<br>
 	 *
 	 * @param resourceName リソース名
 	 * @param since データを検索する時刻(指定時刻以降の更新データを検索)
@@ -39,7 +51,7 @@ public interface ResourceItemCommonDataRepositoryCustom {
 	List<ResourceItemCommonData> findModified(@Param("resourceName") String resourceName, @Param("since") long since);
 
 	/**
-	 * リソース名が合致し、そのリソースでのIDが合致する共通データを返します.<br>
+	 * リソース名が合致し、対象リソースアイテムIDが合致する共通データを返します.<br>
 	 *
 	 * @param resourceName リソース名
 	 * @param targetItemId 共通データの対象リソースアイテムにおけるID

@@ -14,7 +14,7 @@
  * limitations under the License.
  *
  */
-package com.htmlhifive.sync.common;
+package com.htmlhifive.sync.resource.common;
 
 import java.util.List;
 
@@ -52,13 +52,19 @@ public class ResourceItemCommonDataRepositoryService implements ResourceItemComm
 	@Override
 	public ResourceItemCommonData currentCommonData(ResourceItemCommonDataId id) {
 
-		ResourceItemCommonData common = repository.findOne(id);
+		return repository.findOne(id);
+	}
 
-		if (common == null) {
-			throw new BadRequestException("itemCommonData not found : " + id.getResourceName() + "-"
-					+ id.getResourceItemId());
-		}
-		return common;
+	/**
+	 * リソースアイテム共通データのIDオブジェクトで共通データエンティティを"for update"で検索し、返します.<br>
+	 *
+	 * @param id リソースアイテム共通データID
+	 * @return 共通データエンティティ
+	 */
+	@Override
+	public ResourceItemCommonData currentCommonDataForUpdate(ResourceItemCommonDataId id) {
+
+		return repository.findOneForUpdate(id);
 	}
 
 	/**

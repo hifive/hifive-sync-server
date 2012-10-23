@@ -27,23 +27,21 @@
 		<property name="dataSource" ref="dataSource" />
 		<property name="packagesToScan">
 			<list>
-				<value>com.htmlhifive.sync.common</value>
+				<value>com.htmlhifive.sync.resource</value>
 				<value>com.htmlhifive.sync.service</value>
 			</list>
 		</property>
 	</bean>
 
 	<!-- JPA repository settings -->
-	<jpa:repositories base-package="com.htmlhifive.sync.service"
+	<jpa:repositories base-package="com.htmlhifive.sync.resource"
 		transaction-manager-ref="txManager" />
-	<jpa:repositories base-package="com.htmlhifive.sync.common"
+	<jpa:repositories base-package="com.htmlhifive.sync.service"
 		transaction-manager-ref="txManager" />
 
 	<!-- hifive-sync-server configuration constants -->
 	<util:constant id="DOWNLOAD_CTRL_READ_LOCK"
 		static-field="com.htmlhifive.sync.service.download.DownloadControlType.READ_LOCK" />
-	<util:constant id="DOWNLOAD_CTRL_VERIFY"
-		static-field="com.htmlhifive.sync.service.download.DownloadControlType.VERIFY" />
 	<util:constant id="DOWNLOAD_CTRL_NONE"
 		static-field="com.htmlhifive.sync.service.download.DownloadControlType.NONE" />
 

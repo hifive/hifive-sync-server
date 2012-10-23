@@ -1,4 +1,4 @@
-package com.htmlhifive.sync.common;
+package com.htmlhifive.sync.resource.common;
 
 import com.htmlhifive.sync.resource.SyncAction;
 

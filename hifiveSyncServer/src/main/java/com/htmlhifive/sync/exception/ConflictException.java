@@ -16,9 +16,6 @@
  */
 package com.htmlhifive.sync.exception;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.ResponseStatus;
-
 import com.htmlhifive.sync.service.upload.UploadResponse;
 
 /**
@@ -27,7 +24,6 @@ import com.htmlhifive.sync.service.upload.UploadResponse;
  *
  * @author kishigam
  */
-@ResponseStatus(value = HttpStatus.CONFLICT, reason = "conflicted")
 public class ConflictException extends RuntimeException {
 
 	/**

@@ -11587,7 +11587,7 @@ var h5internal = {
 		 *  インスタンスを共通にするためにここで定義する 
 		 */
 		this._itemsChangeListener = this._createItemsChangeListener();
-		
+
 		this._lastUploadAjaxPromise = null;
 	}
 
@@ -12314,6 +12314,7 @@ var h5internal = {
 										// 更新時
 										redoLog.item = getPlainItem(item); // itemのコピーを保持しておく(参照だと変更されてしまう可能性があるため)
 									} else if (action === ACTION_TYPE_DELETE) {
+<<<<<<< HEAD
 										// redoログの中にcreateのログが残っている場合は、このアイテムのログはなかったことにする。
 										var indexOfCreateItem = that.redoLogs.length;
 										for (var i=0, len=that.redoLogs.length; i<len;i++) {
@@ -12380,6 +12381,68 @@ var h5internal = {
 										h5.api.storage.local.setItem(REDOLOG_LIST_KEY, that.redoLogs);
 									}
 								}
+=======
+										var isCreated = false;
+										for (var i=0, len=that.redoLogs.length; i<len;) {
+											// redoログの中にcreateのログが残っている場合は、このアイテムのログはなかったことにする。
+											var existingRedoLog = that.redoLogs[j];
+											if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	&& existingRedoLog.modelName === model.name) {
+												if (isCreated) {
+													that.redoLogs.splice(i,1);
+													len--;
+												} else if (existingRedoLog.action === ACTION_TYPE_CREATE) {
+													isCreated = true;
+													that.redoLogs.splice(i,1);
+													len--;								
+												} else {
+													i++;
+												}
+											}
+										}
+										
+										// 削除時はidのみ保存
+										redoLog.item = {};
+										redoLog.item[model.idKey] = item.get(model.idKey);
+									} else {
+										// 作成時
+										for (var j=0, len=that.redoLogs.length; j<len; j++) {
+											var existingRedoLog = that.redoLogs[j];
+											if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	&& existingRedoLog.modelName === model.name) {
+												// アイテムがcreateされたとき、redoログ内に同じモデルの同じidを持つアイテムがあるときは、
+												// ローカルでアイテムを削除して、競合が起きたのでそれを解決するためにアイテムを作成しなおしたときか、
+												// 重複IDしたデータを再度登録するときである。
+												// 削除していた（競合していた）場合は、削除のログを消して、更新データとしてログを登録する。
+												// IDの重複のときは、redoログ内の旧アイテムのID部分を変更し、同じく更新としてログに登録する。
+												// ただし、IDの変更は、FWに旧IDと新IDを教えておくことで対応している(resolveDuplicateメソッド内)。
+												// したがって、ユーザはresolveDuplicateをアイテム再生成の前に呼び出しておく必要がある。
+												// TODO: 方法については要再検討
+
+												if(existingRedoLog.action === ACTION_TYPE_DELETE) {
+													// 一度削除されてまだサーバに送信されていない場合は、
+													// 削除したことをなくし、更新としてサーバに伝える
+													that.redoLogs.splice(j,1);
+													
+												}
+												item._commonData = existingRedoLog.itemCommonData;
+												action = ACTION_TYPE_UPDATE;
+												break;
+											}
+										}
+										redoLog.item = getPlainItem(item);
+									} 
+
+									$.extend(redoLog, {
+											itemCommonData: item._commonData,
+											modelName: model.name,
+											action: action
+									});
+									
+									that.redoLogs.push(redoLog);
+									if (h5.api.storage.isSupported) {
+										h5.api.storage.local.setItem(REDOLOG_LIST_KEY, that.redoLogs);
+									}
+								};
+>>>>>>> refs/remotes/origin/master
 								
 								function itemsChangeListener(event) {
 									var model = event.target;

@@ -22,13 +22,13 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
-import com.htmlhifive.sync.common.ResourceItemCommonData;
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
-import com.htmlhifive.sync.resource.ClientResolvingStrategy;
 import com.htmlhifive.sync.resource.ResourceQuerySpecifications;
 import com.htmlhifive.sync.resource.SyncResourceService;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.update.ClientResolvingStrategy;
 
 /**
  * personリソースの情報を同期リソースとして公開するためのリソースクラス.<br>

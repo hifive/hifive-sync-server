@@ -5,7 +5,7 @@ import java.util.Map;
 
 import org.springframework.data.jpa.domain.Specifications;
 
-import com.htmlhifive.sync.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 
 /**
  * リソースアイテムをリソースクエリによって検索するためのSpring Specification定義インターフェース.<br>
