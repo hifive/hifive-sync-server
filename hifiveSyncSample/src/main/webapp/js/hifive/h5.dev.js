@@ -11620,7 +11620,7 @@ var h5internal = {
 						 * @return Promiseオブジェクト
 						 */
 						sync: function() {
-							return asyncInOrder(this.upload, this.download, this);
+							return asyncInOrder(this.upload, this.download, this);						
 						},
 
 						/**
@@ -11687,7 +11687,7 @@ var h5internal = {
 								that._lastUploadAjaxPromise.always(function(){
 									// レスポンスが返ってきたので、前回のpromiseをnullにする
 									that._lastUploadAjaxPromise = null;
-								}).done(function(data) {
+								}).done(function(resultData) {
 										// 競合なし
 
 									// 送った部分をredoログから削除する
@@ -11695,7 +11695,7 @@ var h5internal = {
 
 									that.unsentRedoLogsLength = 0;
 									// 最終アップロード時刻を更新する
-									that._lastUploadTime = data.uploadCommonData.lastUploadTime;
+									that._lastUploadTime = resultData.uploadCommonData.lastUploadTime;
 
 									if (h5.api.storage.isSupported) {
 										h5.api.storage.local.setItem(UNSENT_REDOLOGS_LENGTH, 0);
@@ -11723,16 +11723,15 @@ var h5internal = {
 									}
 								});
 								return dfd.promise();
-							};
+							}
 
 							// upload ここから
 
 							// 前回送信失敗したものを送るか、そうでないか
 							if (this._unsentRedoLogsLength !== 0) {
 								return asyncInOrder(_upload, _upload, this);
-							} else {
-								return _upload();
-							}
+							} 
+							return _upload();
 						},
 
 						/**
@@ -11755,9 +11754,9 @@ var h5internal = {
 							}
 
 							var that = this;
-							this._download(this._queries).done(function(data) {
+							this._download(this._queries).done(function(resultData) {
 								// アプリケーションデータを保存する
-								that._saveDownloadCommonData(data.downloadCommonData);
+								that._saveDownloadCommonData(resultData.downloadCommonData);
 								dfd.resolve();
 							}).fail(function(obj) {
 								alert('downloadのreject');
@@ -11802,7 +11801,7 @@ var h5internal = {
 									conditions: queryArray[i].conditions
 								});
 							}
-							this._download(queries).done(function(data, items) {
+							this._download(queries).done(function(resultData, items) {
 								dfd.resolve(items);
 							}).fail(function(obj) {
 								dfd.reject(obj);
@@ -11999,7 +11998,7 @@ var h5internal = {
 							if (!addedQueriesOfThisModel)
 								return false;
 
-							for (i = 0, len = addedQueriesOfThisModel.length; i < len; i++) {
+							for (var i = 0, len = addedQueriesOfThisModel.length; i < len; i++) {
 								if (query.conditions === addedQueriesOfThisModel[i].conditions)
 									return true;
 							}
@@ -12068,7 +12067,7 @@ var h5internal = {
 							if (this._storageId) {
 								data.downloadCommonData = {
 										storageId: this._storageId
-								}
+								};
 							}
 
 							var options = {
@@ -12084,10 +12083,10 @@ var h5internal = {
 
 							var dfd = h5.async.deferred();
 
-							this.ajax(options).done(function(data) {
+							this.ajax(options).done(function(resultData) {
 								// レスポンスを解析してモデルに反映する
-								var items = that._saveServerItems(data.resourceItems);
-								dfd.resolve(data, items);
+								var items = that._saveServerItems(resultData.resourceItems);
+								dfd.resolve(resultData, items);
 							}).fail(function(obj) {
 								if (obj.statusText === 'timeout' || obj.statusText === 'error') {
 									fwLogger.info('サーバとの接続に失敗しました');
@@ -12104,20 +12103,20 @@ var h5internal = {
 						/**
 						 * 
 						 */
-						_dispatchConflictEvent: function(data) {
+						_dispatchConflictEvent: function(resultData) {
 							// 衝突あり
 							
 							var eventType;  // 競合イベントタイプ 
 							var conflicted; // 競合アイテムリスト
 
-							if (data.uploadCommonData.conflictType === CONFLICT_TYPE_DUPLICATE_ID) {
+							if (resultData.uploadCommonData.conflictType === CONFLICT_TYPE_DUPLICATE_ID) {
 								// IDの重複が起きたとき
 								eventType = EVENT_DUPLICATE_ID;
-								conflicted = this._getItemsOfDuplicatedIds(data.resourceItems);
-							} else if (data.uploadCommonData.conflictType === CONFLICT_TYPE_UPDATED) {
+								conflicted = this._getItemsOfDuplicatedIds(resultData.resourceItems);
+							} else if (resultData.uploadCommonData.conflictType === CONFLICT_TYPE_UPDATED) {
 								// 更新しようとして競合が起きたとき
 								eventType = EVENT_UPDATED;
-								conflicted = this._getConflictItems(data.resourceItems);
+								conflicted = this._getConflictItems(resultData.resourceItems);
 							} else {
 								throw new Error(ERR_MSG_INVALID_CONFLICT_TYPE);
 							}
@@ -12393,7 +12392,7 @@ var h5internal = {
 									if (h5.api.storage.isSupported) {
 										h5.api.storage.local.setItem(REDOLOG_LIST_KEY, that.redoLogs);
 									}
-								};
+								}
 								
 								function itemsChangeListener(event) {
 									var model = event.target;
