@@ -105,7 +105,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 			// TODO 次期バージョンにて実装予定
 			//			if (requiredLockStatus == ResourceLockStatusType.EXCLUSIVE) {
-			//				lockStrategy.checkLockStatus(syncCommon, itemCommon, ResourceLockStatusType.EXCLUSIVE);
+			//				lockStrategy.checkReadLockStatus(syncCommon, itemCommon);
 			//			}
 
 			// for updateで取得済みでない場合は取得(非 for update)
@@ -147,7 +147,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		// TODO 次期バージョンにて実装予定
 		//		if (requiredLockStatus == ResourceLockStatusType.EXCLUSIVE) {
 		//			for (ResourceItemCommonData itemCommon : commonDataList) {
-		//				lockStrategy.checkLockStatus(syncCommon, itemCommon, ResourceLockStatusType.EXCLUSIVE);
+		//				lockStrategy.checkReadLockStatus(syncCommon, itemCommon);
 		//			}
 		//		}
 
@@ -300,7 +300,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		try {
 			// TODO 次期バージョンにて実装予定
 			//		if (requiredLockStatus != ResourceLockStatusType.UNLOCK) {
-			//			lockStrategy.checkLockStatus(uploadCommon, itemCommon, requiredLockStatus);
+			//			lockStrategy.checkWriteLockStatus(uploadCommon, itemCommon, requiredLockStatus);
 			//		}
 
 			// for updateで取得済みでない場合は取得(非 for update)

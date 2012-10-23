@@ -35,13 +35,24 @@ import com.htmlhifive.sync.service.SyncCommonData;
 public interface LockStrategy {
 
 	/**
-	 * リソースアイテムの現在のロック状態をチェックし、指定されたロックトークンで指定されたロックを持っていない場合{@link LockException}をスローします.<br>
+	 * リソースアイテムの現在のロック状態をチェックし、自身以外のロックトークンで排他ロックされている場合{@link LockException}をスローします.<br>
 	 *
 	 * @param syncCommon 同期共通データ
 	 * @param itemCommon リソースアイテム共通データ
 	 * @return リソースアイテム共通ロックデータ
 	 */
-	void checkLockStatus(SyncCommonData syncCommon, ResourceItemCommonData itemCommon, ResourceLockStatusType required);
+	void checkReadLockStatus(SyncCommonData syncCommon, ResourceItemCommonData itemCommon);
+
+	/**
+	 * リソースアイテムの現在のロック状態をチェックし、自身のロックトークンで指定されたロック状態となっていない場合{@link LockException}をスローします.<br>
+	 *
+	 * @param syncCommon 同期共通データ
+	 * @param itemCommon リソースアイテム共通データ
+	 * @param required チェックするロック状態タイプ
+	 * @return リソースアイテム共通ロックデータ
+	 */
+	void checkWriteLockStatus(SyncCommonData syncCommon, ResourceItemCommonData itemCommon,
+			ResourceLockStatusType required);
 
 	/**
 	 * 1件のリソースアイテムを指定されたロック状態でロックします.

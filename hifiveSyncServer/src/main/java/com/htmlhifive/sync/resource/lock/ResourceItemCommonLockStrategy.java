@@ -33,18 +33,31 @@ public class ResourceItemCommonLockStrategy implements LockStrategy {
 	private ResourceItemCommonLockDataRepository repository;
 
 	/**
-	 * リソースアイテムの現在のロック状態をチェックし、指定されたロックトークンで指定されたロックを持っていない場合{@link LockException}をスローします.<br>
+	 * リソースアイテムの現在のロック状態をチェックし、自身以外のロックトークンで排他ロックされている場合{@link LockException}をスローします.<br>
 	 *
 	 * @param syncCommon 同期共通データ
 	 * @param itemCommon リソースアイテム共通データ
 	 * @return リソースアイテム共通ロックデータ
-	 * @throws LockException 必要なロックを持っていなかった場合
 	 */
 	@Override
-	public void checkLockStatus(SyncCommonData syncCommon, ResourceItemCommonData itemCommon,
-			ResourceLockStatusType required) {
+	public void checkReadLockStatus(SyncCommonData syncCommon, ResourceItemCommonData itemCommon) {
+		// TODO 自動生成されたメソッド・スタブ
 
-		// TODO: 次期バージョンにて実装予定
+	}
+
+	/**
+	 * リソースアイテムの現在のロック状態をチェックし、自身のロックトークンで指定されたロック状態となっていない場合{@link LockException}をスローします.<br>
+	 *
+	 * @param syncCommon 同期共通データ
+	 * @param itemCommon リソースアイテム共通データ
+	 * @param required チェックするロック状態タイプ
+	 * @return リソースアイテム共通ロックデータ
+	 */
+	@Override
+	public void checkWriteLockStatus(SyncCommonData syncCommon, ResourceItemCommonData itemCommon,
+			ResourceLockStatusType required) {
+		// TODO 自動生成されたメソッド・スタブ
+
 	}
 
 	/**
