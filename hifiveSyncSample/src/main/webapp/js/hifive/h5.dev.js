@@ -11412,7 +11412,7 @@ var h5internal = {
 	var STORAGE_ID_KEY = 'sync-storageId';
 	var QUERIES_KEY = 'sync-queries';
 	var LAST_UPLOAD_TIME_KEY = 'sync-lastUploadTime';
-	var UNSENT_REDOLOGS_LENGTH = 'sync-unsentRedoLogLength'
+	var UNSENT_REDOLOGS_LENGTH = 'sync-unsentRedoLogLength';
 
 	// テーブルへ挿入するitemのキーは、syncitem-を頭につける
 	var HEAD_OF_SYNC_ITEM_KEY = 'syncitem-';
@@ -11459,7 +11459,7 @@ var h5internal = {
 	 * @param {DataItem} item データアイテム
 	 * @return {Object} データアイテムのPOJO
 	 */
-	function getPlainItem(item) {
+	function toPlainItem(item) {
 		var obj = item.get();
 		var schema = item.getModel().schema;
 		for ( var prop in schema) {
@@ -11488,7 +11488,7 @@ var h5internal = {
 		var saveData = {
 			// ローカルに保存するための、PlainObjectを生成する
 			// スキーマに登録されたデータでisTransitionがtrueでないデータを登録する
-			item: getPlainItem(item),
+			item: toPlainItem(item),
 			commonData: item.commonData
 		};
 
@@ -11859,12 +11859,15 @@ var h5internal = {
 						 * @return {String} ID
 						 */
 						getGlobalItemId: function(modelOrStrOrNum) {
-							var id;
-							if (typeof modelOrStrOrNum === 'string') {
-								id = modelOrStrOrNum;								
-							} else if (typeof modelOrStrOrNum === 'number') {
+							var id = '';
+							switch(typeof modelOrStrOrNum) {
+							case 'string':
+								id = modelOrStrOrNum;
+								break;
+							case 'number':
 								id = modelOrStrOrNum.toString();
-							} else if (typeof modelOrStrOrNum === 'object') {
+								break;
+							case 'object':
 								// SyncManagerが持つDataModelManagerを持っていなければならない
 								if (!modelOrStrOrNum.getManager || modelOrStrOrNum.getManager() !== this.dataModelManager) {
 									throw new Error(ERR_MSG_INVALID_ARGUMENT);						
@@ -11873,7 +11876,8 @@ var h5internal = {
 									modelOrStrOrNum.__idSequence = h5.core.data.createSequence(null, null, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
 								}
 								id = modelOrStrOrNum.__idSequence.next();
-							} else {
+								break;
+							default:
 								throw new Error(ERR_MSG_INVALID_ARGUMENT);
 							}
 							return this._storageId + '-' + id;								
@@ -12310,17 +12314,18 @@ var h5internal = {
 
 									var redoLog = {};
 									
-									if (action === ACTION_TYPE_UPDATE) {
-										// 更新時
-										redoLog.item = getPlainItem(item); // itemのコピーを保持しておく(参照だと変更されてしまう可能性があるため)
-									} else if (action === ACTION_TYPE_DELETE) {
+									switch(action) {
+									case ACTION_TYPE_UPDATE: // 更新時
+										redoLog.item = toPlainItem(item); // itemのコピーを保持しておく(参照だと変更されてしまう可能性があるため)
+										break;
+									case ACTION_TYPE_DELETE: // 削除時
 										// redoログの中にcreateのログが残っている場合は、このアイテムのログはなかったことにする。
 										var indexOfCreateItem = that.redoLogs.length;
 										for (var i=0, len=that.redoLogs.length; i<len;i++) {
-											var existingRedoLog = that.redoLogs[j];
-											if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	
-													&& existingRedoLog.modelName === model.name
-													&& existingRedoLog.action === ACTION_TYPE_CREATE) {
+											var log = that.redoLogs[j];
+											if (log.item[model.idKey] === item.get(model.idKey)	
+													&& log.modelName === model.name
+													&& log.action === ACTION_TYPE_CREATE) {
 												indexOfCreateItem = i;
 												break;
 											}
@@ -12329,8 +12334,7 @@ var h5internal = {
 										if (indexOfCreateItem < that.redoLogs.length) {
 											// 後ろからたどって、このアイテムのログを削除していく(createしたところまで)
 											for (var j=that.redoLogs.length-1; j>=indexOfCreateItem; j--) {
-												if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	
-														&& existingRedoLog.modelName === model.name ){
+												if (log.item[model.idKey] === item.get(model.idKey)	&& log.modelName === model.name ){
 													that.redoLogs.splice(j,1);
 												}
 											}
@@ -12341,33 +12345,37 @@ var h5internal = {
 										// 削除時はidのみ保存
 										redoLog.item = {};
 										redoLog.item[model.idKey] = item.get(model.idKey);
-									} else {
-										// 作成時
+										break;
+									case ACTION_TYPE_INSERT: // 作成時
 										for (var j=0, len=that.redoLogs.length; j<len; j++) {
-											var existingRedoLog = that.redoLogs[j];
-											if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	&& existingRedoLog.modelName === model.name) {
-												// アイテムがcreateされたとき、redoログ内に同じモデルの同じidを持つアイテムがあるときは、
-												// ローカルでアイテムを削除して、競合が起きたのでそれを解決するためにアイテムを作成しなおしたときか、
-												// 重複IDしたデータを再度登録するときである。
-												// 削除していた（競合していた）場合は、削除のログを消して、更新データとしてログを登録する。
-												// IDの重複のときは、redoログ内の旧アイテムのID部分を変更し、同じく更新としてログに登録する。
-												// ただし、IDの変更は、FWに旧IDと新IDを教えておくことで対応している(resolveDuplicateメソッド内)。
-												// したがって、ユーザはresolveDuplicateをアイテム再生成の前に呼び出しておく必要がある。
-												// TODO: 方法については要再検討
-
-												if(existingRedoLog.action === ACTION_TYPE_DELETE) {
-													// 一度削除されてまだサーバに送信されていない場合は、
-													// 削除したことをなくし、更新としてサーバに伝える
-													that.redoLogs.splice(j,1);
-													
-												}
-												item._commonData = existingRedoLog.itemCommonData;
-												action = ACTION_TYPE_UPDATE;
-												break;
+											var log = that.redoLogs[j];
+											if (log.item[model.idKey] !== item.get(model.idKey)	|| log.modelName !== model.name) {
+												continue;
 											}
+											// アイテムがcreateされたとき、redoログ内に同じモデルの同じidを持つアイテムがあるときは、
+											// ローカルでアイテムを削除して、競合が起きたのでそれを解決するためにアイテムを作成しなおしたときか、
+											// 重複IDしたデータを再度登録するときである。
+											// 削除していた（競合していた）場合は、削除のログを消して、更新データとしてログを登録する。
+											// IDの重複のときは、redoログ内の旧アイテムのID部分を変更し、同じく更新としてログに登録する。
+											// ただし、IDの変更は、FWに旧IDと新IDを教えておくことで対応している(resolveDuplicateメソッド内)。
+											// したがって、ユーザはresolveDuplicateをアイテム再生成の前に呼び出しておく必要がある。
+											// TODO: 方法については要再検討
+
+											if(log.action === ACTION_TYPE_DELETE) {
+												// 一度削除されてまだサーバに送信されていない場合は、
+												// 削除したことをなくし、更新としてサーバに伝える
+												that.redoLogs.splice(j,1);
+												
+											}
+											item._commonData = log.itemCommonData;
+											action = ACTION_TYPE_UPDATE;
+											break;
 										}
-										redoLog.item = getPlainItem(item);
-									} 
+										redoLog.item = toPlainItem(item);
+										break;
+									default: // ここに来るとエラー
+										throw new Error(ERR_MSG_INVALID_ACTION_TYPE);
+									} 									
 
 									$.extend(redoLog, {
 											itemCommonData: item._commonData,
