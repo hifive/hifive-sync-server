@@ -12,7 +12,6 @@
 
 	<import
 		resource="classpath:META-INF/spring/applicationContext-hifiveSyncServer.xml" />
-	<import resource="classpath:META-INF/spring/controllers-hifiveSyncServer.xml" />
 	<import resource="test-applicationContext-database.xml" />
 
 	<!-- SyncResource base configuration -->
