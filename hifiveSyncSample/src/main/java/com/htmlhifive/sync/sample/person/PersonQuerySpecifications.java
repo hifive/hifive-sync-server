@@ -26,47 +26,33 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.domain.Specifications;
 import org.springframework.stereotype.Service;
 
-import com.htmlhifive.sync.resource.ResourceQuerySpecifications;
-import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.AbstractResourceQuerySpecifications;
 
 /**
  * Personをリソースクエリによって検索するためのSpring Specification定義クラス.
  */
 @Service
-public class PersonQuerySpecifications implements ResourceQuerySpecifications<Person> {
+public class PersonQuerySpecifications extends AbstractResourceQuerySpecifications<Person> {
 
     /**
-     * 「指定された共通データが対応するリソースアイテムであり、かつデータ項目が指定された条件に合致する」
-     * というクエリ仕様を表現するSpecificationsオブジェクトを返します.
+     * クエリ条件を解析します.<br>
+     * Personの検索条件を解析し、Specificationオブジェクトのリストを返します.
      *
-     * @param commonDataList
-     *            リソースアイテム共通データ
      * @param conditions
      *            クエリ条件
-     * @return Specificationsオブジェクト
+     * @return Specificationオブジェクトのリスト
      */
     @Override
-    public Specifications<Person> parseConditions(
-            List<ResourceItemCommonData> commonDataList,
-            Map<String, String[]> conditions) {
+    public List<Specification<Person>> doParseConditions(Map<String, String[]> conditions) {
 
         List<Specification<Person>> specList = new ArrayList<>();
-
-        List<String> targetItemIdList = new ArrayList<>();
-        for (ResourceItemCommonData common : commonDataList) {
-            targetItemIdList.add(common.getTargetItemId());
-        }
-        if (!targetItemIdList.isEmpty()) {
-            specList.add(isInIds(targetItemIdList.toArray(new String[] {})));
-        }
 
         for (String cond : conditions.keySet()) {
             switch (cond) {
             case ("personId"):
-                specList.add(isInIds(conditions.get(cond)));
+                specList.add(super.isInIds(conditions.get(cond)));
                 break;
             case ("organization"):
                 specList.add(isEqualOrganization(conditions.get(cond)[0]));
@@ -79,37 +65,7 @@ public class PersonQuerySpecifications implements ResourceQuerySpecifications<Pe
             }
         }
 
-        if (specList.isEmpty()) {
-            return null;
-        }
-
-        Specifications<Person> specs = Specifications.where(specList.get(0));
-        for (Specification<Person> spec : specList.subList(1, specList.size())) {
-            specs = specs.and(spec);
-        }
-        return specs;
-    }
-
-    /**
-     * 配列に含むIDのいずれかに合致するPersonを抽出するSpecificationを返します.
-     *
-     * @param ids
-     *            IDの配列
-     * @return Specificationオブジェクト
-     */
-    private Specification<Person> isInIds(final String... ids) {
-        return new Specification<Person>() {
-
-            @Override
-            public Predicate toPredicate(
-                    Root<Person> root,
-                    CriteriaQuery<?> cq,
-                    CriteriaBuilder builder) {
-
-                return root.get(root.getModel().getSingularAttribute("personId", String.class)).in(
-                        (Object[])ids);
-            }
-        };
+        return specList;
     }
 
     /**

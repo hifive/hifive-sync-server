@@ -28,42 +28,28 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.data.jpa.domain.Specifications;
 import org.springframework.stereotype.Service;
 
-import com.htmlhifive.sync.resource.ResourceQuerySpecifications;
-import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.AbstractResourceQuerySpecifications;
 
 /**
  * Scheduleをリソースクエリによって検索するためのSpring Specification定義クラス.
  */
 @Service
-public class ScheduleQuerySpecifications implements ResourceQuerySpecifications<Schedule> {
+public class ScheduleQuerySpecifications extends AbstractResourceQuerySpecifications<Schedule> {
 
     /**
-     * 「指定された共通データが対応するリソースアイテムであり、かつデータ項目が指定された条件に合致する」
-     * というクエリ仕様を表現するSpecificationsオブジェクトを返します.
+     * クエリ条件を解析します.<br>
+     * Personの検索条件を解析し、Specificationオブジェクトのリストを返します.
      *
-     * @param commonDataList
-     *            リソースアイテム共通データ
      * @param conditions
      *            クエリ条件
-     * @return Specificationsオブジェクト
+     * @return Specificationオブジェクトのリスト
      */
     @Override
-    public Specifications<Schedule> parseConditions(
-            List<ResourceItemCommonData> commonDataList,
-            Map<String, String[]> conditions) {
+    public List<Specification<Schedule>> doParseConditions(Map<String, String[]> conditions) {
 
         List<Specification<Schedule>> specList = new ArrayList<>();
-
-        List<String> targetItemIdList = new ArrayList<>();
-        for (ResourceItemCommonData common : commonDataList) {
-            targetItemIdList.add(common.getTargetItemId());
-        }
-        if (!targetItemIdList.isEmpty()) {
-            specList.add(isInIds(targetItemIdList.toArray(new String[] {})));
-        }
 
         for (String cond : conditions.keySet()) {
             switch (cond) {
@@ -81,39 +67,7 @@ public class ScheduleQuerySpecifications implements ResourceQuerySpecifications<
             }
         }
 
-        if (specList.isEmpty()) {
-            return null;
-        }
-
-        Specifications<Schedule> specs = Specifications.where(specList.get(0));
-        for (Specification<Schedule> spec : specList.subList(1, specList.size())) {
-
-            specs = specs.and(spec);
-        }
-
-        return specs;
-    }
-
-    /**
-     * 配列に含むIDのいずれかに合致するScheduleを抽出するSpecificationを返します.
-     *
-     * @param ids
-     *            IDの配列
-     * @return Specificationオブジェクト
-     */
-    private Specification<Schedule> isInIds(final String... ids) {
-        return new Specification<Schedule>() {
-
-            @Override
-            public Predicate toPredicate(
-                    Root<Schedule> root,
-                    CriteriaQuery<?> cq,
-                    CriteriaBuilder builder) {
-
-                return root.get(root.getModel().getSingularAttribute("scheduleId", String.class)).in(
-                        (Object[])ids);
-            }
-        };
+        return specList;
     }
 
     /**
