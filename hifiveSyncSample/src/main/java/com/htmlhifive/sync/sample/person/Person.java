@@ -33,120 +33,121 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 @Table(name = "PERSON")
 public class Person {
 
-	/**
-	 * このエンティティのID.<br>
-	 */
-	@Id
-	private String personId;
+    /**
+     * このエンティティのID.<br>
+     */
+    @Id
+    private String personId;
 
-	/**
-	 * この人の名前.
-	 */
-	private String name;
+    /**
+     * この人の名前.
+     */
+    private String name;
 
-	/**
-	 * この人の年齢.
-	 */
-	private Integer age;
+    /**
+     * この人の年齢.
+     */
+    private Integer age;
 
-	/**
-	 * この人の所属組織
-	 */
-	private String organization;
+    /**
+     * この人の所属組織
+     */
+    private String organization;
 
-	/**
-	 * 人情報インスタンスを生成します.
-	 */
-	public Person() {
-	}
+    /**
+     * @see Object#equals(Object)
+     */
+    @Override
+    public boolean equals(Object obj) {
 
-	/**
-	 * @see Object#equals(Object)
-	 */
-	@Override
-	public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (!(obj instanceof Person))
+            return false;
 
-		if (this == obj)
-			return true;
-		if (!(obj instanceof Person))
-			return false;
+        Person otherObj = (Person)obj;
 
-		Person otherObj = (Person) obj;
+        return new EqualsBuilder().append(this.personId, otherObj.personId).append(
+                this.name, otherObj.name).append(this.organization, otherObj.organization).append(
+                this.age, otherObj.age).isEquals();
+    }
 
-		return EqualsBuilder.reflectionEquals(this, otherObj);
-	}
+    /**
+     * @see Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
 
-	/**
-	 * @see Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
+        return new HashCodeBuilder(17, 37).append(this.personId).append(this.name).append(
+                this.organization).append(this.age).hashCode();
+    }
 
-		return HashCodeBuilder.reflectionHashCode(this);
-	}
+    /**
+     * @see Object#toString()
+     */
+    @Override
+    public String toString() {
 
-	/**
-	 * @see Object#toString()
-	 */
-	@Override
-	public String toString() {
+        return ToStringBuilder.reflectionToString(this);
+    }
 
-		return ToStringBuilder.reflectionToString(this);
-	}
+    /**
+     * @return personId
+     */
+    public String getPersonId() {
+        return personId;
+    }
 
-	/**
-	 * @return personId
-	 */
-	public String getPersonId() {
-		return personId;
-	}
+    /**
+     * @param personId
+     *            セットする personId
+     */
+    public void setPersonId(String personId) {
+        this.personId = personId;
+    }
 
-	/**
-	 * @param personId セットする personId
-	 */
-	public void setPersonId(String personId) {
-		this.personId = personId;
-	}
+    /**
+     * @return name
+     */
+    public String getName() {
+        return name;
+    }
 
-	/**
-	 * @return name
-	 */
-	public String getName() {
-		return name;
-	}
+    /**
+     * @param name
+     *            セットする name
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	/**
-	 * @param name セットする name
-	 */
-	public void setName(String name) {
-		this.name = name;
-	}
+    /**
+     * @return age
+     */
+    public Integer getAge() {
+        return age;
+    }
 
-	/**
-	 * @return age
-	 */
-	public Integer getAge() {
-		return age;
-	}
+    /**
+     * @param age
+     *            セットする age
+     */
+    public void setAge(Integer age) {
+        this.age = age;
+    }
 
-	/**
-	 * @param age セットする age
-	 */
-	public void setAge(Integer age) {
-		this.age = age;
-	}
+    /**
+     * @return organization
+     */
+    public String getOrganization() {
+        return organization;
+    }
 
-	/**
-	 * @return organization
-	 */
-	public String getOrganization() {
-		return organization;
-	}
-
-	/**
-	 * @param organization セットする organization
-	 */
-	public void setOrganization(String organization) {
-		this.organization = organization;
-	}
+    /**
+     * @param organization
+     *            セットする organization
+     */
+    public void setOrganization(String organization) {
+        this.organization = organization;
+    }
 }
