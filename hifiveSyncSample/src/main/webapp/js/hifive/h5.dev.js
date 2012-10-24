@@ -12308,12 +12308,12 @@ var h5internal = {
 				 */
 				function addRedoLog(item, model, action) {
 					//TODO: 更新順序の保存は要検討。現在はアイテムをそのままの順で保存するのみ（重複可）。
-
-					var redoLog = {};
+					
+					var plainItem = undefined;
 					
 					switch(action) {
 					case ACTION_TYPE_UPDATE: // 更新時
-						redoLog.item = toPlainItem(item); // itemのコピーを保持しておく(参照だと変更されてしまう可能性があるため)
+						plainItem = toPlainItem(item); // itemのコピーを保持しておく(参照だと変更されてしまう可能性があるため)
 						break;
 					case ACTION_TYPE_DELETE: // 削除時
 						// redoログの中にcreateのログが残っている場合は、このアイテムのログはなかったことにする。
@@ -12340,8 +12340,8 @@ var h5internal = {
 						}
 						
 						// 削除時はidのみ保存
-						redoLog.item = {};
-						redoLog.item[model.idKey] = item.get(model.idKey);
+						plainItem = {};
+						plainItem[model.idKey] = item.get(model.idKey);
 						break;
 					case ACTION_TYPE_INSERT: // 作成時
 						for (var j=0, len=that.redoLogs.length; j<len; j++) {
@@ -12368,19 +12368,18 @@ var h5internal = {
 							action = ACTION_TYPE_UPDATE;
 							break;
 						}
-						redoLog.item = toPlainItem(item);
+						plainItem = toPlainItem(item);
 						break;
 					default: // ここに来るとエラー
 						throw new Error(ERR_MSG_INVALID_ACTION_TYPE);
 					} 									
 
-					$.extend(redoLog, {
-							itemCommonData: item._commonData,
-							modelName: model.name,
-							action: action
+					that.redoLogs.push({
+						item : plainItem,
+						itemCommonData: item._commonData,
+						modelName: model.name,
+						action: action
 					});
-					
-					that.redoLogs.push(redoLog);
 					if (h5.api.storage.isSupported) {
 						h5.api.storage.local.setItem(REDOLOG_LIST_KEY, that.redoLogs);
 					}
