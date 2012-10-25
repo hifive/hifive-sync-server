@@ -51,16 +51,17 @@ public class PersonResource extends AbstractSyncResource<Person> {
 
     /**
      * 指定されたIDだけを持つPersonを返します.<br>
-     * Personが存在しない場合、nullを返します.
+     * Personが存在しない場合、{@link BadRequestException}をスローします.
      *
      * @param personId
      *            ID
      * @return Personオブジェクト
+     * @throws BadRequestException
+     *             Personが存在しない場合
      */
     public Person getResourceItemByPersonId(String personId) {
 
-        // Personデータを検索(ロックは考慮しない)
-        // 存在しなければBadRequestExceptionがスローされる
+        // Personデータを検索(共通データ、ロックは考慮しない)
         return doGet(personId);
     }
 
