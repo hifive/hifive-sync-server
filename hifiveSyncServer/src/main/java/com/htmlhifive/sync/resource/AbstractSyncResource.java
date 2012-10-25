@@ -334,9 +334,8 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 				} catch (ItemUpdatedException e) {
 
-					// 更新を行わず、競合タイプ設定してリターン
-					currentCommon.setConflictType(SyncConflictType.UPDATED);
-					return new ResourceItemWrapper<>(currentCommon, currentItem);
+					// 更新を行わずリターン(例外から取得した共通データには競合タイプがセットされている)
+					return new ResourceItemWrapper<>(e.getConflictedCommonData(), itemType().cast(e.getCurrentItem()));
 				}
 			}
 
