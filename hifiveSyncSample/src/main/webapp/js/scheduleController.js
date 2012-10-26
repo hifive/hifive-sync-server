@@ -236,7 +236,7 @@ $(function() {
 			var date = schedule.dates[0];
 			var promise = this.logic.regist(schedule);
 			
-//			scheduleSample.common.showIndicator(this, promise, 'データを登録中');
+			scheduleSample.common.showIndicator(this, promise, 'データを登録中');
 
 			promise.always( function() {
 					that.plotSchedule();
