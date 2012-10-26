@@ -267,7 +267,7 @@ $(function() {
 			
 			scheduleSample.common.showIndicator(this, promise, 'データを更新中');
 			
-			promise.always(function() {
+			promise.always(function(obj) {
 				that.plotSchedule();
 				that.showScheduleByDate(date);
 				that.closeDialog();
