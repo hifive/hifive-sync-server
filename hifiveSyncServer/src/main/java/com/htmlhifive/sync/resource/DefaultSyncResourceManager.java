@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import com.htmlhifive.sync.exception.SyncException;
 import com.htmlhifive.sync.resource.lock.LockStrategy;
+import com.htmlhifive.sync.resource.lock.ResourceItemCommonLockStrategy;
 import com.htmlhifive.sync.resource.lock.ResourceLockStatusType;
 import com.htmlhifive.sync.resource.update.UpdateStrategy;
 
@@ -59,12 +60,14 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	private Map<String, Class<? extends SyncResource<?>>> resourceMap;
 
 	/**
-	 * リソースごとのロックモードを保持するMap
+	 * リソースごとのロックモードを保持するMap.<br>
+	 * TODO 次期バージョンにて実装予定
 	 */
+	@Deprecated
 	private Map<String, ResourceLockStatusType> requiredLockStatusMap;
 
 	/**
-	 * リソースごとのロック戦略オブジェクトを保持するMap<br>
+	 * リソースごとのロック戦略オブジェクトを保持するMap.<br>
 	 * TODO 次期バージョンにて実装予定
 	 */
 	@Deprecated
@@ -96,9 +99,11 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	public DefaultSyncResourceManager(String syncResourceBaseTypeName, Properties resourceConfigurations) {
 
 		this.resourceMap = new HashMap<>();
+
+		// TODO 次期バージョンにて実装予定
 		this.requiredLockStatusMap = new HashMap<>();
 
-		//	  TODO 次期バージョンにて実装予定
+		// TODO 次期バージョンにて実装予定
 		this.lockStrategyMap = new HashMap<>();
 
 		this.updateStrategyMap = new HashMap<>();
@@ -145,10 +150,11 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 			resourceMap.put(resourceName, resourceClass);
 
 			// ロック状態タイプを特定する
+			// TODO 次期バージョンにて実装予定
 			requiredLockStatusMap.put(resourceName, resourceAnnotation.requiredLockStatus());
 
 			// ロックマネージャを特定する
-			//	  TODO 次期バージョンにて実装予定
+			// TODO 次期バージョンにて実装予定
 			lockStrategyMap.put(resourceName, resourceAnnotation.lockStrategy());
 
 			// 更新戦略オブジェクトを特定する
@@ -198,9 +204,16 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 			return null;
 		}
 
+		for(String a :context.getBeansOfType(ResourceItemCommonLockStrategy.class).keySet()){
+		System.out.println(a);
+		System.out.println(context.getBeansOfType(ResourceItemCommonLockStrategy.class).get(a));
+		}
+
 		SyncResource<?> resource = context.getBean(resourceClass);
 
 		// LockStrategy,UpdateStrategyのセット
+
+		// TODO 次期バージョンにて実装予定
 		resource.setRequiredLockStatus(requiredLockStatusMap.get(resourceName));
 
 		// TODO 次期バージョンにて実装予定
