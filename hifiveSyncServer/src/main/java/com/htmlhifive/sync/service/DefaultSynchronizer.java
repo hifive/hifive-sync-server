@@ -36,7 +36,6 @@ import org.springframework.stereotype.Service;
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.exception.LockException;
-import com.htmlhifive.sync.resource.DefaultSyncResourceManager;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.ResourceQueryConditions;
 import com.htmlhifive.sync.resource.SyncConflictType;
@@ -68,13 +67,13 @@ public class DefaultSynchronizer implements Synchronizer {
 	/**
 	 * 同期制御の設定情報.
 	 */
-	@Resource(type = DefaultSynchronizerConfiguration.class)
+	@Resource
 	private SyncConfiguration syncConfiguration;
 
 	/**
 	 * リソースへのインターフェースを取得するためのマネージャ.
 	 */
-	@Resource(type = DefaultSyncResourceManager.class)
+	@Resource
 	private SyncResourceManager resourceManager;
 
 	/**
