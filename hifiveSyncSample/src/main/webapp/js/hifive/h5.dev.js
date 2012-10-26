@@ -11579,6 +11579,9 @@ var h5internal = {
 		this.baseUrl = baseUrl;
 
 		this.dafaultAjaxOptions = {};
+		
+		/** 競合アイテムのリスト */
+		this.conflictItems = {};
 
 		/** 前回uploadで送ろうとして失敗したredoLogsの長さ */
 		this._unsentRedoLogsLength = 0;
@@ -11615,6 +11618,12 @@ var h5internal = {
 		 * @return Promiseオブジェクト
 		 */
 		sync: function() {
+			if (this.hasConflictItem()) {
+				// 競合アイテムが残っているときはsyncしない
+				var dfd = h5.async.deferred();
+				dfd.resolve();
+				return dfd.promise();
+			}			
 			return asyncInOrder(this.upload, this.download, this);						
 		},
 
@@ -11641,6 +11650,12 @@ var h5internal = {
 						|| navigator.__offLine) { // テスト用コード 
 					// オフライン時、または前のリクエストが返ってきていないときはデータを送らない
 					// TODO: オフラインであることを伝える
+					dfd.resolve();
+					return dfd.promise();
+				}
+				
+				if (that.hasConflictItem()) {
+					// 競合アイテムが残っているときはuploadしない
 					dfd.resolve();
 					return dfd.promise();
 				}
@@ -11752,6 +11767,10 @@ var h5internal = {
 			this._download(this._queries).done(function(resultData) {
 				// アプリケーションデータを保存する
 				that._saveDownloadCommonData(resultData.downloadCommonData);
+				
+				// 競合リストを削除する
+				that.conflictItems = {};
+				
 				dfd.resolve();
 			}).fail(function(obj) {
 				alert('downloadのreject');
@@ -11879,6 +11898,55 @@ var h5internal = {
 			}
 			return this._storageId + '-' + id;								
 			
+		},
+	
+		/**
+		 * 未解決の競合アイテムがあるかを返します。
+		 * 引数にデータモデル名を１つ指定した場合には、そのモデルが競合アイテムを持つかを返します。
+		 * 引数を指定しなければ、モデルを問わず競合アイテムを持つかを返します。
+		 * 
+		 * @memberOf SyncManager
+		 * @param dataModelName データモデル名
+		 * @returns 未解決の競合アイテムを持つかどうか
+		 */
+		hasConflictItem: function(dataModelName) {
+			var conflictItems = this.conflictItems; // 競合アイテムのリストをキャッシュ
+			
+			function has(modelName) {
+				var conflictItemsOfModel = conflictItems[modelName];
+				if (!conflictItemsOfModel) {
+					return false;
+				}
+				if ($.isEmptyObject(conflictItemsOfModel)) {
+					return false;
+				}				
+				return true;
+			}
+			
+			if ($.isEmptyObject(conflictItems)) {
+				return false;
+			}
+			
+			if (dataModelName) {
+				// 指定されたモデルについて、競合アイテムがあるかをチェックする
+				return has(dataModelName);
+			}
+			
+			// 指定がなければ、すべてのモデルについて、競合アイテムがあるかをチェックする
+			for (var modelName in conflictItems) {
+				if(has(modelName)) {
+					return true;
+				} 
+			}			
+			return false;
+		},
+		
+		/**
+		 * 競合状態を解決済みにします。
+		 * 競合アイテムリストから、競合を解決したアイテムを削除します。
+		 */
+		setAsResolved: function(itemId, modelName) {
+			delete this.conflictItems[modelName][itemId];
 		},
 		
 		/**
@@ -12089,7 +12157,9 @@ var h5internal = {
 
 
 		/**
+		 * 今回のアップロードで競合したアイテムについて、競合イベントをあげる
 		 * 
+		 * @param resultData サーバから送られた競合のレスポンス
 		 */
 		_dispatchConflictEvent: function(resultData) {
 			// 衝突あり
@@ -12110,9 +12180,8 @@ var h5internal = {
 			}
 
 			// モデルごとに競合イベントを発生させる
-			// TODO: このconflictedはすでに競合が起こっていてまだ未解決なものも加える？
 			var models = this.dataModelManager.models;
-			for ( var modelName in conflicted) {
+			for (var modelName in conflicted) {
 				models[modelName].dispatchEvent({
 					type: eventType,
 					conflicted: conflicted[modelName]
@@ -12126,34 +12195,6 @@ var h5internal = {
 			});
 		},
 
-
-		/**
-		 * 送られてきた競合結果のリストをもとに、重複したIDのサーバ側のアイテムとローカルのアイテムのリストを得る
-		 * 
-		 * @param serverItems 競合したアイテムのサーバ側のデータリスト
-		 * @returns {Array} 重複したIDのサーバ側のアイテムとローカルのアイテムを含むリスト
-		 */
-		_getItemsOfDuplicatedIds: function(serverItems) {
-			var conflicted = {};
-			for ( var modelName in serverItems) {
-				conflicted[modelName] = [];
-				
-				var items = serverItems[modelName];
-				for ( var i = 0, len = items.length; i < len; i++) {
-					var serverItem = items[i].item;
-
-					var model = this.dataModelManager.models[items[i].itemCommonData.resourceName];
-
-					conflicted[modelName].push({
-						model: model,
-						localItem: model.get(serverItem[model.idKey]),
-						serverItem: serverItem
-					});
-				}
-			}
-			return conflicted;
-		},
-
 		/**
 		 * 送られてきた競合結果のリストをもとに、競合オブジェクトのリストを得る
 		 * 
@@ -12165,10 +12206,7 @@ var h5internal = {
 			for ( var modelName in serverItems) {
 				// 更新による競合の場合は、
 				// サーバの更新アイテムと削除アイテムをそれぞれリストで返す
-				conflicted[modelName] = {
-						removed: [],
-						changed: []
-				};
+				conflicted[modelName] = {};
 				
 				var items = serverItems[modelName];
 				for ( var i = 0, len = items.length; i < len; i++) {
@@ -12177,18 +12215,23 @@ var h5internal = {
 
 					var model = this.dataModelManager.models[itemCommonData.resourceName];
 
+					var id = serverItem[model.idKey];
+					
 					conflictItem = {
 						model: model,
-						localItem: model.get(serverItem[model.idKey])
+						localItem: model.get(id)
 					};
 
 					if (itemCommonData.action === ACTION_TYPE_DELETE) {
 						conflictItem.serverItem = null;
-						conflicted[modelName]['removed'].push(conflictItem);
-					} else {
+						conflictItem.updateType = ACTION_TYPE_DELETE;
+					} else if (itemCommonData.action === ACTION_TYPE_UPDATE) {
 						conflictItem.serverItem = serverItem;
-						conflicted[modelName]['changed'].push(conflictItem);
+						conflictItem.updateType = ACTION_TYPE_UPDATE;
+					} else {
+						throw new Error(ERR_MSG_INVALID_ACTION_TYPE);
 					}
+					conflicted[modelName][id] = conflictItem;
 					
 					// itemのlastModifiedを更新する
 					// itemの共通データはredoログに参照が入っているので、そこを更新すれば十分である
@@ -12201,6 +12244,40 @@ var h5internal = {
 							break;
 						}
 					}
+				}
+				
+				// すべての競合オブジェクトを管理するリストに、今回の競合オブジェクトを加える
+				if (!this.conflictItems[modelName]) {
+					this.conflictItems[modelName] = {};
+				}		
+				$.extend(this.conflictItems[modelName], conflicted[modelName]);
+			}
+			return conflicted;
+		},
+
+		/**
+		 * 送られてきた競合結果のリストをもとに、重複したIDのサーバ側のアイテムとローカルのアイテムのリストを得る
+		 * 
+		 * @param serverItems 競合したアイテムのサーバ側のデータリスト
+		 * @returns {Array} 重複したIDのサーバ側のアイテムとローカルのアイテムを含むリスト
+		 */
+		_getItemsOfDuplicatedIds: function(serverItems) {
+			var conflicted = {};
+			for ( var modelName in serverItems) {
+				conflicted[modelName] = {};
+				
+				var items = serverItems[modelName];
+				for ( var i = 0, len = items.length; i < len; i++) {
+					var serverItem = items[i].item;
+					var id = serverItem[model.idKey];
+
+					var model = this.dataModelManager.models[items[i].itemCommonData.resourceName];
+
+					conflicted[modelName][id] = {
+						model: model,
+						localItem: model.get(id),
+						serverItem: serverItem
+					};
 				}
 			}
 			return conflicted;
@@ -12343,7 +12420,7 @@ var h5internal = {
 						plainItem = {};
 						plainItem[model.idKey] = item.get(model.idKey);
 						break;
-					case ACTION_TYPE_INSERT: // 作成時
+					case ACTION_TYPE_CREATE: // 作成時
 						for (var j=0, len=that.redoLogs.length; j<len; j++) {
 							var log = that.redoLogs[j];
 							if (log.item[model.idKey] !== item.get(model.idKey)	|| log.modelName !== model.name) {
@@ -12412,7 +12489,7 @@ var h5internal = {
 					for ( var i = 0, len = changed.length; i < len; i++) {
 						var item = changed[i].target;
 						// ローカルに変更結果を保存
-						setItemToStorage(item);
+						setItemToStorage(item);						
 
 						if (item._isServerUpdate) {
 							delete item._isServerUpdate;
