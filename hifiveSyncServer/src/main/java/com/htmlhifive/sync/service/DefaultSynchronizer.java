@@ -43,7 +43,6 @@ import com.htmlhifive.sync.resource.SyncConflictType;
 import com.htmlhifive.sync.resource.SyncResource;
 import com.htmlhifive.sync.resource.SyncResourceManager;
 import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
-import com.htmlhifive.sync.resource.lock.ResourceLockStatusType;
 import com.htmlhifive.sync.service.download.DownloadCommonData;
 import com.htmlhifive.sync.service.download.DownloadControlType;
 import com.htmlhifive.sync.service.download.DownloadRequest;
@@ -285,10 +284,11 @@ public class DefaultSynchronizer implements Synchronizer {
 		Map<String, List<ResourceItemCommonData>> commonListMap = new HashMap<>();
 		for (String resourceName : reservingItemsMap.keySet()) {
 
-			// リソースが悲観的・排他ロックを用いている場合、読み取りロックは不要
-			if (resourceManager.locateSyncResource(resourceName).requiredLockStatus() == ResourceLockStatusType.EXCLUSIVE) {
-				continue;
-			}
+			// TODO 次期バージョンにて実装予定
+			//			// リソースが悲観的・排他ロックを用いている場合、読み取りロックは不要
+			//			if (resourceManager.locateSyncResource(resourceName).requiredLockStatus() == ResourceLockStatusType.EXCLUSIVE) {
+			//				continue;
+			//			}
 
 			List<ResourceItemCommonData> commonList = new ArrayList<>();
 			for (ResourceItemWrapper<?> wrapper : reservingItemsMap.get(resourceName)) {
@@ -420,11 +420,13 @@ public class DefaultSynchronizer implements Synchronizer {
 
 			String resourceName = itemWrapper.getItemCommonData().getId().getResourceName();
 
-			// リソースが悲観的(排他・共有)ロックを用いている場合、そのリソースのアイテムの予約は不要
-			ResourceLockStatusType lockType = resourceManager.locateSyncResource(resourceName).requiredLockStatus();
-			if (lockType == ResourceLockStatusType.EXCLUSIVE || lockType == ResourceLockStatusType.SHARED) {
-				continue;
-			}
+			// TODO 次期バージョンにて実装予定
+			//			// リソースが悲観的(排他・共有)ロックを用いている場合、そのリソースのアイテムの予約は不要
+			//			ResourceLockStatusType lockType = resourceManager.locateSyncResource(resourceName).requiredLockStatus();
+			//			if (lockType == ResourceLockStatusType.EXCLUSIVE || lockType == ResourceLockStatusType.SHARED) {
+			//				continue;
+			//			}
+
 			mapBuilder.add(resourceName, itemWrapper.getItemCommonData());
 		}
 

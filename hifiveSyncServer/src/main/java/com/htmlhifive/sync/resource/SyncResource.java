@@ -150,9 +150,11 @@ public interface SyncResource<I> {
 
 	/**
 	 * このリソースへアクセスする際に要求されるロック方式を返します.<br>
+	 * TODO: 次期バージョンにて実装予定
 	 *
 	 * @return リソースロック状態タイプ
 	 */
+	@Deprecated
 	ResourceLockStatusType requiredLockStatus();
 
 	/**
@@ -173,15 +175,18 @@ public interface SyncResource<I> {
 
 	/**
 	 * このリソースが要求するロック状態を設定します.<br>
-	 * 通常、アプリケーションから使用することはありません.
+	 * 通常、アプリケーションから使用することはありません.<br>
+	 * TODO: 次期バージョンにて実装予定
 	 *
 	 * @param requiredLockStatus セットする requiredLockStatus
 	 */
+	@Deprecated
 	void setRequiredLockStatus(ResourceLockStatusType requiredLockStatus);
 
 	/**
 	 * リソースのロックを管理するマネージャを設定します.<br>
-	 * 通常、アプリケーションから使用することはありません. TODO: 次期バージョンにて実装予定
+	 * 通常、アプリケーションから使用することはありません.<br>
+	 * TODO: 次期バージョンにて実装予定
 	 *
 	 * @param lockManager セットする lockManager
 	 */
