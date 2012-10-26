@@ -40,7 +40,7 @@ public class JsonResourceItemConverter<I> implements ResourceItemConverter<I> {
 	@Override
 	public I convertToItem(Object itemObj, Class<I> to) {
 
-		Object item = null;
+		I item = null;
 		try {
 			// JSONデータからの型へ変換
 			item = new ObjectMapper().convertValue(itemObj, to);
@@ -50,6 +50,6 @@ public class JsonResourceItemConverter<I> implements ResourceItemConverter<I> {
 			throw new BadRequestException("JSON data of sync resource cannot accept. ", e);
 		}
 
-		return to.cast(item);
+		return item;
 	}
 }

@@ -251,6 +251,12 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			ResourceItemCommonData currentCommon = commonDataService.currentCommonData(itemCommon.getId()
 					.getResourceName(), e.getDuplicatedTargetItemId());
 
+			// 起こりえない(データ不整合)
+			if (currentCommon == null) {
+				throw new SyncException("itemCommonData not found : " + itemCommon.getId() + "-"
+						+ e.getDuplicatedTargetItemId());
+			}
+
 			currentCommon.setConflictType(SyncConflictType.DUPLICATE_ID);
 			return new ResourceItemWrapper<>(currentCommon, itemType().cast(e.getCurrentItem()));
 		}
@@ -328,9 +334,8 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 				} catch (ItemUpdatedException e) {
 
-					// 更新を行わず、競合タイプ設定してリターン
-					currentCommon.setConflictType(SyncConflictType.UPDATED);
-					return new ResourceItemWrapper<>(currentCommon, currentItem);
+					// 更新を行わずリターン(例外から取得した共通データには競合タイプがセットされている)
+					return new ResourceItemWrapper<>(e.getConflictedCommonData(), itemType().cast(e.getCurrentItem()));
 				}
 			}
 

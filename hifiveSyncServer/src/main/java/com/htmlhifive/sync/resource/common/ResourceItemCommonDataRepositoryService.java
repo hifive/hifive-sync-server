@@ -90,12 +90,7 @@ public class ResourceItemCommonDataRepositoryService implements ResourceItemComm
 	@Override
 	public ResourceItemCommonData currentCommonData(String resourceName, String targetItemId) {
 
-		ResourceItemCommonData common = repository.findByTargetItemId(resourceName, targetItemId);
-
-		if (common == null) {
-			throw new BadRequestException("itemCommonData not found : " + resourceName + "-" + targetItemId);
-		}
-		return common;
+		return repository.findByTargetItemId(resourceName, targetItemId);
 	}
 
 	/**
@@ -125,12 +120,18 @@ public class ResourceItemCommonDataRepositoryService implements ResourceItemComm
 	@Override
 	public ResourceItemCommonData saveUpdatedCommonData(ResourceItemCommonData common) {
 
+		if (!repository.exists(common.getId())) {
+
+			throw new BadRequestException("ResourceItemCommonData is not found. : " + common.getId().getResourceName()
+					+ " , " + common.getId().getResourceItemId());
+		}
+
 		return repository.save(common);
 	}
 
 	/**
 	 * リソースアイテム共通クラスを指定された情報で更新します.<br>
-	 * 指定されたアクションが{@link SyncAction#CREATE}の場合、は新規登録されます.
+	 * 指定されたアクションが{@link SyncAction#CREATE}の場合は新規登録されます.
 	 *
 	 * @param resourceName リソース名
 	 * @param resourceItemId リソースアイテムID
@@ -151,9 +152,8 @@ public class ResourceItemCommonDataRepositoryService implements ResourceItemComm
 				throw new SyncException("resource item common data has already exists.  resource : " + resourceName
 						+ " , resourceItemId : " + resourceItemId);
 			}
+			common = new ResourceItemCommonData(id, targetItemId);
 		}
-
-		common = new ResourceItemCommonData(id, targetItemId);
 
 		common.modify(action, updateTime);
 

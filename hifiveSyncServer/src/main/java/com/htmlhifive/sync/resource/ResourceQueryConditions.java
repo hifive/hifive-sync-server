@@ -54,9 +54,10 @@ public class ResourceQueryConditions {
 		if (!(obj instanceof ResourceQueryConditions))
 			return false;
 
-		ResourceQueryConditions msg = (ResourceQueryConditions) obj;
+		ResourceQueryConditions queryConditions = (ResourceQueryConditions) obj;
 
-		return EqualsBuilder.reflectionEquals(this, msg);
+		return new EqualsBuilder().append(this.conditions, queryConditions.conditions)
+				.append(this.lastDownloadTime, queryConditions.lastDownloadTime).isEquals();
 	}
 
 	/**
@@ -65,7 +66,7 @@ public class ResourceQueryConditions {
 	@Override
 	public int hashCode() {
 
-		return HashCodeBuilder.reflectionHashCode(this);
+		return new HashCodeBuilder().append(this.conditions).append(this.lastDownloadTime).hashCode();
 	}
 
 	/**

@@ -24,9 +24,6 @@ package com.htmlhifive.sync.exception;
  */
 public class DuplicateIdException extends Exception {
 
-	/**
-	 * シリアルバージョンUID.
-	 */
 	private static final long serialVersionUID = -1708837543557342515L;
 
 	/**

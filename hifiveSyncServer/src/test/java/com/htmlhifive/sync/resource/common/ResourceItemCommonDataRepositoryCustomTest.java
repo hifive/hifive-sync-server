@@ -1,9 +1,26 @@
+/*
+ * Copyright (C) 2012 NS Solutions Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 package com.htmlhifive.sync.resource.common;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 import java.util.List;
 
@@ -12,6 +29,7 @@ import javax.persistence.Table;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.transaction.TransactionConfiguration;
@@ -60,6 +78,18 @@ public class ResourceItemCommonDataRepositoryCustomTest extends AbstractTransact
 	}
 
 	/**
+	 * {@link ResourceItemCommonDataRepository#findOne(ResourceItemCommonDataId)}用テストメソッド.<br>
+	 * nullが渡されると、{@link InvalidDataAccessApiUsageException}がスローされる.
+	 */
+	@Test(expected = InvalidDataAccessApiUsageException.class)
+	public void testFindOneReturnNull() {
+
+		target.findOne(null);
+
+		fail();
+	}
+
+	/**
 	 * {@link ResourceItemCommonDataRepositoryCustom#findOneForUpdate(ResourceItemCommonDataId)}用テストメソッド.
 	 */
 	@Test
@@ -73,6 +103,18 @@ public class ResourceItemCommonDataRepositoryCustomTest extends AbstractTransact
 		// EntityManager.getLockMode(actual)ではロックモードの取得結果が正しくない？
 		// 目視で for update されていることは確認済み
 		assertThat(actual, is(equalTo(expected)));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryCustom#findOneForUpdate(ResourceItemCommonDataId)}用テストメソッド.<br>
+	 * nullが渡されると、nullを返す.
+	 */
+	@Test
+	public void testFindOneForUpdateReturnNull() {
+
+		ResourceItemCommonData actual = target.findOneForUpdate(null);
+
+		assertThat(actual, is(nullValue()));
 	}
 
 	/**
@@ -100,5 +142,29 @@ public class ResourceItemCommonDataRepositoryCustomTest extends AbstractTransact
 
 		ResourceItemCommonData actual2 = target.findByTargetItemId("r2", "r555");
 		assertThat(actual2, is(nullValue()));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryCustom#findByTargetItemId(String, String)}用テストメソッド.<br>
+	 * nullが渡されると、nullを返す.
+	 */
+	@Test
+	public void testFindByTargetItemIdReturnNullBecauseOfNullResourceName() {
+
+		ResourceItemCommonData actual = target.findByTargetItemId(null, "r2-1");
+
+		assertThat(actual, is(nullValue()));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryCustom#findByTargetItemId(String, String)}用テストメソッド.<br>
+	 * nullが渡されると、nullを返す.
+	 */
+	@Test
+	public void testFindByTargetItemIdReturnNullBecauseOfNullTargetItemId() {
+
+		ResourceItemCommonData actual = target.findByTargetItemId("r2", null);
+
+		assertThat(actual, is(nullValue()));
 	}
 }

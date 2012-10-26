@@ -36,7 +36,7 @@ public class ClientResolvingStrategy implements UpdateStrategy {
 	public <T> T resolveConflict(ResourceItemCommonData itemCommon, T item, ResourceItemCommonData serverCommon,
 			T serverItem) throws ItemUpdatedException {
 
-		throw new ItemUpdatedException("return client to resolve.");
+		throw new ItemUpdatedException("return client to resolve.", serverCommon, serverItem);
 	}
 
 }
