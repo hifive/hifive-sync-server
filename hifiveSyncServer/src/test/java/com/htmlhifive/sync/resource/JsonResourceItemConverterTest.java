@@ -53,7 +53,7 @@ public class JsonResourceItemConverterTest {
 	 * {@link JsonResourceItemConverter#convertToItem(Object, Class)}用テストメソッド.
 	 */
 	@Test
-	public void testConvertToItemObjectClass() throws Exception {
+	public void testConvertToItem() throws Exception {
 
 		// Arrange：正常系
 		JsonResourceItemConverter<String> target1 = new JsonResourceItemConverter<>();
@@ -73,7 +73,7 @@ public class JsonResourceItemConverterTest {
 	 * オブジェクトがnullのときは結果もnullになる.
 	 */
 	@Test
-	public void testConvertToItemNullItem() throws Exception {
+	public void testConvertToItemReturnsNullBecauseOfNullItem() throws Exception {
 
 		// Arrange：例外系
 		JsonResourceItemConverter<String> target1 = new JsonResourceItemConverter<>();
@@ -91,7 +91,7 @@ public class JsonResourceItemConverterTest {
 	 * 変換後の型がnullの時は{@link NullPointerException}がスローされる.
 	 */
 	@Test(expected = NullPointerException.class)
-	public void testConvertToItemNullClass() throws Exception {
+	public void testConvertToItemReturnsNullBecauseOfNullType() throws Exception {
 
 		// Arrange：異常系
 		JsonResourceItemConverter<String> target1 = new JsonResourceItemConverter<>();

@@ -83,7 +83,7 @@ public class ResourceItemCommonDataTest {
 	 * {@link ResourceItemCommonData#equals(Object)}用テストメソッド.
 	 */
 	@Test
-	public void testEqualsObject() {
+	public void testEquals() {
 
 		ResourceItemCommonData target = new ResourceItemCommonData(new ResourceItemCommonDataId("resourceName0",
 				"resourceItemId0"), "targetItemId0");

@@ -57,7 +57,7 @@ public class ResourceItemWrapperTest {
 	 * {@link ResourceItemWrapper#compareTo(ResourceItemWrapper)}用テストメソッド.
 	 */
 	@Test
-	public void testCompareToResourceItemWrapper() {
+	public void testCompareTo() {
 
 		// Arrange：正常系
 		ResourceItemCommonDataId id = new ResourceItemCommonDataId("resourceName1", "resourceItemId1");
@@ -83,7 +83,7 @@ public class ResourceItemWrapperTest {
 	 * {@link ResourceItemWrapper#equals(Object)}用テストメソッド.
 	 */
 	@Test
-	public void testEqualsObject() {
+	public void testEquals() {
 
 		// Arrange：正常系
 		ResourceItemCommonData itemCommonData1 = new ResourceItemCommonData(new ResourceItemCommonDataId(
