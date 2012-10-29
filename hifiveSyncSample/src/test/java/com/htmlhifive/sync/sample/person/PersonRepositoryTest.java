@@ -33,9 +33,6 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.AbstractTransactionalJUnit4SpringContextTests;
 import org.springframework.test.context.transaction.TransactionConfiguration;
 
-import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
-import com.htmlhifive.sync.resource.common.ResourceItemCommonDataId;
-
 /**
  * <H3>
  * PersonRepositoryのテストクラス.</H3>
@@ -59,9 +56,9 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
     private Person personB;
     private Person personC;
 
-    private ResourceItemCommonData commonA;
-    private ResourceItemCommonData commonB;
-    private ResourceItemCommonData commonC;
+    private String personIdA = "A";
+    private String personIdB = "B";
+    private String personIdC = "C";
 
     @Before
     public void setUp() {
@@ -72,40 +69,31 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
         personB = new Person();
         personC = new Person();
 
-        personA.setPersonId("A");
+        personA.setPersonId(personIdA);
         personA.setName("nameA");
         personA.setOrganization("org1");
 
-        personB.setPersonId("B");
+        personB.setPersonId(personIdB);
         personB.setName("nameB");
         personB.setOrganization("org2");
 
-        personC.setPersonId("C");
+        personC.setPersonId(personIdC);
         personC.setName("nameC");
         personC.setOrganization(personA.getOrganization());
 
         target.save(personA);
         target.save(personB);
         target.save(personC);
-
-        commonA =
-                new ResourceItemCommonData(
-                        new ResourceItemCommonDataId("person", "common1"), personA.getPersonId());
-        commonB =
-                new ResourceItemCommonData(
-                        new ResourceItemCommonDataId("person", "common2"), personB.getPersonId());
-        commonC =
-                new ResourceItemCommonData(
-                        new ResourceItemCommonDataId("person", "common3"), personC.getPersonId());
     }
 
+    /**
+     * {@link PersonRepository#findAll(org.springframework.data.jpa.domain.Specification)}
+     * 用テストメソッド.
+     */
     @Test
     public void testFindAllBySpecOfPersonId() {
 
-        String[] idsCond =
-                new String[] {
-                        commonA.getTargetItemId(), commonB.getTargetItemId(),
-                        commonC.getTargetItemId() };
+        String[] idsCond = new String[] { personIdA, personIdB, personIdC };
 
         Map<String, String[]> personCond = new HashMap<String, String[]>() {
             {
@@ -124,7 +112,8 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
     }
 
     /**
-     * 共通データの条件に合致しない場合は結果に含まれない.
+     * {@link PersonRepository#findAll(org.springframework.data.jpa.domain.Specification)}
+     * 用テストメソッド. アイテムの識別子の条件に合致しない場合は結果に含まれない.
      */
     @Test
     public void testNotFoundBecaouseOfCommonDataCond() {
@@ -146,13 +135,13 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
         assertThat(actual.isEmpty(), is(true));
     }
 
+    /**
+     *
+     */
     @Test
     public void testFindAllBySpecOfCommonDataCondOnly() {
 
-        String[] idsCond =
-                new String[] {
-                        commonA.getTargetItemId(), commonB.getTargetItemId(),
-                        commonC.getTargetItemId() };
+        String[] idsCond = new String[] { personIdA, personIdB, personIdC };
 
         Map<String, String[]> personCond = new HashMap<String, String[]>() {
             {
