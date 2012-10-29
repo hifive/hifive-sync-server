@@ -426,13 +426,13 @@ $(function() {
 					- ($tableWrap.offset().top - $(this.rootElement).offset().top);
 			$tableWrap.height(height);
 			var elm = $tableWrap[0];
-			if (elm.clientWidth !== elm.offsetWidth
-					&& this.$find('table.calender th.dummyForScrollWidth').length === 0) {
+			var $calender = this.$find('.calender')[1];
+			var $dummyForScrollWidth = this.$find('table.calender th.dummyForScrollWidth');
+			if (elm.offsetWidth !== $calender.offsetWidth && $dummyForScrollWidth.length === 0) {
 				this.$find('table.calender thead tr').append(
 						$('<th class="dummyForScrollWidth"></th>'));
-			} else if (elm.clientWidth === elm.offsetWidth
-					&& this.$find('table.calender th.dummyForScrollWidth').length !== 0) {
-				this.$find('table.calender th.dummyForScrollWidth').remove();
+			} else if (elm.offsetWidth === $calender.offsetWidth && $dummyForScrollWidth.length !== 0) {
+				$dummyForScrollWidth.remove();
 			}
 		},
 
