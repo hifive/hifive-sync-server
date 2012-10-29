@@ -48,10 +48,12 @@ public @interface SyncResourceService {
 	String resourceName();
 
 	/**
-	 * リソースが採用する(要求する)ロック状態のタイプ.
+	 * リソースが採用する(要求する)ロック状態のタイプ.<br>
+	 * TODO 次期バージョンにて実装予定
 	 *
 	 * @return ロック状態タイプ
 	 */
+	@Deprecated
 	ResourceLockStatusType requiredLockStatus() default ResourceLockStatusType.UNLOCK;
 
 	/**

@@ -18,7 +18,9 @@ package com.htmlhifive.sync.resource;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -53,8 +55,11 @@ import com.htmlhifive.sync.service.upload.UploadCommonData;
 public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 	/**
-	 * このリソースのアイテムが必要とするロックの種類.
+	 * このリソースのアイテムが必要とするロックの種類.<br>
+	 * TODO 次期バージョンの実装で使用予定
 	 */
+	@Deprecated
+	@SuppressWarnings("unused")
 	private ResourceLockStatusType requiredLockStatus;
 
 	/**
@@ -98,15 +103,17 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	 * @return リソースアイテムのラッパーオブジェクト
 	 */
 	@Override
-	public List<ResourceItemWrapper<I>> get(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonDataList) {
+	public List<ResourceItemWrapper<I>> get(SyncCommonData syncCommon, List<ResourceItemCommonData> commonDataList) {
 
-		List<ResourceItemWrapper<I>> resultList = new ArrayList<>();
-		for (ResourceItemCommonData itemCommon : itemCommonDataList) {
+		// TODO 次期バージョンにて実装予定
+		//		if (requiredLockStatus == ResourceLockStatusType.EXCLUSIVE) {
+		//			for (ResourceItemCommonData itemCommon : commonDataList) {
+		//				lockStrategy.checkReadLockStatus(syncCommon, itemCommon);
+		//			}
+		//		}
 
-			// TODO 次期バージョンにて実装予定
-			//			if (requiredLockStatus == ResourceLockStatusType.EXCLUSIVE) {
-			//				lockStrategy.checkReadLockStatus(syncCommon, itemCommon);
-			//			}
+		List<String> idList = new ArrayList<>();
+		for (ResourceItemCommonData itemCommon : commonDataList) {
 
 			// for updateで取得済みでない場合は取得(非 for update)
 			ResourceItemCommonData common = itemCommon;
@@ -123,16 +130,18 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 				}
 			}
 
-			I item = doGet(common.getTargetItemId());
-
-			resultList.add(new ResourceItemWrapper<>(common, item));
+			idList.add(common.getTargetItemId());
 		}
+
+		Map<String, I> items = doGet(idList.toArray(new String[] {}));
+		List<ResourceItemWrapper<I>> resultList = wrapResourceItem(commonDataList, items);
 
 		return countOfVerification == 0 ? resultList : verify(resultList, countOfVerification);
 	}
 
 	/**
-	 * クエリの条件に合致する全リソースアイテムを取得します.
+	 * クエリの条件に合致する全リソースアイテムを取得します.<br>
+	 * この処理では「非 for update」での取得を行います.
 	 *
 	 * @param syncCommon 共通データ
 	 * @param query クエリオブジェクト
@@ -151,15 +160,33 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		//			}
 		//		}
 
-		Map<I, ResourceItemCommonData> items = doGetByQuery(commonDataList, query.getConditions());
-
-		List<ResourceItemWrapper<I>> resultList = new ArrayList<>();
-		for (I item : items.keySet()) {
-
-			resultList.add(new ResourceItemWrapper<>(items.get(item), item));
+		List<String> idList = new ArrayList<>();
+		for (ResourceItemCommonData common : commonDataList) {
+			idList.add(common.getTargetItemId());
 		}
 
+		Map<String, I> items = doGetByQuery(query.getConditions(), idList.toArray(new String[] {}));
+		List<ResourceItemWrapper<I>> resultList = wrapResourceItem(commonDataList, items);
+
 		return countOfVerification == 0 ? resultList : verify(resultList, countOfVerification);
+	}
+
+	/**
+	 * リソースアイテムデータとそれぞれに対応するリソースアイテム共通データを{@link ResourceItemWrapper}に格納し、そのリストを返します.
+	 *
+	 * @param commonDataList リソースアイテム共通データのコレクション
+	 * @param items リソースアイテム(アイテムの識別子をkeyとするMap)
+	 * @return リソースアイテム(ラッパーオブジェクト)のリスト
+	 */
+	private List<ResourceItemWrapper<I>> wrapResourceItem(Collection<ResourceItemCommonData> commonDataList,
+			Map<String, I> items) {
+
+		List<ResourceItemWrapper<I>> resultList = new ArrayList<>();
+		for (ResourceItemCommonData common : commonDataList) {
+
+			resultList.add(new ResourceItemWrapper<>(common, items.get(common.getTargetItemId())));
+		}
+		return resultList;
 	}
 
 	/**
@@ -179,12 +206,12 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		boolean isVerified = true;
 
 		// TODO: 共通データの一括取得
-		List<ResourceItemCommonData> comparisonCommonList = new ArrayList<>();
+		Map<String, ResourceItemCommonData> comparisonCommonMap = new HashMap<>();
 		for (ResourceItemWrapper<I> itemWrapper : itemWrapperList) {
 
 			ResourceItemCommonData comparisonCommon = commonDataService.currentCommonData(itemWrapper
 					.getItemCommonData().getId());
-			comparisonCommonList.add(comparisonCommon);
+			comparisonCommonMap.put(comparisonCommon.getTargetItemId(), comparisonCommon);
 
 			// 再取得した共通データとの差異がある場合検証失敗
 			if (!comparisonCommon.equals(itemWrapper.getItemCommonData())) {
@@ -204,10 +231,8 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		}
 
 		// 検証回数残がある場合、リソースアイテムを再取得
-		List<ResourceItemWrapper<I>> nextList = new ArrayList<>();
-		for (ResourceItemCommonData common : comparisonCommonList) {
-			nextList.add(new ResourceItemWrapper<>(common, doGet(common.getTargetItemId())));
-		}
+		List<ResourceItemWrapper<I>> nextList = wrapResourceItem(comparisonCommonMap.values(),
+				doGet(comparisonCommonMap.keySet().toArray(new String[] {})));
 
 		return verify(nextList, count);
 	}
@@ -321,12 +346,20 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			// 競合判定
 			// 競合がなければ、更新対象は渡されたitemとなる
 			I updateItem = item;
-			if (requiredLockStatus == ResourceLockStatusType.UNLOCK
-					&& conflict(itemCommon, currentCommon, uploadCommon)) {
 
-				// サーバで保持しているアイテムを取得。論理削除のため、削除済みリソースアイテム(IDのみ設定)の取得にdoDeleteを使用できる
-				I currentItem = currentCommon.getAction() == SyncAction.DELETE ? doDelete(currentCommon
-						.getTargetItemId()) : doGet(currentCommon.getTargetItemId());
+			if (
+			// TODO 次期バージョンにて実装予定
+			//		requiredLockStatus == ResourceLockStatusType.UNLOCK &&
+			isConflicted(itemCommon, currentCommon, uploadCommon)) {
+
+				// サーバで保持しているアイテムを取得
+				// 論理削除のため、削除済みリソースアイテム(IDのみ設定)の取得にdoDeleteを使用できる
+				I currentItem;
+				if (currentCommon.getAction() == SyncAction.DELETE) {
+					currentItem = doDelete(currentCommon.getTargetItemId());
+				} else {
+					currentItem = doGet(currentCommon.getTargetItemId()).get(currentCommon.getTargetItemId());
+				}
 
 				try {
 					// 競合解決、更新アイテムを決定し、更新対象のリソースアイテムを上書き
@@ -344,15 +377,8 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 				itemCommon.setAction(SyncAction.DELETE);
 				doDelete(currentCommon.getTargetItemId());
 			} else {
+
 				itemCommon.setAction(SyncAction.UPDATE);
-				if (currentCommon.getAction() == SyncAction.DELETE) {
-					try {
-						doCreate(updateItem);
-					} catch (DuplicateIdException e) {
-						// データ不整合のため、CONFLICTを返さない
-						throw new SyncException("inconsistent data. Deleted", e);
-					}
-				}
 				doUpdate(updateItem);
 			}
 
@@ -450,53 +476,52 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	}
 
 	/**
-	 * 単一データreadメソッドのリソース別独自処理を行う抽象メソッド.<br>
-	 * サブクラスでは与えられたIDが示すリソースアイテムを返すようにこのメソッドを実装します.
+	 * データ取得メソッドのリソース別独自処理を行う抽象メソッド.<br>
+	 * 与えられた識別子が示すリソースアイテムを返します.
 	 *
-	 * @param targetItemId 対象リソースアイテムのID
-	 * @return リソースアイテム
+	 * @param ids リソースアイテムの識別子(複数可)
+	 * @return リソースアイテム(識別子をKeyとするMap)
 	 */
-	protected abstract I doGet(String targetItemId);
+	protected abstract Map<String, I> doGet(String... ids);
 
 	/**
 	 * クエリによってリソースアイテムを取得する抽象メソッド.<br>
-	 * 指定された共通データが対応するリソースアイテムであり、かつデータ項目が指定された条件に合致するものを検索し、返します.
+	 * 与えられた識別子が示すアイテムの中で、データ項目が指定された条件に合致するものを返します.
 	 *
-	 * @param commonDataList 共通データリスト
 	 * @param conditions 条件Map(データ項目名,データ項目の条件)
-	 * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
+	 * @param ids リソースアイテムの識別子(複数可)
+	 * @return 条件に合致するリソースアイテム(共通データをkeyとするMap)
 	 */
-	protected abstract Map<I, ResourceItemCommonData> doGetByQuery(List<ResourceItemCommonData> commonDataList,
-			Map<String, String[]> conditions);
+	protected abstract Map<String, I> doGetByQuery(Map<String, String[]> conditions, String... ids);
 
 	/**
 	 * createメソッドのリソース別独自処理. <br>
-	 * 追加されたデータのリソースIDを返す.
+	 * 追加されたアイテムの識別子を返します.
 	 *
 	 * @param newItem 生成内容を含むリソースアイテム
-	 * @return 採番されたリソースアイテムID
-	 * @throws DuplicateIdException 追加しようとしたデータのIDが重複する場合
+	 * @return リソースアイテムの識別子
+	 * @throws DuplicateIdException 追加しようとしたアイテムの識別子が重複する場合
 	 */
 	protected abstract String doCreate(I newItem) throws DuplicateIdException;
 
 	/**
 	 * updateEメソッドのリソース別独自処理を実装する抽象メソッド. <br>
-	 * サブクラスではIが示すリソースアイテムを与えられたアイテムの内容で更新するようにこのメソッドを実装します.
+	 * アイテムの内容を更新し、そのアイテムの識別子を返します.
 	 *
 	 * @param item 更新内容を含むリソースアイテム
-	 * @return 更新されたリソースアイテム
+	 * @return リソースアイテムの識別子
 	 */
-	protected abstract I doUpdate(I item);
+	protected abstract String doUpdate(I item);
 
 	/**
 	 * deleteメソッドのリソース別独自処理を実装する抽象メソッド. <br>
-	 * サブクラスではこのリソースでのアイテムのIDが示すリソースアイテムを削除するようにこのメソッドを実装します.<br>
-	 * IDのみ設定されたリソースアイテム型オブジェクトなど、削除後のアイテムを表すオブジェクトを返す必要があります.
+	 * 識別子が示すアイテムを論理削除状態にします.<br>
+	 * 削除後のアイテムを表す識別子だけのオブジェクトを返します.
 	 *
-	 * @param targetItemId 各リソースにおけるアイテムのID
-	 * @return 削除されたアイテムを表すリソースアイテムオブジェクト
+	 * @param id リソースアイテムの識別子
+	 * @return 削除されたアイテムを表すリソースアイテム
 	 */
-	protected abstract I doDelete(String targetItemId);
+	protected abstract I doDelete(String id);
 
 	/**
 	 * オブジェクトをリソースアイテムの型に変換するためのコンバータオブジェクトを返します.
@@ -559,7 +584,8 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	 * @param server サーバで保持している現在の共通データ
 	 * @return 競合が発生している場合true.
 	 */
-	private boolean conflict(ResourceItemCommonData client, ResourceItemCommonData server, UploadCommonData uploadCommon) {
+	private boolean isConflicted(ResourceItemCommonData client, ResourceItemCommonData server,
+			UploadCommonData uploadCommon) {
 
 		if (server.getLastModified() <= client.getLastModified()) {
 			return false;
@@ -589,10 +615,12 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 	/**
 	 * このリソースが要求するロック状態を設定します.<br>
-	 * 通常、アプリケーションから使用することはありません.
+	 * 通常、アプリケーションから使用することはありません.<br>
+	 * TODO 次期バージョンにて実装予定
 	 *
 	 * @param requiredLockStatus セットする requiredLockStatus
 	 */
+	@Deprecated
 	@Override
 	public void setRequiredLockStatus(ResourceLockStatusType requiredLockStatus) {
 		this.requiredLockStatus = requiredLockStatus;

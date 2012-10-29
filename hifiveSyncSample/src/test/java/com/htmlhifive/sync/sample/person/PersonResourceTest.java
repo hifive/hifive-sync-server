@@ -36,8 +36,6 @@ import org.springframework.data.jpa.domain.Specifications;
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.resource.ResourceQuerySpecifications;
-import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
-import com.htmlhifive.sync.resource.common.ResourceItemCommonDataId;
 
 /**
  * <H3>
@@ -75,7 +73,7 @@ public class PersonResourceTest {
      * {@link PersonResource#getResourceItemByPersonId(String)}用テストメソッド.
      */
     @Test
-    public void testGetResourceItemByPersonIdString() {
+    public void testGetResourceItemByPersonId() {
 
         // Arrange：正常系
         final PersonResource target = new PersonResource();
@@ -135,45 +133,51 @@ public class PersonResourceTest {
     }
 
     /**
-     * {@link PersonResource#doGet(String)}用テストメソッド.
+     * {@link PersonResource#doGet(String...)}用テストメソッド.
      */
     @Test
-    public void testDoGetString() {
+    public void testDoGet() {
 
         // Arrange：正常系
         final PersonResource target = new PersonResource();
 
-        final String targetItemId = "personId";
+        final String personId = "personId";
 
         final Person expected = new Person();
-        expected.setPersonId(targetItemId);
+        expected.setPersonId(personId);
         expected.setName("person");
         expected.setAge(10);
         expected.setOrganization("org");
+
+        Map<String, Person> expectedMap = new HashMap<String, Person>() {
+            {
+                put(personId, expected);
+            }
+        };
 
         new Expectations() {
             {
                 setField(target, repository);
                 setField(target, querySpec);
 
-                repository.findOne(targetItemId);
+                repository.findOne(personId);
                 result = expected;
             }
         };
 
         // Act
-        Person actual = target.doGet(targetItemId);
+        Map<String, Person> actual = target.doGet(personId);
 
         // Assert：結果が正しいこと
-        assertThat(actual, is(expected));
+        assertThat(actual, is(expectedMap));
     }
 
     /**
-     * {@link PersonResource#doGet(String)}用テストメソッド. 存在しない場合
+     * {@link PersonResource#doGet(String...)}用テストメソッド. 存在しない場合
      * {@link BadRequestException}がスローされる.
      */
     @Test(expected = BadRequestException.class)
-    public void testDoGetStringFailBecausePersonNotExists() {
+    public void testDoGetFailBecausePersonNotExists() {
 
         // Arrange：異常系
         final PersonResource target = new PersonResource();
@@ -204,33 +208,21 @@ public class PersonResourceTest {
     }
 
     /**
-     * {@link PersonResource#doGetByQuery(List, Map)}用テストメソッド.
+     * {@link PersonResource#doGetByQuery(Map, String...)}用テストメソッド.
      */
     @Test
-    public void testDoGetByQueryListMap() {
+    public void testDoGetByQuery() {
 
         // Arrange：正常系
         final PersonResource target = new PersonResource();
 
         final String personId1 = "person1";
-
-        final ResourceItemCommonData common1 =
-                new ResourceItemCommonData(
-                        new ResourceItemCommonDataId("person", "resource1"), personId1);
-        final ResourceItemCommonData common2 =
-                new ResourceItemCommonData(
-                        new ResourceItemCommonDataId("person", "resource2"), "person2");
+        final String personId2 = "person2";
 
         final Person person1 = new Person();
         person1.setPersonId(personId1);
 
-        final List<ResourceItemCommonData> commonDataList =
-                new ArrayList<ResourceItemCommonData>() {
-                    {
-                        add(common1);
-                        add(common2);
-                    }
-                };
+        final String[] ids = new String[] { personId1, personId2 };
 
         final Map<String, String[]> conditions = new HashMap<String, String[]>() {
             {
@@ -244,12 +236,11 @@ public class PersonResourceTest {
             }
         };
 
-        final Map<Person, ResourceItemCommonData> expectedPersonMap =
-                new HashMap<Person, ResourceItemCommonData>() {
-                    {
-                        put(person1, common1);
-                    }
-                };
+        final Map<String, Person> expectedPersonMap = new HashMap<String, Person>() {
+            {
+                put(personId1, person1);
+            }
+        };
 
         new Expectations() {
             {
@@ -258,7 +249,7 @@ public class PersonResourceTest {
 
                 Specifications<Person> specs = (Specifications<Person>)any;
 
-                querySpec.parseConditions(commonDataList, conditions);
+                querySpec.parseConditions(conditions, ids);
                 result = specs;
 
                 repository.findAll(specs);
@@ -267,54 +258,50 @@ public class PersonResourceTest {
         };
 
         // Act
-        Map<Person, ResourceItemCommonData> actual =
-                target.doGetByQuery(commonDataList, conditions);
+        Map<String, Person> actual = target.doGetByQuery(conditions, ids);
 
         // Assert：結果が正しいこと
         assertThat(actual, is(expectedPersonMap));
     }
 
     /**
-     * {@link PersonResource#doGetByQuery(List, Map)}用テストメソッド.
+     * {@link PersonResource#doGetByQuery(Map, String...)}用テストメソッド.
      * 共通データリストがnullの時は例外をそのままスロー.
      */
     @Test(expected = Exception.class)
-    public void testDoGetByQueryListMapFailBecauseOfNullCommonList() {
+    public void testDoGetByQueryFailBecauseOfNullIds() {
 
         // Arrange：異常系
         final PersonResource target = new PersonResource();
 
-        final String personId1 = "person1";
+        final String[] ids = null;
 
-        final Map<String, String[]> conditions = new HashMap<String, String[]>() {
-            {
-                put("personId", new String[] { personId1 });
-            }
-        };
+        // any
+        final Map<String, String[]> conditions = new HashMap<>();
 
         new Expectations() {
             {
                 setField(target, repository);
                 setField(target, querySpec);
 
-                querySpec.parseConditions(null, conditions);
+                querySpec.parseConditions(conditions, ids);
                 result = new NullPointerException();
             }
         };
 
         // Act
-        target.doGetByQuery(null, conditions);
+        target.doGetByQuery(conditions, ids);
 
         // Assert：例外でなければ失敗
         fail();
     }
 
     /**
-     * {@link PersonResource#doGetByQuery(List, Map)}用テストメソッド.
+     * {@link PersonResource#doGetByQuery(Map, String...)}用テストメソッド.
      * クエリ条件Mapがnullの時は条件なし(空のMap)と同様の結果となる.
      */
     @Test
-    public void testDoGetByQueryListMapFailBecauseOfNullCondMap() {
+    public void testDoGetByQueryFailBecauseOfNullCondMap() {
 
         // Arrange：例外系
         final PersonResource target = new PersonResource();
@@ -322,25 +309,10 @@ public class PersonResourceTest {
         final String personId1 = "person1";
         final String personId2 = "person2";
 
-        final ResourceItemCommonData common1 =
-                new ResourceItemCommonData(
-                        new ResourceItemCommonDataId("person", "resource1"), personId1);
-        final ResourceItemCommonData common2 =
-                new ResourceItemCommonData(
-                        new ResourceItemCommonDataId("person", "resource2"), personId2);
-
         final Person person1 = new Person();
         person1.setPersonId(personId1);
         final Person person2 = new Person();
         person2.setPersonId(personId2);
-
-        final List<ResourceItemCommonData> commonDataList =
-                new ArrayList<ResourceItemCommonData>() {
-                    {
-                        add(common1);
-                        add(common2);
-                    }
-                };
 
         final List<Person> expectedPersonList = new ArrayList<Person>() {
             {
@@ -349,13 +321,12 @@ public class PersonResourceTest {
             }
         };
 
-        final Map<Person, ResourceItemCommonData> expectedPersonMap =
-                new HashMap<Person, ResourceItemCommonData>() {
-                    {
-                        put(person1, common1);
-                        put(person2, common2);
-                    }
-                };
+        final Map<String, Person> expectedPersonMap = new HashMap<String, Person>() {
+            {
+                put(personId1, person1);
+                put(personId2, person2);
+            }
+        };
 
         new Expectations() {
             {
@@ -364,7 +335,7 @@ public class PersonResourceTest {
 
                 Specifications<Person> specs = (Specifications<Person>)any;
 
-                querySpec.parseConditions(commonDataList, null);
+                querySpec.parseConditions(null, new String[] { personId1, personId2 });
                 result = specs;
 
                 repository.findAll(specs);
@@ -373,7 +344,8 @@ public class PersonResourceTest {
         };
 
         // Act
-        Map<Person, ResourceItemCommonData> actual = target.doGetByQuery(commonDataList, null);
+        Map<String, Person> actual =
+                target.doGetByQuery(null, new String[] { personId1, personId2 });
 
         // Assert：結果が正しいこと
         assertThat(actual, is(expectedPersonMap));
@@ -383,7 +355,7 @@ public class PersonResourceTest {
      * {@link PersonResource#doCreate(Person)}用テストメソッド.
      */
     @Test
-    public void testDoCreatePerson() throws Exception {
+    public void testDoCreate() throws Exception {
 
         // Arrange：正常系
         final PersonResource target = new PersonResource();
@@ -486,7 +458,7 @@ public class PersonResourceTest {
      * {@link PersonResource#doUpdate(Person)}用テストメソッド.
      */
     @Test
-    public void testDoUpdatePerson() {
+    public void testDoUpdate() {
 
         // Arrange：正常系
         final PersonResource target = new PersonResource();
@@ -511,10 +483,10 @@ public class PersonResourceTest {
         };
 
         // Act
-        Person actual = target.doUpdate(item);
+        String actual = target.doUpdate(item);
 
         // Assert：結果が正しいこと
-        assertThat(actual, is(equalTo(item)));
+        assertThat(actual, is(equalTo(personId)));
     }
 
     /**
@@ -522,7 +494,7 @@ public class PersonResourceTest {
      * 更新するPersonが存在しない場合{@link BadRequestException}がスローされる.
      */
     @Test(expected = BadRequestException.class)
-    public void testDoUpdatePersonFailBecauseOfNotFound() {
+    public void testDoUpdateFailBecauseOfNotFound() {
 
         // Arrange：正常系
         final PersonResource target = new PersonResource();
@@ -579,7 +551,7 @@ public class PersonResourceTest {
      * {@link PersonResource#doDelete(String)}用テストメソッド.
      */
     @Test
-    public void testDoDeleteString() {
+    public void testDoDelete() {
 
         // Arrange：正常系
         final PersonResource target = new PersonResource();
@@ -614,7 +586,7 @@ public class PersonResourceTest {
      * 更新するPersonが存在しない場合{@link BadRequestException}がスローされる.
      */
     @Test(expected = BadRequestException.class)
-    public void testDoDeleteStringFailBecauseOfNotFound() {
+    public void testDoDeleteFailBecauseOfNotFound() {
 
         // Arrange：異常系
         final PersonResource target = new PersonResource();
@@ -645,7 +617,7 @@ public class PersonResourceTest {
      * {@link BadRequestException}がスローされる.
      */
     @Test(expected = BadRequestException.class)
-    public void testDoDeleteStringFailBecauseOfNullInput() {
+    public void testDoDeleteFailBecauseOfNullInput() {
 
         // Arrange：正常系
         final PersonResource target = new PersonResource();

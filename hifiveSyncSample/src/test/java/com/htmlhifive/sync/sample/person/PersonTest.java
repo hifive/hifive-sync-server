@@ -53,7 +53,7 @@ public class PersonTest {
      * {@link Person#equals(Object)}用テストメソッド.
      */
     @Test
-    public void testEqualsObject() {
+    public void testEquals() {
 
         final Person person = new Person() {
             {

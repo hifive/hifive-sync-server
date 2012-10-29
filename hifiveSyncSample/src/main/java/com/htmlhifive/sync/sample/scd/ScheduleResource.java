@@ -32,7 +32,6 @@ import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
 import com.htmlhifive.sync.resource.ResourceQuerySpecifications;
 import com.htmlhifive.sync.resource.SyncResourceService;
-import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 import com.htmlhifive.sync.resource.update.ClientResolvingStrategy;
 import com.htmlhifive.sync.sample.person.Person;
 import com.htmlhifive.sync.sample.person.PersonRepository;
@@ -65,50 +64,50 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
     private PersonRepository personRepository;
 
     /**
-     * 単一データreadメソッドのリソース別独自処理を行う抽象メソッド.<br>
-     * エンティティをリポジトリから取得し、アイテムクラスのオブジェクトに設定して返します.
+     * データ取得メソッドのリソース別独自処理を行う抽象メソッド.<br>
+     * 与えられた識別子が示すリソースアイテムを返します.
      *
-     * @param targetItemId
-     *            対象リソースアイテムのID
-     * @return リソースアイテム
+     * @param ids
+     *            リソースアイテムの識別子(複数可)
+     * @return リソースアイテム(識別子をkeyとするMap)
      */
     @Override
-    protected ScheduleResourceItem doGet(String targetItemId) {
+    protected Map<String, ScheduleResourceItem> doGet(String... ids) {
 
-        Schedule bean = findSchedule(targetItemId);
+        Map<String, ScheduleResourceItem> itemMap = new HashMap<>();
+        for (String scheduleId : ids) {
 
-        ScheduleResourceItem item = entityToItem(bean);
-        return item;
+            Schedule scheduleEntity = findSchedule(scheduleId);
+            itemMap.put(scheduleId, entityToItem(scheduleEntity));
+        }
+
+        return itemMap;
     }
 
     /**
      * クエリによってリソースアイテムを取得する抽象メソッド.<br>
-     * 指定された共通データが対応するリソースアイテムであり、かつデータ項目が指定された条件に合致するものを検索し、返します.
+     * 与えられた識別子が示すアイテムの中で、データ項目が指定された条件に合致するものを返します.
      *
-     * @param commonDataList
-     *            共通データリスト
      * @param conditions
      *            条件Map(データ項目名,データ項目の条件)
-     * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
+     * @param ids
+     *            リソースアイテムの識別子(複数可)
+     * @return 条件に合致するリソースアイテム(アイテム識別子をKeyとするMap)
      */
     @Override
-    protected Map<ScheduleResourceItem, ResourceItemCommonData> doGetByQuery(
-            List<ResourceItemCommonData> commonDataList,
-            Map<String, String[]> conditions) {
+    protected Map<String, ScheduleResourceItem> doGetByQuery(
+            Map<String, String[]> conditions,
+            String... ids) {
 
-        Map<ScheduleResourceItem, ResourceItemCommonData> itemMap = new HashMap<>();
+        Map<String, ScheduleResourceItem> itemMap = new HashMap<>();
 
         // Specificationsを用いたクエリ実行
         List<Schedule> scheduleList =
-                repository.findAll(querySpec.parseConditions(commonDataList, conditions));
+                repository.findAll(querySpec.parseConditions(conditions, ids));
 
         for (Schedule schedule : scheduleList) {
-            for (ResourceItemCommonData common : commonDataList) {
-                if (common.getTargetItemId().equals(schedule.getScheduleId())) {
-                    ScheduleResourceItem item = entityToItem(schedule);
-                    itemMap.put(item, common);
-                }
-            }
+            ScheduleResourceItem item = entityToItem(schedule);
+            itemMap.put(item.getScheduleId(), item);
         }
 
         return itemMap;
@@ -122,7 +121,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
      */
     private ScheduleResourceItem entityToItem(Schedule bean) {
 
-        ScheduleDateFormatConverter formatterHolder =
+        ScheduleDateFormatConverter formatConverter =
                 new ScheduleDateFormatConverter(
                         ScheduleDateFormatConverter.FORMAT_INT8,
                         ScheduleDateFormatConverter.FORMAT_SLASH_SEPARATION);
@@ -140,7 +139,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
         List<String> dates = new ArrayList<>();
         for (ScheduleDate date : bean.getDateBeans()) {
-            dates.add(formatterHolder.convertFormat(String.valueOf(date.getDate())));
+            dates.add(formatConverter.convertFormat(String.valueOf(date.getDate())));
         }
         item.setDates(dates);
 
@@ -186,10 +185,10 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
      *
      * @param item
      *            更新内容を含むリソースアイテム
-     * @return 更新されたリソースアイテム
+     * @return リソースアイテムの識別子
      */
     @Override
-    protected ScheduleResourceItem doUpdate(ScheduleResourceItem item) {
+    protected String doUpdate(ScheduleResourceItem item) {
 
         Schedule updatingEntity = findSchedule(item.getScheduleId());
 
@@ -197,8 +196,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
         repository.save(updatingEntity);
 
-        item.setCreateUserName(updatingEntity.getCreateUser().getName());
-        return item;
+        return item.getScheduleId();
     }
 
     /**
@@ -272,7 +270,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
      */
     private List<ScheduleDate> itemDatesToEntityDates(Schedule entity, List<String> itemDates) {
 
-        ScheduleDateFormatConverter formatterHolder =
+        ScheduleDateFormatConverter formatConverter =
                 new ScheduleDateFormatConverter(
                         ScheduleDateFormatConverter.FORMAT_SLASH_SEPARATION,
                         ScheduleDateFormatConverter.FORMAT_INT8);
@@ -285,7 +283,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
             // 日付のマッチングは行わず、取得順に再設定する
             if (dateItr.hasNext()) {
                 ScheduleDate oldDateBean = dateBean;
-                oldDateBean.setDate(Integer.parseInt(formatterHolder.convertFormat(dateItr.next())));
+                oldDateBean.setDate(Integer.parseInt(formatConverter.convertFormat(dateItr.next())));
                 resultDatesList.add(oldDateBean);
             }
         }
@@ -293,7 +291,7 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
         // 元より多い分は新規
         while (dateItr.hasNext()) {
             resultDatesList.add(new ScheduleDate(
-                    entity, Integer.parseInt(formatterHolder.convertFormat(dateItr.next()))));
+                    entity, Integer.parseInt(formatConverter.convertFormat(dateItr.next()))));
         }
         return resultDatesList;
     }

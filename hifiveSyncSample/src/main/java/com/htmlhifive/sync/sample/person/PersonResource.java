@@ -27,7 +27,6 @@ import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.resource.AbstractSyncResource;
 import com.htmlhifive.sync.resource.ResourceQuerySpecifications;
 import com.htmlhifive.sync.resource.SyncResourceService;
-import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 import com.htmlhifive.sync.resource.update.ClientResolvingStrategy;
 
 /**
@@ -59,52 +58,52 @@ public class PersonResource extends AbstractSyncResource<Person> {
      * @throws BadRequestException
      *             Personが存在しない場合
      */
-    public Person getResourceItemByPersonId(String personId) {
+    public Person getResourceItemByPersonId(final String personId) {
 
         // Personデータを検索(共通データ、ロックは考慮しない)
-        return doGet(personId);
+        return findPerson(personId);
+
     }
 
     /**
-     * 単一データreadメソッドのリソース別独自処理を行う抽象メソッド.<br>
-     * エンティティをリポジトリから取得し、アイテムクラスのオブジェクトに設定して返します.
+     * データ取得メソッドのリソース別独自処理を行う抽象メソッド.<br>
+     * 与えられた識別子が示すリソースアイテムを返します.
      *
-     * @param targetItemId
-     *            対象リソースアイテムのID
-     * @return リソースアイテム
+     * @param ids
+     *            各リソースアイテムの識別子(複数可)
+     * @return リソースアイテム(識別子をKeyとするMap)
      */
     @Override
-    protected Person doGet(String targetItemId) {
+    protected Map<String, Person> doGet(String... ids) {
 
-        return findPerson(targetItemId);
+        Map<String, Person> itemMap = new HashMap<>();
+        for (String personId : ids) {
+            itemMap.put(personId, findPerson(personId));
+        }
+
+        return itemMap;
     }
 
     /**
      * クエリによってリソースアイテムを取得する抽象メソッド.<br>
-     * 指定された共通データが対応するリソースアイテムであり、かつデータ項目が指定された条件に合致するものを検索し、返します.
+     * 与えられた識別子が示すアイテムの中で、データ項目が指定された条件に合致するものを返します.
      *
-     * @param commonDataList
-     *            共通データリスト
      * @param conditions
      *            条件Map(データ項目名,データ項目の条件)
-     * @return 条件に合致するリソースアイテム(CommonDataを値として持つMap)
+     * @param ids
+     *            各リソースアイテムの識別子(複数可)
+     * @return 条件に合致するリソースアイテム(アイテムの識別子をkeyとするMap)
      */
     @Override
-    protected Map<Person, ResourceItemCommonData> doGetByQuery(
-            List<ResourceItemCommonData> commonDataList,
-            Map<String, String[]> conditions) {
+    protected Map<String, Person> doGetByQuery(Map<String, String[]> conditions, String... ids) {
 
-        Map<Person, ResourceItemCommonData> itemMap = new HashMap<>();
+        Map<String, Person> itemMap = new HashMap<>();
 
         // Specificationsを用いたクエリ実行
-        List<Person> personList =
-                repository.findAll(querySpec.parseConditions(commonDataList, conditions));
+        List<Person> personList = repository.findAll(querySpec.parseConditions(conditions, ids));
+
         for (Person person : personList) {
-            for (ResourceItemCommonData common : commonDataList) {
-                if (common.getTargetItemId().equals(person.getPersonId())) {
-                    itemMap.put(person, common);
-                }
-            }
+            itemMap.put(person.getPersonId(), person);
         }
 
         return itemMap;
@@ -121,14 +120,15 @@ public class PersonResource extends AbstractSyncResource<Person> {
     @Override
     protected String doCreate(Person newItem) throws DuplicateIdException {
 
-        if (repository.exists(newItem.getPersonId())) {
+        String personId = newItem.getPersonId();
+        if (repository.exists(personId)) {
 
-            throw new DuplicateIdException(newItem.getPersonId(), doGet(newItem.getPersonId()));
+            throw new DuplicateIdException(personId, doGet(personId).get(personId));
         }
 
         repository.save(newItem);
 
-        return newItem.getPersonId();
+        return personId;
     }
 
     /**
@@ -136,9 +136,10 @@ public class PersonResource extends AbstractSyncResource<Person> {
      *
      * @param item
      *            更新内容を含むリソースアイテム
+     * @return リソースアイテムの識別子
      */
     @Override
-    protected Person doUpdate(Person item) {
+    protected String doUpdate(Person item) {
 
         // itemはDTOとしてのPersonなので、永続データとして存在することを確認する
         if (!repository.exists(item.getPersonId())) {
@@ -146,7 +147,7 @@ public class PersonResource extends AbstractSyncResource<Person> {
             throw new BadRequestException("entity not found :" + item.getPersonId());
         }
 
-        return repository.save(item);
+        return repository.save(item).getPersonId();
     }
 
     /**

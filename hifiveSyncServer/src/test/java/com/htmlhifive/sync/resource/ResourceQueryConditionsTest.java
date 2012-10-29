@@ -56,7 +56,7 @@ public class ResourceQueryConditionsTest {
 	 */
 	@SuppressWarnings("serial")
 	@Test
-	public void testEqualsObject() {
+	public void testEquals() {
 
 		final Map<String, String[]> conditions = new HashMap<String, String[]>() {
 			{

@@ -14,6 +14,7 @@ import com.htmlhifive.sync.service.SyncCommonData;
  *
  * @author kishigam
  */
+@SuppressWarnings("deprecation")
 @Deprecated
 @Entity
 @Table(name = "RESOURCE_ITEM_COMMON_LOCK")

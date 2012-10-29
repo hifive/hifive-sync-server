@@ -27,7 +27,7 @@ import com.htmlhifive.sync.service.SyncCommonData;
 
 /**
  * 下り更新に関する共通情報を保持するデータクラス(エンティティ).
- *
+ * 
  * @author kishigam
  */
 public class DownloadCommonData implements SyncCommonData {
@@ -55,7 +55,9 @@ public class DownloadCommonData implements SyncCommonData {
 	 * リクエストの対象となっているロックトークン.<br>
 	 * このフィールドはクライアントへのレスポンスに含みません.<br>
 	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.<br>
+	 * TODO 次期バージョンにて実装予定
 	 */
+	@Deprecated
 	private String lockToken;
 
 	/**
@@ -67,7 +69,7 @@ public class DownloadCommonData implements SyncCommonData {
 
 	/**
 	 * 指定されたストレージIDを持つ下り更新共通データを生成します.
-	 *
+	 * 
 	 * @param storageId ストレージID
 	 */
 	public DownloadCommonData(String storageId) {
@@ -102,7 +104,7 @@ public class DownloadCommonData implements SyncCommonData {
 
 	/**
 	 * nullのときクライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.
-	 *
+	 * 
 	 * @return storageId
 	 */
 	@JsonSerialize(include = Inclusion.NON_DEFAULT)
@@ -134,7 +136,7 @@ public class DownloadCommonData implements SyncCommonData {
 
 	/**
 	 * リクエスト、レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
-	 *
+	 * 
 	 * @return syncTime
 	 */
 	@JsonIgnore
@@ -151,10 +153,12 @@ public class DownloadCommonData implements SyncCommonData {
 	}
 
 	/**
-	 * クライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.
-	 *
+	 * クライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.<br>
+	 * TODO 次期バージョンにて実装予定
+	 * 
 	 * @return lockToken
 	 */
+	@Deprecated
 	@JsonSerialize(include = Inclusion.NON_DEFAULT)
 	@Override
 	public String getLockToken() {
@@ -162,8 +166,11 @@ public class DownloadCommonData implements SyncCommonData {
 	}
 
 	/**
+	 * TODO 次期バージョンにて実装予定
+	 * 
 	 * @param lockToken セットする lockToken
 	 */
+	@Deprecated
 	public void setLockToken(String lockToken) {
 		this.lockToken = lockToken;
 	}
