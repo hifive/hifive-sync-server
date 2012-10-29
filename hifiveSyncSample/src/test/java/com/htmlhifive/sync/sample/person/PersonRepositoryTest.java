@@ -20,7 +20,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,13 +102,10 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
     @Test
     public void testFindAllBySpecOfPersonId() {
 
-        List<ResourceItemCommonData> commonDataCond = new ArrayList<ResourceItemCommonData>() {
-            {
-                add(commonA);
-                add(commonB);
-                add(commonC);
-            }
-        };
+        String[] idsCond =
+                new String[] {
+                        commonA.getTargetItemId(), commonB.getTargetItemId(),
+                        commonC.getTargetItemId() };
 
         Map<String, String[]> personCond = new HashMap<String, String[]>() {
             {
@@ -119,8 +115,7 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
             }
         };
 
-        List<Person> actual =
-                target.findAll(querySpecs.parseConditions(commonDataCond, personCond));
+        List<Person> actual = target.findAll(querySpecs.parseConditions(personCond, idsCond));
 
         assertThat(actual.size(), is(equalTo(2)));
         assertThat(actual.contains(personA), is(true));
@@ -134,11 +129,8 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
     @Test
     public void testNotFoundBecaouseOfCommonDataCond() {
 
-        List<ResourceItemCommonData> commonDataCond = new ArrayList<ResourceItemCommonData>() {
-            {
-                // empty
-            }
-        };
+        // length==0
+        String[] idsCond = new String[] {};
 
         Map<String, String[]> personCond = new HashMap<String, String[]>() {
             {
@@ -149,8 +141,7 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
             }
         };
 
-        List<Person> actual =
-                target.findAll(querySpecs.parseConditions(commonDataCond, personCond));
+        List<Person> actual = target.findAll(querySpecs.parseConditions(personCond, idsCond));
 
         assertThat(actual.isEmpty(), is(true));
     }
@@ -158,13 +149,10 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
     @Test
     public void testFindAllBySpecOfCommonDataCondOnly() {
 
-        List<ResourceItemCommonData> commonDataCond = new ArrayList<ResourceItemCommonData>() {
-            {
-                add(commonA);
-                add(commonB);
-                add(commonC);
-            }
-        };
+        String[] idsCond =
+                new String[] {
+                        commonA.getTargetItemId(), commonB.getTargetItemId(),
+                        commonC.getTargetItemId() };
 
         Map<String, String[]> personCond = new HashMap<String, String[]>() {
             {
@@ -172,8 +160,7 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
             }
         };
 
-        List<Person> actual =
-                target.findAll(querySpecs.parseConditions(commonDataCond, personCond));
+        List<Person> actual = target.findAll(querySpecs.parseConditions(personCond, idsCond));
 
         assertThat(actual.size(), is(equalTo(3)));
         assertThat(actual.contains(personA), is(true));

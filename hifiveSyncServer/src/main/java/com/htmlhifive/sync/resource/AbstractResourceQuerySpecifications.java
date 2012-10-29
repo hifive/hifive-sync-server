@@ -32,37 +32,34 @@ import javax.persistence.criteria.Root;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.domain.Specifications;
 
-import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
-
 /**
  * リソースクエリによるリソースアイテム検索のためのSpring Specifications抽象クラス.
  *
  * @author kishigam
- * @param <T> Specificationの対象エンティティ
+ * @param <E> Specificationの対象エンティティ
  */
-public abstract class AbstractResourceQuerySpecifications<T> implements ResourceQuerySpecifications<T> {
+public abstract class AbstractResourceQuerySpecifications<E> implements ResourceQuerySpecifications<E> {
 
 	/**
-	 * 「指定された共通データが対応するリソースアイテムであり、かつデータ項目が指定された条件に合致する」 というクエリ仕様を表現するSpecificationsオブジェクトを返します.
+	 * /** 「指定された識別子を持ち、かつデータ項目が指定された条件に合致する」 というクエリ仕様を表現するSpecificationsオブジェクトを返します.
 	 *
-	 * @param commonDataList リソースアイテム共通データ
 	 * @param conditions クエリ条件
+	 * @param ids リソースアイテムの識別子(複数可)
 	 * @return Specificationsオブジェクト
 	 */
 	@Override
-	public Specifications<T> parseConditions(List<ResourceItemCommonData> commonDataList,
-			Map<String, String[]> conditions) {
+	public Specifications<E> parseConditions(Map<String, String[]> conditions, String... ids) {
 
-		List<Specification<T>> specList = new ArrayList<>();
+		List<Specification<E>> specList = new ArrayList<>();
 
-		// 共通データの条件をSpecに追加
-		specList.add(createResourceItemCommonDataSpec(commonDataList));
+		// 対象ID(識別子)の条件をSpecに追加
+		specList.add(createItemIdentifierSpec(ids));
 
 		// サブクラスで対象エンティティ固有の検索条件を追加
 		specList.addAll(doParseConditions(conditions));
 
-		Specifications<T> specs = Specifications.where(specList.get(0));
-		for (Specification<T> spec : specList.subList(1, specList.size())) {
+		Specifications<E> specs = Specifications.where(specList.get(0));
+		for (Specification<E> spec : specList.subList(1, specList.size())) {
 			specs = specs.and(spec);
 		}
 
@@ -76,26 +73,18 @@ public abstract class AbstractResourceQuerySpecifications<T> implements Resource
 	 * @param conditions クエリ条件
 	 * @return Specificationオブジェクトのリスト
 	 */
-	protected abstract Collection<? extends Specification<T>> doParseConditions(Map<String, String[]> conditions);
+	protected abstract Collection<? extends Specification<E>> doParseConditions(Map<String, String[]> conditions);
 
 	/**
-	 * リソースアイテム共通データが持つ対象アイテムIDをIDとして持つエンティティを抽出するSpecificationオブジェクトを返します.
+	 * 対象アイテムの識別子を持つエンティティを抽出するSpecificationオブジェクトを返します.
 	 *
-	 * @param commonDataList リソースアイテム共通データのリスト
+	 * @param ids リソースアイテムの識別子(複数可)
 	 * @return Specificationオブジェクト
 	 */
-	protected Specification<T> createResourceItemCommonDataSpec(List<ResourceItemCommonData> commonDataList) {
-
-		List<String> targetItemIds = new ArrayList<>();
-		for (ResourceItemCommonData common : commonDataList) {
-			targetItemIds.add(common.getTargetItemId());
-		}
+	protected Specification<E> createItemIdentifierSpec(String... ids) {
 
 		// IDがないときは空ではなく、nullを格納しなければならない
-		Specification<T> commonDataSpec = isInIds(targetItemIds.isEmpty() ? new String[] { null } : targetItemIds
-				.toArray(new String[] {}));
-
-		return commonDataSpec;
+		return isInIds(ids == null || ids.length == 0 ? new String[] { null } : ids);
 	}
 
 	/**
@@ -104,11 +93,11 @@ public abstract class AbstractResourceQuerySpecifications<T> implements Resource
 	 * @param ids IDの配列
 	 * @return Specificationオブジェクト
 	 */
-	protected Specification<T> isInIds(final String... ids) {
-		return new Specification<T>() {
+	protected Specification<E> isInIds(final String... ids) {
+		return new Specification<E>() {
 
 			@Override
-			public Predicate toPredicate(Root<T> root, CriteriaQuery<?> cq, CriteriaBuilder builder) {
+			public Predicate toPredicate(Root<E> root, CriteriaQuery<?> cq, CriteriaBuilder builder) {
 
 				return root.get(root.getModel().getSingularAttribute(entityIdFieldName(), String.class)).in(
 						(Object[]) ids);
@@ -128,7 +117,7 @@ public abstract class AbstractResourceQuerySpecifications<T> implements Resource
 		ParameterizedType thisType = (ParameterizedType) this.getClass().getGenericSuperclass();
 
 		// この抽象クラスで1つ目の型変数に指定されているのがエンティティの型
-		Class<T> entityClass = (Class<T>) thisType.getActualTypeArguments()[0];
+		Class<E> entityClass = (Class<E>) thisType.getActualTypeArguments()[0];
 
 		// フィールドを検索し、@Idがついたフィールド名を返す
 		for (Field field : entityClass.getDeclaredFields()) {
