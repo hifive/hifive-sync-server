@@ -51,25 +51,8 @@ $(function() {
 			this.logic.init();
 
 			var that = this;
-
-			// conflictのイベントリスナーを登録
-			scheduleSample.sync.manager.addEventListener('conflict', function(event) {
-				// 今回競合した分のデータを競合データリストに入れる
-				// TODO: syncManagerに持たせる？
-				var conflictItems = event.conflicted[that.personDataModel.name];
-				if (!conflictItems) {
-					return;
-				}
-				for (var i=0, len=conflictItems['changed'].length; i<len; i++) {
-					that.logic.save(conflictItems['changed'][i].serverItem);
-				}
-				for (var i=0, len=conflictItems['removed'].length; i<len; i++) {
-					this.personDataModel.remove(conflictItems['removed'][i].serverItem.personId);
-				}
-				alert('ユーザのデータが更新されていました。確認後、再度更新しなおしてください');				
-			});
 			
-			scheduleSample.sync.manager.addEventListener('duplicateId', function(event) {
+			this.personDataModel.addEventListener('duplicateId', function(event) {
 				// 今回競合した分のデータを競合データリストに入れる
 				var conflictItems = event.conflicted[that.personDataModel.name];
 				if (!conflictItems) {
@@ -81,6 +64,19 @@ $(function() {
 				}), {
 					top: '0'
 				});
+			});
+			
+			// conflictのイベントリスナーを登録
+			this.personDataModel.addEventListener('conflict', function(event) {
+				for (var id in event.conflicted) {
+					var conflictItem = event.conflicted[id];
+					if (conflictItem.updateType === 'update') {
+						that.save(conflictItem.serverItem);						
+					} else { 
+						that.personDataModel.remove(id);
+					}
+				}
+				alert('ユーザのデータが更新されていました。確認後、再度更新しなおしてください');				
 			});
 
 		},

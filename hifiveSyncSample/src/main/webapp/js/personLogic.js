@@ -7,11 +7,11 @@
 	PersonLogic.prototype = {
 			
 		init: function() {
-			var that = this;
+			var modelName = this.personDataModel.name;
 	
 			// 同期対象のリソースを定義
 			this.syncManager.addQueries({
-				modelName: that.personDataModel.name,
+				modelName: modelName,
 				// 指定しない(すべてのデータを取得)
 				// あとで変更可能
 				conditions: {}

@@ -419,7 +419,7 @@ table.calender td .date {
 
 #dialog .dialog_conflict {
 	width: 500px;
-	height: 600px;
+	height: 650px;
 	overflow-y: auto;
 	overflow-x: hidden;
 	/* IE6でスクロールバーの幅分調整 */
@@ -560,7 +560,7 @@ table.calender td .date {
 }
 
 #dialog #schedule_edit {
-	height: 400px;
+	height: 450px;
 	width: 500px;
 }
 

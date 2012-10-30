@@ -88,10 +88,9 @@ $(function() {
 		
 		// 日付をキーにしたスケジュール
 		schedulesByDateKey: [],
-
-		// スケジュールモデル内の競合状態のアイテム
-		// TODO: syncManagerに持たせれば、ここのプロパティは不必要
-		_conflictItems : [],
+		
+		/** scheduleDataModel内の競合アイテム */
+		conflictItems : null,
 
 		// TODO ダイアログの処理は共通化するべき
 		/**
@@ -108,16 +107,10 @@ $(function() {
 			var that = this;
 
 			// conflictのイベントリスナーを登録
-			scheduleSample.sync.manager.addEventListener('conflict', function(event) {
-				// 今回競合した分のデータを競合データリストに入れる
-				// TODO: syncManagerに持たせる？
-				var conflictItems = event.conflicted[that.scheduleDataModel.name];
-				if (!conflictItems) {
-					return;
-				}
-				that._conflictItems = that._conflictItems.concat(conflictItems['changed']).concat(conflictItems['removed']);
+			this.scheduleDataModel.addEventListener('conflict', function(event) {
 				alert('スケジュールのデータが競合しています。');				
-				that.showConflict();
+				that.showConflict(event.conflicted);
+				that.conflictItems = scheduleSample.sync.manager.conflictItems['schedule']; // 競合しているアイテムをキャッシュする
 			});
 			
 			this.logic = new scheduleSample.logic.ScheduleLogic();
@@ -179,14 +172,28 @@ $(function() {
 			context.event.preventDefault();
 		},
 
-		showConflict: function() {
-			if (!this._conflictItems || this._conflictItems.length == 0) {
-				alert('衝突しているデータはありません');
-				return;
-			}
+		/**
+		 * 競合したアイテムを表示する。
+		 * 引数に指定されれば、指定された競合アイテムのリストを表示し、
+		 * 指定されていなければ、すべての競合アイテムを表示する。
+		 * 
+		 * @param conflicted 表示する競合アイテムのリスト
+		 * @memberOf ScheduleDataModel
+		 */
+		showConflict: function(conflicted) {
+			var conflictedToShow; // 表示対象の競合アイテムリスト
+			if (conflicted) {
+				conflictedToShow = conflicted; 
+			} else {
+				if (!scheduleSample.sync.manager.hasConflictItem('schedule')) {
+					alert('衝突しているデータはありません');
+					return;
+				}
+				conflictedToShow = scheduleSample.sync.manager.conflictItems['schedule'];
+			}	
 			
 			scheduleSample.common.showDialog(this.view.get('conflict', {
-				conflictItems: this._conflictItems
+				conflictItems: $.extend({}, conflictedToShow) 
 			}), {
 				top: '0'
 			});
@@ -219,13 +226,9 @@ $(function() {
 			var $dialog = $('#schedule_regist');
 			var obj = this.getDialogInput($dialog);
 
-			var conflictIndex = $(context.event.target).nextAll('input[name="conflictIndex"]').val();
+			var isConflict = $(context.event.target).nextAll('input[name="isConflict"]').val();
 
-			if (conflictIndex && this._conflictItems && this._conflictItems.length > 0) {
-				this._conflictItems.splice(conflictIndex, 1);
-			}
-			
-			this.regist(obj);
+			this.regist(obj, isConflict);
 		},
 
 		/**
@@ -236,7 +239,7 @@ $(function() {
 			var date = schedule.dates[0];
 			var promise = this.logic.regist(schedule);
 			
-//			scheduleSample.common.showIndicator(this, promise, 'データを登録中');
+			scheduleSample.common.showIndicator(this, promise, 'データを登録中');
 
 			promise.always( function() {
 					that.plotSchedule();
@@ -255,19 +258,15 @@ $(function() {
 			var schedule = this.getDialogInput($dialog);
 
 			var scheduleId = $(context.event.target).nextAll('input[name="scheduleId"]').val();
-			var conflictIndex = $(context.event.target).nextAll('input[name="conflictIndex"]').val();
-
-			if (conflictIndex && this._conflictItems && this._conflictItems.length > 0) {
-				this._conflictItems.splice(conflictIndex, 1);
-			}
+			var isConflict = $(context.event.target).nextAll('input[name="isConflict"]').val();
 
 			var that = this;
 			var date = schedule.dates[0];
-			var promise = this.logic.update(schedule, scheduleId);
+			var promise = this.logic.update(schedule, scheduleId, isConflict);
 			
 			scheduleSample.common.showIndicator(this, promise, 'データを更新中');
 			
-			promise.always(function() {
+			promise.always(function(obj) {
 				that.plotSchedule();
 				that.showScheduleByDate(date);
 				that.closeDialog();
@@ -365,36 +364,39 @@ $(function() {
 		 */
 		'{#dialog #schedule_conflict button.editSchedule} click': function(context) {
 			var scheduleId = $(context.event.target).nextAll('input[name="scheduleId"]').val();
-			var schedule = this.scheduleDataModel.get(scheduleId);
+			var conflictItem = this.conflictItems[scheduleId];
+			var schedule = conflictItem.localItem;
+			var serverItem = conflictItem.serverItem;
+						
 			this.$fromDialog = $('#dialog .content>*').clone();
-			var conflict = {};
-			var dates =  $(context.event.target).nextAll('input[name="dates"]').val();
-			if (dates && schedule.get('dates') != dates) {
-				conflict.dates = dates;
-			}
+			
+			var conflict;
+			if (!serverItem) {
+				conflict = {};
+			} else {
+				// ローカルとサーバの異なるプロパティを抜き出す。
+				conflict = {};
+				if (serverItem.dates && !scheduleSample.common.equalArrays(schedule.get('dates'), serverItem.dates)) {
+					conflict.dates = serverItem.dates;
+				}
 
-			var category = $(context.event.target).nextAll('input[name="category"]').val();
-			if (category && schedule.get('category') != category) {
-				conflict.category = category;
-			}
+				if (serverItem.category && schedule.get('category') !== serverItem.category) {
+					conflict.category = serverItem.category;
+				}
 
-			var title =  $(context.event.target).nextAll('input[name="title"]').val();
-			if (title && schedule.get('title') != title) {
-				conflict.title = title;
-			}
+				if (serverItem.title && schedule.get('title') !== serverItem.title) {
+					conflict.title = serverItem.title;
+				}
 
-			var detail = $(context.event.target).nextAll('input[name="detail"]').val();
-			if (detail && schedule.get('detail') != detail) {
-				conflict.detail = detail;
-			}
+				if (serverItem.detail && schedule.get('detail') !== serverItem.detail) {
+					conflict.detail = serverItem.detail;
+				}
 
-			var userIds =  $(context.event.target).nextAll('input[name="userIds"]').val();
-			if (userIds && scheduleSample.common.equalArrays(schedule.get('userIds'), userIds)) {
-				conflict.date = userIds;
+				if (serverItem.userIds && scheduleSample.common.equalArrays(schedule.get('userIds'), serverItem.userIds)) {
+					conflict.date = serverItem.userIds;
+				}	
 			}
-
-			var conflictIndex = $(context.event.target).nextAll('input[name="conflictIndex"]').val();
-			conflict.conflictindex = conflictIndex;
+			
 			scheduleSample.common.showDialog(this.view.get('edit', {
 				schedule: schedule,
 				conflict: conflict
@@ -408,20 +410,11 @@ $(function() {
 		 */
 		'{#dialog #schedule_conflict button.registSchedule} click': function(context) {
 			var scheduleId = $(context.event.target).nextAll('input[name="scheduleId"]').val();
+			var conflictItem = this.conflictItems[scheduleId];
+			
 			this.$fromDialog = $('#dialog .content>*').clone();
 			
-			var dates =  $(context.event.target).nextAll('input[name="dates"]').val();
-
-			var schedule = {
-					dates: dates,
-					category: $(context.event.target).nextAll('input[name="category"]').val(),
-					title: $(context.event.target).nextAll('input[name="title"]').val(),
-					detail: $(context.event.target).nextAll('input[name="detail"]').val(),
-					userIds: $(context.event.target).nextAll('input[name="userIds"]').val()
-			}
-			
-			var conflictIndex = $(context.event.target).nextAll('input[name="conflictIndex"]').val();
-			this.openRegistDialog(dates, schedule, conflictIndex);
+			this.openRegistDialog(dates, conflictItem.serverItem, true);
 		},
 
 		/**
@@ -433,13 +426,13 @@ $(function() {
 					- ($tableWrap.offset().top - $(this.rootElement).offset().top);
 			$tableWrap.height(height);
 			var elm = $tableWrap[0];
-			if (elm.clientWidth !== elm.offsetWidth
-					&& this.$find('table.calender th.dummyForScrollWidth').length === 0) {
+			var $calender = this.$find('.calender')[1];
+			var $dummyForScrollWidth = this.$find('table.calender th.dummyForScrollWidth');
+			if (elm.offsetWidth !== $calender.offsetWidth && $dummyForScrollWidth.length === 0) {
 				this.$find('table.calender thead tr').append(
 						$('<th class="dummyForScrollWidth"></th>'));
-			} else if (elm.clientWidth === elm.offsetWidth
-					&& this.$find('table.calender th.dummyForScrollWidth').length !== 0) {
-				this.$find('table.calender th.dummyForScrollWidth').remove();
+			} else if (elm.offsetWidth === $calender.offsetWidth && $dummyForScrollWidth.length !== 0) {
+				$dummyForScrollWidth.remove();
 			}
 		},
 
@@ -466,7 +459,7 @@ $(function() {
 		 *
 		 * @param {Date} [date] 予定登録画面の日付にあらかじめ入力しておく日にちの日付
 		 */
-		openRegistDialog: function(date, schedule, conflictIndex) {
+		openRegistDialog: function(date, schedule, isConflict) {
 			var userIds = [''];
 			if (schedule && schedule.userIds) {
 				userIds = scheduele.userIds;
@@ -480,7 +473,7 @@ $(function() {
 				title: schedule ? schedule.title : '',
 				detail: schedule ? schedule.detail : '',
 				userIds: userIds, 
-				conflictIndex: conflictIndex ? conflictIndex : null
+				isConflict: isConflict ? true : false
 			}), {
 				top: 0
 			});

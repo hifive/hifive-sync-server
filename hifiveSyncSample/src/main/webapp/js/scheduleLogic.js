@@ -73,19 +73,27 @@
 			});
 		},
 		
-		regist: function(schedule) {
+		regist: function(schedule, isConflict) {
 			// スケジュールIDの生成
 			schedule.scheduleId = this.syncManager.getGlobalItemId(this.scheduleDataModel);	
 			this._removeEmptyUserIds(schedule);
 			this.scheduleDataModel.create(schedule);
+			
+			if(isConflict) {
+				this.syncManager.setAsResolved(scheduleId, this.scheduleDataModel.name);
+			}
 	
 			return this.syncManager.sync();
 		},
 	
-		update: function(schedule, scheduleId) {
+		update: function(schedule, scheduleId, isConflict) {
 			var item = this.scheduleDataModel.get(scheduleId);
 			this._removeEmptyUserIds(schedule);
 			item.set(schedule);
+			
+			if(isConflict) {
+				this.syncManager.setAsResolved(scheduleId, this.scheduleDataModel.name);
+			}
 	
 			return this.syncManager.sync();
 		},

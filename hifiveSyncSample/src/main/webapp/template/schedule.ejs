@@ -81,8 +81,8 @@
 		<label class="title">タイトル</label><input type="text" name="title" value="[%= title %]"/><br>
 		<label class="users">参加者</label><input type="text" name="userIds" value="[%= userIds[0] %]"/><br>
 		<label class="detail">詳細</label><textarea name="detail">[%= detail %]</textarea><br>
-		[% if(conflictIndex) { %]
-			<input type="hidden" name="conflictIndex" value="[%= conflictIndex %]"/>
+		[% if(isConflict) { %]
+			<input type="hidden" name="isConflict" value="[%= isConflict %]"/>
 		[% } %]
 		
 		<div class="button-wrap">
@@ -104,8 +104,8 @@
 		<label></label><p class="conflict">サーバのデータ：[%= scheduleSample.common.category[conflict.category].name %]</p><br>
 	[% } %]
 	<label class="date">日程</label>[%:= scheduleSample.common.getDateInputForm(schedule.get('dates')[0]) %]<br>
-	[% if (conflict && conflict.date) { %]
-		<label></label><p class="conflict">サーバのデータ：[%= conflict.date %]</p><br>
+	[% if (conflict && conflict.dates) { %]
+		<label></label><p class="conflict">サーバのデータ：[%= conflict.dates[0] %]</p><br>
 	[% } %]
 	<label class="title">タイトル</label><input type="text" name="title" value="[%= schedule.get('title') %]"/><br>
 	[% if (conflict && conflict.title) { %]
@@ -124,8 +124,8 @@
 		<button class="submit">変更</button>
 		<button class="cancelEdit">キャンセル</button>
 		<input type="hidden" name="scheduleId" value="[%= schedule.get('scheduleId') %]"/>
-		[% if (conflict && conflict.conflictIndex) { %]
-			<input type="hidden" name="conflictIndex" value="[%= conflict.conflictIndex %]"/>
+		[% if (conflict) { %]
+			<input type="hidden" name="isConflict" value="[%= true %]"/>
 		[% } %]
 	</div>
 </div>
@@ -206,12 +206,14 @@
 <script type="text/ejs" id="conflict">
 	<div id="schedule_conflict" class="dialog_conflict">
 		<p>衝突したデータ</p>
-		[% for(var i = 0, l = conflictItems.length; i<l; i++){
-			 var serverItem = conflictItems[i].serverItem;
-			 var localItem =  conflictItems[i].localItem;
+		[%  var i=0;
+			for(var scheduleId in conflictItems){
+			i++;
+			 var serverItem = conflictItems[scheduleId].serverItem;
+			 var localItem =  conflictItems[scheduleId].localItem;
 		%]
 			<hr>
-			<p>衝突データ[%= i + 1%]</p>
+			<p>衝突データ[%= i++　%]</p>
 			<hr>
 			<label class="dataOrigin">サーバのスケジュール</label><br>
 
@@ -238,13 +240,12 @@
 			[% } %]
 			<hr>
 			
-			<label class="dataOrigin">ローカルのスケジュール</label><br>
+			<label class="dataOrigin">あなたのスケジュール</label><br>
 
 			[% if (!localItem) { %]
 				<p>削除されています</p><br>
 				<button class="registSchedule">この予定を編集</button>
 			[% } else { %]
-				<label class="dataOrigin">あなたのスケジュール</label><br>
 				<label>日付</label><p>[%= h5.u.str.format('{0}({1})', localItem.get('dates')[0], scheduleSample.common.dateToWeek(localItem.get('dates')[0])) %]</p><br>
 				[% for(var j = 1, l = localItem.get('dates').length; j < l; j++){ %]
 					<label></label><p>[%= h5.u.str.format('{0}({1})', localItem.get('dates')[j], scheduleSample.common.dateToWeek(localItem.get('dates')[j])) %]</p><br>
@@ -265,19 +266,8 @@
 
 				<button class="editSchedule">この予定を編集</button>
 			[% } %]
-				<input type="hidden" name="scheduleId" value="[%= localItem ? localItem.get('scheduleId') : serverItem.scheduleId %]"/>
-			[% if (serverItem) { %]
-				[% for(var j = 0, l = serverItem.dates.length; j < l; j++){ %]
-					<input type="hidden" name="dates" value="[%= serverItem.dates[j] %]"/>
-				[% } %]
-				[% for(var j = 0, l = serverItem.userIds.length; j < l; j++){ %]
-					<input type="hidden" name="userIds" value="[%= serverItem.userIds[j] %]"/>
-				[% } %]
-				<input type="hidden" name="category" value="[%= serverItem.category %]"/>
-				<input type="hidden" name="title" value="[%= serverItem.title %]"/>
-				<input type="hidden" name="detail" value="[%= serverItem.detail %]"/>
-			[% } %]
-			<input type="hidden" name="conflictIndex" value="[%= i %]"/>
+			<input type="hidden" name="scheduleId" value="[%= scheduleId %]"/>
+			[% i++; %]
 		[% } %]
 	<br><br><br><br>[%# スマートフォン用のスペース %]
 	</div>

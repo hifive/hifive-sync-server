@@ -11412,7 +11412,7 @@ var h5internal = {
 	var STORAGE_ID_KEY = 'sync-storageId';
 	var QUERIES_KEY = 'sync-queries';
 	var LAST_UPLOAD_TIME_KEY = 'sync-lastUploadTime';
-	var UNSENT_REDOLOGS_LENGTH = 'sync-unsentRedoLogLength'
+	var UNSENT_REDOLOGS_LENGTH = 'sync-unsentRedoLogLength';
 
 	// テーブルへ挿入するitemのキーは、syncitem-を頭につける
 	var HEAD_OF_SYNC_ITEM_KEY = 'syncitem-';
@@ -11459,7 +11459,7 @@ var h5internal = {
 	 * @param {DataItem} item データアイテム
 	 * @return {Object} データアイテムのPOJO
 	 */
-	function getPlainItem(item) {
+	function toPlainItem(item) {
 		var obj = item.get();
 		var schema = item.getModel().schema;
 		for ( var prop in schema) {
@@ -11488,7 +11488,7 @@ var h5internal = {
 		var saveData = {
 			// ローカルに保存するための、PlainObjectを生成する
 			// スキーマに登録されたデータでisTransitionがtrueでないデータを登録する
-			item: getPlainItem(item),
+			item: toPlainItem(item),
 			commonData: item.commonData
 		};
 
@@ -11579,6 +11579,9 @@ var h5internal = {
 		this.baseUrl = baseUrl;
 
 		this.dafaultAjaxOptions = {};
+		
+		/** 競合アイテムのリスト */
+		this.conflictItems = {};
 
 		/** 前回uploadで送ろうとして失敗したredoLogsの長さ */
 		this._unsentRedoLogsLength = 0;
@@ -11593,850 +11596,928 @@ var h5internal = {
 
 	SyncManager.prototype = new EventDispatcher();
 
-	$
-			.extend(
-					SyncManager.prototype,
-					{
+	$.extend(SyncManager.prototype,	{
 
-						/**
-						 * HTTP通信を行います。基本的な使い方はh5.ajaxと同じです。 ajaxSetupでデフォルトオプションを指定すると、
-						 * そこで指定してデフォルト値を使います。
-						 * 
-						 * @param {Object} options ajaxオプション
-						 * @memberOf SyncManager
-						 * @return Promiseオブジェクト
-						 */
-						ajax: function(options) {
-							var _options = $.extend({}, this.defaultAjaxOptions, options);
-							return h5.ajax(_options);
-						},
+		/**
+		 * HTTP通信を行います。基本的な使い方はh5.ajaxと同じです。 ajaxSetupでデフォルトオプションを指定すると、
+		 * そこで指定してデフォルト値を使います。
+		 * 
+		 * @param {Object} options ajaxオプション
+		 * @memberOf SyncManager
+		 * @return Promiseオブジェクト
+		 */
+		ajax: function(options) {
+			var _options = $.extend({}, this.defaultAjaxOptions, options);
+			return h5.ajax(_options);
+		},
 
-						/**
-						 * 更新データのサーバへの送信、およびサーバからの更新結果の取得を行います。
-						 * 
-						 * @memberOf SyncManager
-						 * @return Promiseオブジェクト
-						 */
-						sync: function() {
-							return asyncInOrder(this.upload, this.download, this);						
-						},
+		/**
+		 * 更新データのサーバへの送信、およびサーバからの更新結果の取得を行います。
+		 * 
+		 * @memberOf SyncManager
+		 * @return Promiseオブジェクト
+		 */
+		sync: function() {
+			if (this.hasConflictItem()) {
+				// 競合アイテムが残っているときはsyncしない
+				var dfd = h5.async.deferred();
+				dfd.resolve();
+				return dfd.promise();
+			}			
+			return asyncInOrder(this.upload, this.download, this);						
+		},
 
-						/**
-						 * ローカルでの更新データをサーバに送ります。
-						 * 
-						 * @memberOf SyncManager
-						 * @return Promiseオブジェクト
-						 */
-						upload: function() {
-														
-							var that = this;
-							
-							/**
-							 * 実際にredoログから送信データを作成し送信する。
-							 * 以前に送信失敗していたら、それを送信する。
-							 * 
-							 * @returns promiseオブジェクト
-							 */
-							function _upload() {
-								var dfd = h5.async.deferred();
-
-								if (!navigator.onLine || that._lastUploadAjaxPromise 
-										|| navigator.__offLine) { // テスト用コード 
-									// オフライン時、または前のリクエストが返ってきていないときはデータを送らない
-									// TODO: オフラインであることを伝える
-									dfd.resolve();
-									return dfd.promise();
-								}
-
-								// rodoログの数
-								var redoLogsLength = that.unsentRedoLogsLength || that.redoLogs.length;
-								
-								if (redoLogsLength === 0) {
-									// 送るデータがなかったらリクエストは投げない
-									dfd.resolve();
-									return dfd.promise();
-								}
-
-								if (!that._storageId) {
-									// 自分の更新を送るときは、storageIdがないとエラー
-									throw new Error(ERR_MSG_NO_STORAGE_ID);
-								}
-								
-								// サーバへ送るデータ								
-								var data = {
-									uploadCommonData: {
-										storageId: that._storageId,
-										lastUploadTime: that._lastUploadTime
-									},
-									resourceItems: that._getUploadResourceItems()
-								};
-
-								var options = {
-									type: 'post',
-									contentType: 'application/json',
-									url: that.baseUrl + '/upload',
-									data: JSON.stringify(data),
-									cache: false
-								};
-
-								// uploadのpromiseオブジェクトを保存して、終わったかどうかをチェックする
-								that._lastUploadAjaxPromise = that.ajax(options);
-								
-								that._lastUploadAjaxPromise.always(function(){
-									// レスポンスが返ってきたので、前回のpromiseをnullにする
-									that._lastUploadAjaxPromise = null;
-								}).done(function(resultData) {
-										// 競合なし
-
-									// 送った部分をredoログから削除する
-									that.redoLogs = that.redoLogs.splice(redoLogsLength);
-
-									that.unsentRedoLogsLength = 0;
-									// 最終アップロード時刻を更新する
-									that._lastUploadTime = resultData.uploadCommonData.lastUploadTime;
-
-									if (h5.api.storage.isSupported) {
-										h5.api.storage.local.setItem(UNSENT_REDOLOGS_LENGTH, 0);
-										h5.api.storage.local.setItem(REDOLOG_LIST_KEY, that.redoLogs);
-										h5.api.storage.local.setItem(LAST_UPLOAD_TIME_KEY, that._lastUploadTime);
-									}
-									dfd.resolve();
-								}).fail(function(obj) {
-									// イベントをあげる前に呼ぶと、ハンドラ内で呼び出したblockUIが消えてしまうことがあるため
-									dfd.reject(obj);
-									// TODO: 送信失敗の判定の検証
-									if (obj.statusText === 'timeout' || obj.statusText === 'error') {
-										// 失敗時は、未送信であるredoログの長さを保持しておいて、次回送る
-										that.unsentRedoLogsLength = redoLogsLength;
-										if (h5.api.storage.isSupported) {
-											h5.api.storage.local.setItem(UNSENT_REDOLOGS_LENGTH, that.unsentRedoLogsLength);
-										}
-										fwLogger.info('サーバとの接続に失敗しました');
-									} else if (obj.status == 409) {
-										// 衝突あり
-										that._dispatchConflictEvent(JSON.parse(obj.responseText));
-									} else {
-										throw new Error(ERR_MSG_BAD_REQUEST_ERROR, null,
-												obj.statusText);
-									}
-								});
-								return dfd.promise();
-							}
-
-							// upload ここから
-
-							// 前回送信失敗したものを送るか、そうでないか
-							if (this._unsentRedoLogsLength !== 0) {
-								return asyncInOrder(_upload, _upload, this);
-							} 
-							return _upload();
-						},
-
-						/**
-						 * サーバから更新データを取得し、ローカルに保存します。
-						 * 
-						 * @memberOf SyncManager
-						 * @return Promiseオブジェクト
-						 */
-						download: function() {
-							if ($.isEmptyObject(this._queries)) {
-								// クエリが指定されていない
-								throw new Error(ERR_MSG_NO_QUERIES);
-							}
-							var dfd = h5.async.deferred();
-
-							if (!navigator.onLine || navigator.__offLine) { // テスト用コード 
-								// オフライン時は何もしない
-								dfd.resolve();
-								return dfd.promise();
-							}
-
-							var that = this;
-							this._download(this._queries).done(function(resultData) {
-								// アプリケーションデータを保存する
-								that._saveDownloadCommonData(resultData.downloadCommonData);
-								dfd.resolve();
-							}).fail(function(obj) {
-								alert('downloadのreject');
-								dfd.reject(obj);
-							});
-
-							return dfd.promise();
-						},
-
-						/**
-						 * クエリを指定してデータをサーバから取得します。 現在のバージョンに関係なくすべてのデータを取得します。
-						 * 
-						 * @params queryOrArray クエリオブジェクトまたはそのリスト
-						 * @memberOf SyncManager
-						 * @return 取得データを引数とするPromiseオブジェクト
-						 */
-						get: function(queryOrArray) {
-							var queryArray = wrapInArray(queryOrArray);
-							if (!queryArray || queryArray.length == 0) {
-								// クエリが指定されていない
-								throw new Error(ERR_MSG_NO_QUERIES);
-							}
-
-							var dfd = h5.async.deferred();
-							if (!navigator.onLine || navigator.__offLine) { // テスト用コード 
-								// オフライン時は何もしない
-								dfd.resolve();
-								return dfd.promise();
-							}
-
-							var queries = {};
-							for ( var i = 0, len = queryArray; i < len; i++) {
-								if (!queryArray[i].modelName) {
-									throw new Error(ERR_MSG_INVALID_QUERIES);
-								}
-								if (!queries[queryArray[i].modelName]) {
-									queries[queryArray[i].modelName] = [];
-								}
-								if (!queryArray[i].conditions)
-									queryArray[i].conditions = {};
-								queries[queryArray[i].modelName].push({
-									conditions: queryArray[i].conditions
-								});
-							}
-							this._download(queries).done(function(resultData, items) {
-								dfd.resolve(items);
-							}).fail(function(obj) {
-								dfd.reject(obj);
-							});
-							return dfd.promise();
-						},
-						
-						/**
-						 * クエリオブジェクトを指定して、データのロックを取得する。
-						 * 
-						 * @param {Object} queryOrArray クエリオブジェクトまたはその配列
-						 * @memberOf SyncManager
-						 * @return ロックトークンとロックしたアイテムのID
-						 */
-						lock: function(queryOrArray) {
-							// TODO: 未実装
-							throw new Error('まだ使用できません。');
-						},
-						
-						/**
-						 * 現在ローカルストレージにあるデータを削除し、新たにサーバのデータを取得する。
-						 * サーバに送っていない更新データがある場合には、先にアップロードを行う。
-						 * 
-						 * @memberOf SyncManager
-						 * @return Promiseオブジェクト
-						 */
-						resync: function() {
-							return asyncInOrder(this.upload, function(){
-								// ローカルのアイテムを削除する。
-								this.dataModelManager.beginUpdate();
-								var models = this.dataModelManager.models;								
-								
-								for (var modelName in this._queries) {
-									var model = models[modelName];
-									for (var id in model.items) {
-										var item = model.remove(id);
-										item._isServerUpdate = true; // redoログに登録させない									
-									}
-
-									// クエリのlastDownloadTimeも削除
-									var conditions = this._queries[modelName];
-									for (var i=0, len=conditions.length; i<len; i++){
-										delete conditions[i].lastDownloadTime;
-									}
-									
-								}							
-								this.dataModelManager.endUpdate();								
-								return this.download();
-							}, this);
-						},
-
-						/**
-						 * データモデルごとに重複しないIDを取得します。
-						 * 
-						 * @param {DataModel | String | Number} modelOrStrOrNum データモデルまたは文字列または数値
-						 * @memberOf SyncManager
-						 * @return {String} ID
-						 */
-						getGlobalItemId: function(modelOrStrOrNum) {
-							var id;
-							if (typeof modelOrStrOrNum === 'string') {
-								id = modelOrStrOrNum;								
-							} else if (typeof modelOrStrOrNum === 'number') {
-								id = modelOrStrOrNum.toString();
-							} else if (typeof modelOrStrOrNum === 'object') {
-								// SyncManagerが持つDataModelManagerを持っていなければならない
-								if (!modelOrStrOrNum.getManager || modelOrStrOrNum.getManager() !== this.dataModelManager) {
-									throw new Error(ERR_MSG_INVALID_ARGUMENT);						
-								}
-								if (!modelOrStrOrNum.__idSequence) {
-									modelOrStrOrNum.__idSequence = h5.core.data.createSequence(null, null, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
-								}
-								id = modelOrStrOrNum.__idSequence.next();
-							} else {
-								throw new Error(ERR_MSG_INVALID_ARGUMENT);
-							}
-							return this._storageId + '-' + id;								
-							
-						},
-						
-						/**
-						 * IDの重複を解決した場合に、redoログの古いIDを新しいIDに置き換える。
-						 * また、redoログ内のアイテムIDのリストを持ったresolveDuplicateIdイベントをあげる。
-						 * 
-						 * @param newId 置き換えた後のID
-						 * @param oldId 置き換える前のID
-						 * @param model 対象のアイテムを持つデータモデル
-						 * @memberOf SyncManager
-						 * 
-						 */
-						resolveDuplicate: function(newId, oldId, model) {
-							var updateIdLog = {}; // redoLogをモデルごとに集約したIdのリスト
-							
-							var isOldItemDeleted = false;
-							
-							for (var i=this.redoLogs.length-1; i>=0; i--) {
-								var redoLog = this.redoLogs[i];
-								if (redoLog.item[model.idKey] === oldId && redoLog.modelName === model.name) {
-									// 対象のアイテムが見つかった場合
-									if (redoLog.action === ACTION_TYPE_DELETE) {
-										// 重複を解決したときに、クライアントでアイテムを削除している可能性があるので、
-										// その場合は、redoログから除いておく。
-										this.redoLogs.splice(i,1);
-										isOldItemDeleted = true;
-										continue;
-									}
-									
-									redoLog.item[model.idKey] = newId;
-									redoLog.itemCommonData.resourceItemId = newId;
-								}
-								
-								// アイテムのIDをリストに追加する
-								if (!updateIdLog[redoLog.modelName]) {
-									updateIdLog[redoLog.modelName] = [];
-								}
-								var itemId = redoLog.item[this.dataModelManager.models[redoLog.modelName].idKey];
-								if (updateIdLog[redoLog.modelName].indexOf(itemId) === -1) {
-									updateIdLog[redoLog.modelName].push(itemId);									
-								}
-							}
-							
-							// 古いアイテムは削除しておく
-							if (!isOldItemDeleted) {
-								var item = model.get(oldId);
-								item._isServerUpdate = true;
-								model.remove(oldId);
-							}
-														
-							// 新旧のIDとredoログ内のアイテムのIDのリストをもったイベントをあげる
-							this.dispatchEvent({
-								type : 'resolveDuplicateId',
-								target : model.get(newId),
-								oldId : oldId,
-								newId : newId,
-								updateIdLog : updateIdLog 
-							});
-						},
-
-						/**
-						 * 指定したクエリオブジェクトを同期対象に加ます。
-						 * 
-						 * @param queryOrArray クエリオブジェクトまたはその配列
-						 * @memberOf SyncManager
-						 */
-						addQueries: function(queryOrArray) {
-							var queries = wrapInArray(queryOrArray);
-							for ( var i = 0, len = queries.length; i < len; i++) {
-								var query = queries[i];
-								if (this.hasQuery(query)) {
-									continue;
-								}
-
-								if (!query.modelName) {
-									throw new Error(ERR_MSG_INVALID_QUERIES);
-								}
-
-								if (!this._queries[query.modelName]) {
-									this._queries[query.modelName] = [];
-									// itemsChangeのイベントリスナーを登録
-									this.dataModelManager.models[query.modelName].addEventListener(
-											EVENT_ITEMS_CHANGE, this._itemsChangeListener);
-								}
-								if (!queries[i].conditions) {
-									queries[i].conditions = {};
-								}
-								this._queries[query.modelName].push({
-									conditions: queries[i].conditions
-								});
-							}
-						},
-
-						/**
-						 * 同じクエリが同期対象にすでに登録されているかを判定します。
-						 * クエリオブジェクト内のコンディションは登録したものと同じインスタンスである必要があります。
-						 * 
-						 * @param queryOrArray クエリオブジェクト
-						 * @memberOf SyncManager
-						 * @returns クエリがすでに登録済みかどうか
-						 */
-						hasQuery: function(query) {
-							var addedQueriesOfThisModel = this._queries[query.modelName];
-
-							if (!addedQueriesOfThisModel)
-								return false;
-
-							for (var i = 0, len = addedQueriesOfThisModel.length; i < len; i++) {
-								if (query.conditions === addedQueriesOfThisModel[i].conditions)
-									return true;
-							}
-							return false;
-						},
-
-						/**
-						 * 同期対象に登録されたクエリオブジェクトを同期対象から削除します。
-						 * クエリオブジェクト内のコンディションは登録したものと同じインスタンスである必要があります。
-						 * 
-						 * @param query クエリオブジェクトまたはその配列
-						 * @memberOf SyncManager
-						 */
-						deleteQueries: function(queryOrArray) {
-							var queries = wrapInArray(queryOrArray);
-							for ( var i = 0, len = queries.length; i < len; i++) {
-								var query = queries[i];
-								if (!query.modelName) {
-									throw new Error(ERR_MSG_INVALID_QUERIES);
-								}
-	
-								var conditionList = this._queries[query.modelName];
-								if (!conditionList) {
-									continue;
-								}
-								
-								for ( var j = conditionList.length-1; j >= 0; j--) {
-									if (query.conditions === conditionList[j]) {
-										conditionList.splice(j, 1);
-										break;
-									}
-								}
-								if (conditionList.length === 0) {
-									this.dataModelManager.models[query.modelName].removeEventListener(
-											EVENT_ITEMS_CHANGE, this._itemsChangeListener);
-								}
-							}
-						},
-
-						/**
-						 * 同期時に使用するjQuery.ajaxのオプションのデフォルト値を設定します。
-						 * SyncManager内で通信が行われるときは、この値が使用されます。
-						 * SyncManagerを通さない通信のときは、この値は使用されません。
-						 * 
-						 * @param options {Object} jQuery.ajaxで指定するオプションのオブジェクト
-						 * @memberOf SyncManager
-						 */
-						ajaxSetup: function(options) {
-							if (typeof options !== 'object') {
-								throw new Error(ERR_MSG_INVALID_ARGUMENT);
-							}
-							this.defaultAjaxOptions = options;
-						},
-
-						// ---------------------------
-						// プライベートメソッド
-						// ---------------------------
-						
-						/**
-						 * サーバから更新データを取得する
-						 */
-						_download: function(queries) {
-
-							var data = {};
-							data.queries = queries;
-							if (this._storageId) {
-								data.downloadCommonData = {
-										storageId: this._storageId
-								};
-							}
-
-							var options = {
-								dateType: 'jsonp',
-								type: 'post',
-								contentType: 'application/json',
-								url: this.baseUrl + '/download',
-								data: JSON.stringify(data),
-								cache: false
-							};
-
-							var that = this;
-
-							var dfd = h5.async.deferred();
-
-							this.ajax(options).done(function(resultData) {
-								// レスポンスを解析してモデルに反映する
-								var items = that._saveServerItems(resultData.resourceItems);
-								dfd.resolve(resultData, items);
-							}).fail(function(obj) {
-								if (obj.statusText === 'timeout' || obj.statusText === 'error') {
-									fwLogger.info('サーバとの接続に失敗しました');
-								} else {
-									// TODO:
-									fwLogger.info('接続時にエラーが発生しました:' + obj.statusText);
-								}
-								dfd.reject(obj);
-							});
-							return dfd.promise();
-						},
-
-
-						/**
-						 * 
-						 */
-						_dispatchConflictEvent: function(resultData) {
-							// 衝突あり
-							
-							var eventType;  // 競合イベントタイプ 
-							var conflicted; // 競合アイテムリスト
-
-							if (resultData.uploadCommonData.conflictType === CONFLICT_TYPE_DUPLICATE_ID) {
-								// IDの重複が起きたとき
-								eventType = EVENT_DUPLICATE_ID;
-								conflicted = this._getItemsOfDuplicatedIds(resultData.resourceItems);
-							} else if (resultData.uploadCommonData.conflictType === CONFLICT_TYPE_UPDATED) {
-								// 更新しようとして競合が起きたとき
-								eventType = EVENT_UPDATED;
-								conflicted = this._getConflictItems(resultData.resourceItems);
-							} else {
-								throw new Error(ERR_MSG_INVALID_CONFLICT_TYPE);
-							}
-
-							// モデルごとに競合イベントを発生させる
-							// TODO: このconflictedはすでに競合が起こっていてまだ未解決なものも加える？
-							var models = this.dataModelManager.models;
-							for ( var modelName in conflicted) {
-								models[modelName].dispatchEvent({
-									type: eventType,
-									conflicted: conflicted[modelName]
-								});
-							}
-
-							// 複数のモデルを含んだ競合イベントを発生させる
-							this.dispatchEvent({
-								type: eventType,
-								conflicted: conflicted
-							});
-						},
-
-
-						/**
-						 * 送られてきた競合結果のリストをもとに、重複したIDのサーバ側のアイテムとローカルのアイテムのリストを得る
-						 * 
-						 * @param serverItems 競合したアイテムのサーバ側のデータリスト
-						 * @returns {Array} 重複したIDのサーバ側のアイテムとローカルのアイテムを含むリスト
-						 */
-						_getItemsOfDuplicatedIds: function(serverItems) {
-							var conflicted = {};
-							for ( var modelName in serverItems) {
-								conflicted[modelName] = [];
-								
-								var items = serverItems[modelName];
-								for ( var i = 0, len = items.length; i < len; i++) {
-									var serverItem = items[i].item;
-
-									var model = this.dataModelManager.models[items[i].itemCommonData.resourceName];
-
-									conflicted[modelName].push({
-										model: model,
-										localItem: model.get(serverItem[model.idKey]),
-										serverItem: serverItem
-									});
-								}
-							}
-							return conflicted;
-						},
-
-						/**
-						 * 送られてきた競合結果のリストをもとに、競合オブジェクトのリストを得る
-						 * 
-						 * @param serverItems 競合したアイテムのサーバ側のデータリスト
-						 * @returns {Array} 競合オブジェクトのリスト
-						 */
-						_getConflictItems: function(serverItems) {
-							var conflicted = {};
-							for ( var modelName in serverItems) {
-								// 更新による競合の場合は、
-								// サーバの更新アイテムと削除アイテムをそれぞれリストで返す
-								conflicted[modelName] = {
-										removed: [],
-										changed: []
-								};
-								
-								var items = serverItems[modelName];
-								for ( var i = 0, len = items.length; i < len; i++) {
-									var itemCommonData = items[i].itemCommonData;
-									var serverItem = items[i].item;
-
-									var model = this.dataModelManager.models[itemCommonData.resourceName];
-
-									conflictItem = {
-										model: model,
-										localItem: model.get(serverItem[model.idKey])
-									};
-
-									if (itemCommonData.action === ACTION_TYPE_DELETE) {
-										conflictItem.serverItem = null;
-										conflicted[modelName]['removed'].push(conflictItem);
-									} else {
-										conflictItem.serverItem = serverItem;
-										conflicted[modelName]['changed'].push(conflictItem);
-									}
-									
-									// itemのlastModifiedを更新する
-									// itemの共通データはredoログに参照が入っているので、そこを更新すれば十分である
-									// (削除されている場合、データモデルの管理下から外れてしまうため)
-									for ( var j = 0, l = this.redoLogs.length; j < l; j++) {
-										var redoLog = this.redoLogs[j];
-										if (redoLog.itemCommonData.resoureceItemId === itemCommonData.resoureceItemId) {
-											// 一番最初に見つかったもののみ書き換えれば、他の同じアイテムも同じitemCommonDataを参照しているのでよい。
-											redoLog.itemCommonData.lastModified = itemCommonData.lastModified;
-											break;
-										}
-									}
-								}
-							}
-							return conflicted;
-						},
-						
-						/**
-						 * redoログリストからサーバに送る更新情報のリストを作成する
-						 */
-						_getUploadResourceItems: function() {
-							var resourceItems = [];
-							var len = this._unsentRedoLogsLength !== 0 ? this._unsentRedoLogsLength
-									: this.redoLogs.length;
-							for (var i = 0; i < len; i++) {
-								var redoLog = this.redoLogs[i];
-
-								// 送信データ
-								var resourceItem = {};
-								resourceItem.itemCommonData = $.extend({}, redoLog.itemCommonData,
-										{
-											action: redoLog.action,
-											resourceName: redoLog.modelName
-										});
-
-
-								if (redoLog.action != ACTION_TYPE_DELETE) {
-									resourceItem.item = redoLog.item;
-								}
-								resourceItems.push(resourceItem);
-							}
-							return resourceItems;
-						},
-
-						/**
-						 * @private 更新成功時に、クライアント共通のデータをセットする
-						 */
-						_saveDownloadCommonData: function(downloadCommonData) {
-							// 初回起動時は、ストレージIDを取得
-							if (!this._storageId) {
-								this._storageId = downloadCommonData.storageId;
-								if (h5.api.storage.isSupported) {
-									h5.api.storage.local.setItem(STORAGE_ID_KEY, this._storageId);
-								}
-							}
-
-							// 各リソースの同期時刻を更新
-							for (var modelName in this._queries) {
-								var conditions = this._queries[modelName];
-								for (var i=0, len=conditions.length; i<len; i++) {
-									conditions[i].lastDownloadTime = downloadCommonData.lastDownloadTime;									
-								}
-							}
-						},
-
-						/**
-						 * @private レスポンスを解析し、データをローカルに反映する
-						 * @param serverItems サーバのアイテムが入ったリスト
-						 * @returns 更新したアイテムのリスト
-						 */
-						_saveServerItems: function(serverItems) {
-							var items = {};							
-							this.dataModelManager.beginUpdate();
-						
-							for ( var modelName in serverItems) {
-								var model = this.dataModelManager.models[modelName];
-								items[modelName] = [];
-								var serverItemsOfModel = serverItems[modelName];
-								for ( var i = 0, len = serverItemsOfModel.length; i < len; i++) {
-									var itemCommonData = serverItemsOfModel[i].itemCommonData;
-									var item = serverItemsOfModel[i].item;
-
-									if (itemCommonData.action === ACTION_TYPE_DELETE) {
-										var localItem = model.remove(item[model.idKey]);
-										if (localItem) {
-											localItem._isServerUpdate = true;											
-										}
-										continue;
-									}
-									// ローカルになければアイテムを作成し、あれば更新する
-									var localItem = model.create(item);
-									localItem._commonData = itemCommonData;
-									localItem._isServerUpdate = true;
-									delete localItem._commonData.action;
-									items[modelName].push(localItem);
-								}
-							}							
-
-							this.dataModelManager.endUpdate();
-							
-							// もう一度ループを回して_isServerUpdateを削除する。
-							for (var modelName in items) {
-								for (var i=0, len=items[modelName].length; i<len; i++) {
-									delete items[modelName][i]._isServerUpdate;
-								}
-							}
-							
-							return items;
-						},
-						
-						_createItemsChangeListener: function() {
-								var that = this;
-							
-								/**
-								 * redoLogリストに更新情報を登録。 redoLogの要素は{item(plain), itemCommonData,
-								 * resourceName, action}の構成
-								 */
-								function addRedoLog(item, model, action) {
-									//TODO: 更新順序の保存は要検討。現在はアイテムをそのままの順で保存するのみ（重複可）。
-
-									var redoLog = {};
-									
-									if (action === ACTION_TYPE_UPDATE) {
-										// 更新時
-										redoLog.item = getPlainItem(item); // itemのコピーを保持しておく(参照だと変更されてしまう可能性があるため)
-									} else if (action === ACTION_TYPE_DELETE) {
-										// redoログの中にcreateのログが残っている場合は、このアイテムのログはなかったことにする。
-										var indexOfCreateItem = that.redoLogs.length;
-										for (var i=0, len=that.redoLogs.length; i<len;i++) {
-											var existingRedoLog = that.redoLogs[j];
-											if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	
-													&& existingRedoLog.modelName === model.name
-													&& existingRedoLog.action === ACTION_TYPE_CREATE) {
-												indexOfCreateItem = i;
-												break;
-											}
-										}
-
-										if (indexOfCreateItem < that.redoLogs.length) {
-											// 後ろからたどって、このアイテムのログを削除していく(createしたところまで)
-											for (var j=that.redoLogs.length-1; j>=indexOfCreateItem; j--) {
-												if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	
-														&& existingRedoLog.modelName === model.name ){
-													that.redoLogs.splice(j,1);
-												}
-											}
-											// 保存しないで終了
-											return;
-										}
+		/**
+		 * ローカルでの更新データをサーバに送ります。
+		 * 
+		 * @memberOf SyncManager
+		 * @return Promiseオブジェクト
+		 */
+		upload: function() {
 										
-										// 削除時はidのみ保存
-										redoLog.item = {};
-										redoLog.item[model.idKey] = item.get(model.idKey);
-									} else {
-										// 作成時
-										for (var j=0, len=that.redoLogs.length; j<len; j++) {
-											var existingRedoLog = that.redoLogs[j];
-											if (existingRedoLog.item[model.idKey] === item.get(model.idKey)	&& existingRedoLog.modelName === model.name) {
-												// アイテムがcreateされたとき、redoログ内に同じモデルの同じidを持つアイテムがあるときは、
-												// ローカルでアイテムを削除して、競合が起きたのでそれを解決するためにアイテムを作成しなおしたときか、
-												// 重複IDしたデータを再度登録するときである。
-												// 削除していた（競合していた）場合は、削除のログを消して、更新データとしてログを登録する。
-												// IDの重複のときは、redoログ内の旧アイテムのID部分を変更し、同じく更新としてログに登録する。
-												// ただし、IDの変更は、FWに旧IDと新IDを教えておくことで対応している(resolveDuplicateメソッド内)。
-												// したがって、ユーザはresolveDuplicateをアイテム再生成の前に呼び出しておく必要がある。
-												// TODO: 方法については要再検討
+			var that = this;
+			
+			/**
+			 * 実際にredoログから送信データを作成し送信する。
+			 * 以前に送信失敗していたら、それを送信する。
+			 * 
+			 * @returns promiseオブジェクト
+			 */
+			function _upload() {
+				var dfd = h5.async.deferred();
 
-												if(existingRedoLog.action === ACTION_TYPE_DELETE) {
-													// 一度削除されてまだサーバに送信されていない場合は、
-													// 削除したことをなくし、更新としてサーバに伝える
-													that.redoLogs.splice(j,1);
-													
-												}
-												item._commonData = existingRedoLog.itemCommonData;
-												action = ACTION_TYPE_UPDATE;
-												break;
-											}
-										}
-										redoLog.item = getPlainItem(item);
-									} 
+				if (!navigator.onLine || that._lastUploadAjaxPromise 
+						|| navigator.__offLine) { // テスト用コード 
+					// オフライン時、または前のリクエストが返ってきていないときはデータを送らない
+					// TODO: オフラインであることを伝える
+					dfd.resolve();
+					return dfd.promise();
+				}
+				
+				if (that.hasConflictItem()) {
+					// 競合アイテムが残っているときはuploadしない
+					dfd.resolve();
+					return dfd.promise();
+				}
 
-									$.extend(redoLog, {
-											itemCommonData: item._commonData,
-											modelName: model.name,
-											action: action
-									});
-									
-									that.redoLogs.push(redoLog);
-									if (h5.api.storage.isSupported) {
-										h5.api.storage.local.setItem(REDOLOG_LIST_KEY, that.redoLogs);
-									}
-								}
-								
-								function itemsChangeListener(event) {
-									var model = event.target;
-									
-									// アイテムを挿入
-									var created = event.created;
-									for ( var i = 0, len = created.length; i < len; i++) {
-										// ローカルに保存
-										setItemToStorage(created[i]);
-	
-										if (created[i]._isServerUpdate) {
-											delete created[i]._isServerUpdate;
-											continue;
-										}
-										
-										var itemId = created[i].get(model.idKey);
-										created[i]._commonData = {
-												resourceItemId: itemId ? itemId : that.getGlobalItemId(model)
-										};
-										// クライアントでの更新時は、redoログに追加
-										addRedoLog(created[i], model, ACTION_TYPE_CREATE);
-									}
-	
-									// アイテムを変更
-									var changed = event.changed;
-									for ( var i = 0, len = changed.length; i < len; i++) {
-										var item = changed[i].target;
-										// ローカルに変更結果を保存
-										setItemToStorage(item);
-	
-										if (item._isServerUpdate) {
-											delete item._isServerUpdate;
-											continue;
-										}
-	
-										// クライアントの操作での更新の場合は、redoログに追加
-										addRedoLog(item, model, ACTION_TYPE_UPDATE);
-									}
-	
-									// アイテムを削除
-									var removed = event.removed;
-									for ( var i = 0, len = removed.length; i < len; i++) {
-										// ローカルのデータを削除
-										removeItemFromStorage(removed[i], model);
-	
-										if (removed[i]._isServerUpdate) {
-											delete removed[i]._isServerUpdate;
-											continue;
-										}
-	
-										// クライアントでの更新時は、redoログに追加
-										addRedoLog(removed[i], model, ACTION_TYPE_DELETE);
-									}
-								}
-								return itemsChangeListener;
+				// rodoログの数
+				var redoLogsLength = that.unsentRedoLogsLength || that.redoLogs.length;
+				
+				if (redoLogsLength === 0) {
+					// 送るデータがなかったらリクエストは投げない
+					dfd.resolve();
+					return dfd.promise();
+				}
+
+				if (!that._storageId) {
+					// 自分の更新を送るときは、storageIdがないとエラー
+					throw new Error(ERR_MSG_NO_STORAGE_ID);
+				}
+				
+				// サーバへ送るデータ								
+				var data = {
+					uploadCommonData: {
+						storageId: that._storageId,
+						lastUploadTime: that._lastUploadTime
+					},
+					resourceItems: that._getUploadResourceItems()
+				};
+
+				var options = {
+					type: 'post',
+					contentType: 'application/json',
+					url: that.baseUrl + '/upload',
+					data: JSON.stringify(data),
+					cache: false
+				};
+
+				// uploadのpromiseオブジェクトを保存して、終わったかどうかをチェックする
+				that._lastUploadAjaxPromise = that.ajax(options);
+				
+				that._lastUploadAjaxPromise.always(function(){
+					// レスポンスが返ってきたので、前回のpromiseをnullにする
+					that._lastUploadAjaxPromise = null;
+				}).done(function(resultData) {
+						// 競合なし
+
+					// 送った部分をredoログから削除する
+					that.redoLogs = that.redoLogs.splice(redoLogsLength);
+
+					that.unsentRedoLogsLength = 0;
+					// 最終アップロード時刻を更新する
+					that._lastUploadTime = resultData.uploadCommonData.lastUploadTime;
+
+					if (h5.api.storage.isSupported) {
+						h5.api.storage.local.setItem(UNSENT_REDOLOGS_LENGTH, 0);
+						h5.api.storage.local.setItem(REDOLOG_LIST_KEY, that.redoLogs);
+						h5.api.storage.local.setItem(LAST_UPLOAD_TIME_KEY, that._lastUploadTime);
+					}
+					dfd.resolve();
+				}).fail(function(obj) {
+					// イベントをあげる前に呼ぶと、ハンドラ内で呼び出したblockUIが消えてしまうことがあるため
+					dfd.reject(obj);
+					// TODO: 送信失敗の判定の検証
+					if (obj.statusText === 'timeout' || obj.statusText === 'error') {
+						// 失敗時は、未送信であるredoログの長さを保持しておいて、次回送る
+						that.unsentRedoLogsLength = redoLogsLength;
+						if (h5.api.storage.isSupported) {
+							h5.api.storage.local.setItem(UNSENT_REDOLOGS_LENGTH, that.unsentRedoLogsLength);
 						}
+						fwLogger.info('サーバとの接続に失敗しました');
+					} else if (obj.status == 409) {
+						// 衝突あり
+						that._dispatchConflictEvent(JSON.parse(obj.responseText));
+					} else {
+						throw new Error(ERR_MSG_BAD_REQUEST_ERROR, null,
+								obj.statusText);
+					}
+				});
+				return dfd.promise();
+			}
+
+			// upload ここから
+
+			// 前回送信失敗したものを送るか、そうでないか
+			if (this._unsentRedoLogsLength !== 0) {
+				return asyncInOrder(_upload, _upload, this);
+			} 
+			return _upload();
+		},
+
+		/**
+		 * サーバから更新データを取得し、ローカルに保存します。
+		 * 
+		 * @memberOf SyncManager
+		 * @return Promiseオブジェクト
+		 */
+		download: function() {
+			if ($.isEmptyObject(this._queries)) {
+				// クエリが指定されていない
+				throw new Error(ERR_MSG_NO_QUERIES);
+			}
+			var dfd = h5.async.deferred();
+
+			if (!navigator.onLine || navigator.__offLine) { // テスト用コード 
+				// オフライン時は何もしない
+				dfd.resolve();
+				return dfd.promise();
+			}
+
+			var that = this;
+			this._download(this._queries).done(function(resultData) {
+				// アプリケーションデータを保存する
+				that._saveDownloadCommonData(resultData.downloadCommonData);
+				
+				// 競合リストを削除する
+				that.conflictItems = {};
+				
+				dfd.resolve();
+			}).fail(function(obj) {
+				alert('downloadのreject');
+				dfd.reject(obj);
+			});
+
+			return dfd.promise();
+		},
+
+		/**
+		 * クエリを指定してデータをサーバから取得します。 現在のバージョンに関係なくすべてのデータを取得します。
+		 * 
+		 * @params queryOrArray クエリオブジェクトまたはそのリスト
+		 * @memberOf SyncManager
+		 * @return 取得データを引数とするPromiseオブジェクト
+		 */
+		get: function(queryOrArray) {
+			var queryArray = wrapInArray(queryOrArray);
+			if (!queryArray || queryArray.length == 0) {
+				// クエリが指定されていない
+				throw new Error(ERR_MSG_NO_QUERIES);
+			}
+
+			var dfd = h5.async.deferred();
+			if (!navigator.onLine || navigator.__offLine) { // テスト用コード 
+				// オフライン時は何もしない
+				dfd.resolve();
+				return dfd.promise();
+			}
+
+			var queries = {};
+			for ( var i = 0, len = queryArray; i < len; i++) {
+				if (!queryArray[i].modelName) {
+					throw new Error(ERR_MSG_INVALID_QUERIES);
+				}
+				if (!queries[queryArray[i].modelName]) {
+					queries[queryArray[i].modelName] = [];
+				}
+				if (!queryArray[i].conditions)
+					queryArray[i].conditions = {};
+				queries[queryArray[i].modelName].push({
+					conditions: queryArray[i].conditions
+				});
+			}
+			this._download(queries).done(function(resultData, items) {
+				dfd.resolve(items);
+			}).fail(function(obj) {
+				dfd.reject(obj);
+			});
+			return dfd.promise();
+		},
+		
+		/**
+		 * クエリオブジェクトを指定して、データのロックを取得する。
+		 * 
+		 * @param {Object} queryOrArray クエリオブジェクトまたはその配列
+		 * @memberOf SyncManager
+		 * @return ロックトークンとロックしたアイテムのID
+		 */
+		lock: function(queryOrArray) {
+			// TODO: 未実装
+			throw new Error('まだ使用できません。');
+		},
+		
+		/**
+		 * 現在ローカルストレージにあるデータを削除し、新たにサーバのデータを取得する。
+		 * サーバに送っていない更新データがある場合には、先にアップロードを行う。
+		 * 
+		 * @memberOf SyncManager
+		 * @return Promiseオブジェクト
+		 */
+		resync: function() {
+			return asyncInOrder(this.upload, function(){
+				// ローカルのアイテムを削除する。
+				this.dataModelManager.beginUpdate();
+				var models = this.dataModelManager.models;								
+				
+				for (var modelName in this._queries) {
+					var model = models[modelName];
+					for (var id in model.items) {
+						var item = model.remove(id);
+						item._isServerUpdate = true; // redoログに登録させない									
+					}
+
+					// クエリのlastDownloadTimeも削除
+					var conditions = this._queries[modelName];
+					for (var i=0, len=conditions.length; i<len; i++){
+						delete conditions[i].lastDownloadTime;
+					}
+					
+				}							
+				this.dataModelManager.endUpdate();								
+				return this.download();
+			}, this);
+		},
+
+		/**
+		 * データモデルごとに重複しないIDを取得します。
+		 * 
+		 * @param {DataModel | String | Number} modelOrStrOrNum データモデルまたは文字列または数値
+		 * @memberOf SyncManager
+		 * @return {String} ID
+		 */
+		getGlobalItemId: function(modelOrStrOrNum) {
+			var id = '';
+			switch(typeof modelOrStrOrNum) {
+			case 'string':
+				id = modelOrStrOrNum;
+				break;
+			case 'number':
+				id = modelOrStrOrNum.toString();
+				break;
+			case 'object':
+				// SyncManagerが持つDataModelManagerを持っていなければならない
+				if (!modelOrStrOrNum.getManager || modelOrStrOrNum.getManager() !== this.dataModelManager) {
+					throw new Error(ERR_MSG_INVALID_ARGUMENT);						
+				}
+				if (!modelOrStrOrNum.__idSequence) {
+					modelOrStrOrNum.__idSequence = h5.core.data.createSequence(null, null, h5.core.data.SEQUENCE_RETURN_TYPE_STRING);
+				}
+				id = modelOrStrOrNum.__idSequence.next();
+				break;
+			default:
+				throw new Error(ERR_MSG_INVALID_ARGUMENT);
+			}
+			return this._storageId + '-' + id;								
+			
+		},
+	
+		/**
+		 * 未解決の競合アイテムがあるかを返します。
+		 * 引数にデータモデル名を１つ指定した場合には、そのモデルが競合アイテムを持つかを返します。
+		 * 引数を指定しなければ、モデルを問わず競合アイテムを持つかを返します。
+		 * 
+		 * @memberOf SyncManager
+		 * @param dataModelName データモデル名
+		 * @returns 未解決の競合アイテムを持つかどうか
+		 */
+		hasConflictItem: function(dataModelName) {
+			var conflictItems = this.conflictItems; // 競合アイテムのリストをキャッシュ
+			
+			function has(modelName) {
+				var conflictItemsOfModel = conflictItems[modelName];
+				if (!conflictItemsOfModel) {
+					return false;
+				}
+				if ($.isEmptyObject(conflictItemsOfModel)) {
+					return false;
+				}				
+				return true;
+			}
+			
+			if ($.isEmptyObject(conflictItems)) {
+				return false;
+			}
+			
+			if (dataModelName) {
+				// 指定されたモデルについて、競合アイテムがあるかをチェックする
+				return has(dataModelName);
+			}
+			
+			// 指定がなければ、すべてのモデルについて、競合アイテムがあるかをチェックする
+			for (var modelName in conflictItems) {
+				if(has(modelName)) {
+					return true;
+				} 
+			}			
+			return false;
+		},
+		
+		/**
+		 * 競合状態を解決済みにします。
+		 * 競合アイテムリストから、競合を解決したアイテムを削除します。
+		 */
+		setAsResolved: function(itemId, modelName) {
+			delete this.conflictItems[modelName][itemId];
+		},
+		
+		/**
+		 * IDの重複を解決した場合に、redoログの古いIDを新しいIDに置き換える。
+		 * また、redoログ内のアイテムIDのリストを持ったresolveDuplicateIdイベントをあげる。
+		 * 
+		 * @param newId 置き換えた後のID
+		 * @param oldId 置き換える前のID
+		 * @param model 対象のアイテムを持つデータモデル
+		 * @memberOf SyncManager
+		 * 
+		 */
+		resolveDuplicate: function(newId, oldId, model) {
+			var updateIdLog = {}; // redoLogをモデルごとに集約したIdのリスト
+			
+			var isOldItemDeleted = false;
+			
+			for (var i=this.redoLogs.length-1; i>=0; i--) {
+				var redoLog = this.redoLogs[i];
+				if (redoLog.item[model.idKey] === oldId && redoLog.modelName === model.name) {
+					// 対象のアイテムが見つかった場合
+					if (redoLog.action === ACTION_TYPE_DELETE) {
+						// 重複を解決したときに、クライアントでアイテムを削除している可能性があるので、
+						// その場合は、redoログから除いておく。
+						this.redoLogs.splice(i,1);
+						isOldItemDeleted = true;
+						continue;
+					}
+					
+					redoLog.item[model.idKey] = newId;
+					redoLog.itemCommonData.resourceItemId = newId;
+				}
+				
+				// アイテムのIDをリストに追加する
+				if (!updateIdLog[redoLog.modelName]) {
+					updateIdLog[redoLog.modelName] = [];
+				}
+				var itemId = redoLog.item[this.dataModelManager.models[redoLog.modelName].idKey];
+				if (updateIdLog[redoLog.modelName].indexOf(itemId) === -1) {
+					updateIdLog[redoLog.modelName].push(itemId);									
+				}
+			}
+			
+			// 古いアイテムは削除しておく
+			if (!isOldItemDeleted) {
+				var item = model.get(oldId);
+				item._isServerUpdate = true;
+				model.remove(oldId);
+			}
+										
+			// 新旧のIDとredoログ内のアイテムのIDのリストをもったイベントをあげる
+			this.dispatchEvent({
+				type : 'resolveDuplicateId',
+				target : model.get(newId),
+				oldId : oldId,
+				newId : newId,
+				updateIdLog : updateIdLog 
+			});
+		},
+
+		/**
+		 * 指定したクエリオブジェクトを同期対象に加ます。
+		 * 
+		 * @param queryOrArray クエリオブジェクトまたはその配列
+		 * @memberOf SyncManager
+		 */
+		addQueries: function(queryOrArray) {
+			var queries = wrapInArray(queryOrArray);
+			for ( var i = 0, len = queries.length; i < len; i++) {
+				var query = queries[i];
+				if (this.hasQuery(query)) {
+					continue;
+				}
+
+				if (!query.modelName) {
+					throw new Error(ERR_MSG_INVALID_QUERIES);
+				}
+
+				if (!this._queries[query.modelName]) {
+					this._queries[query.modelName] = [];
+					// itemsChangeのイベントリスナーを登録
+					this.dataModelManager.models[query.modelName].addEventListener(
+							EVENT_ITEMS_CHANGE, this._itemsChangeListener);
+				}
+				if (!queries[i].conditions) {
+					queries[i].conditions = {};
+				}
+				this._queries[query.modelName].push({
+					conditions: queries[i].conditions
+				});
+			}
+		},
+
+		/**
+		 * 同じクエリが同期対象にすでに登録されているかを判定します。
+		 * クエリオブジェクト内のコンディションは登録したものと同じインスタンスである必要があります。
+		 * 
+		 * @param queryOrArray クエリオブジェクト
+		 * @memberOf SyncManager
+		 * @returns クエリがすでに登録済みかどうか
+		 */
+		hasQuery: function(query) {
+			var addedQueriesOfThisModel = this._queries[query.modelName];
+
+			if (!addedQueriesOfThisModel)
+				return false;
+
+			for (var i = 0, len = addedQueriesOfThisModel.length; i < len; i++) {
+				if (query.conditions === addedQueriesOfThisModel[i].conditions)
+					return true;
+			}
+			return false;
+		},
+
+		/**
+		 * 同期対象に登録されたクエリオブジェクトを同期対象から削除します。
+		 * クエリオブジェクト内のコンディションは登録したものと同じインスタンスである必要があります。
+		 * 
+		 * @param query クエリオブジェクトまたはその配列
+		 * @memberOf SyncManager
+		 */
+		deleteQueries: function(queryOrArray) {
+			var queries = wrapInArray(queryOrArray);
+			for ( var i = 0, len = queries.length; i < len; i++) {
+				var query = queries[i];
+				if (!query.modelName) {
+					throw new Error(ERR_MSG_INVALID_QUERIES);
+				}
+
+				var conditionList = this._queries[query.modelName];
+				if (!conditionList) {
+					continue;
+				}
+				
+				for ( var j = conditionList.length-1; j >= 0; j--) {
+					if (query.conditions === conditionList[j]) {
+						conditionList.splice(j, 1);
+						break;
+					}
+				}
+				if (conditionList.length === 0) {
+					this.dataModelManager.models[query.modelName].removeEventListener(
+							EVENT_ITEMS_CHANGE, this._itemsChangeListener);
+				}
+			}
+		},
+
+		/**
+		 * 同期時に使用するjQuery.ajaxのオプションのデフォルト値を設定します。
+		 * SyncManager内で通信が行われるときは、この値が使用されます。
+		 * SyncManagerを通さない通信のときは、この値は使用されません。
+		 * 
+		 * @param options {Object} jQuery.ajaxで指定するオプションのオブジェクト
+		 * @memberOf SyncManager
+		 */
+		ajaxSetup: function(options) {
+			if (typeof options !== 'object') {
+				throw new Error(ERR_MSG_INVALID_ARGUMENT);
+			}
+			this.defaultAjaxOptions = options;
+		},
+
+		// ---------------------------
+		// プライベートメソッド
+		// ---------------------------
+		
+		/**
+		 * サーバから更新データを取得する
+		 */
+		_download: function(queries) {
+
+			var data = {};
+			data.queries = queries;
+			if (this._storageId) {
+				data.downloadCommonData = {
+						storageId: this._storageId
+				};
+			}
+
+			var options = {
+				dateType: 'jsonp',
+				type: 'post',
+				contentType: 'application/json',
+				url: this.baseUrl + '/download',
+				data: JSON.stringify(data),
+				cache: false
+			};
+
+			var that = this;
+
+			var dfd = h5.async.deferred();
+
+			this.ajax(options).done(function(resultData) {
+				// レスポンスを解析してモデルに反映する
+				var items = that._saveServerItems(resultData.resourceItems);
+				dfd.resolve(resultData, items);
+			}).fail(function(obj) {
+				if (obj.statusText === 'timeout' || obj.statusText === 'error') {
+					fwLogger.info('サーバとの接続に失敗しました');
+				} else {
+					// TODO:
+					fwLogger.info('接続時にエラーが発生しました:' + obj.statusText);
+				}
+				dfd.reject(obj);
+			});
+			return dfd.promise();
+		},
+
+
+		/**
+		 * 今回のアップロードで競合したアイテムについて、競合イベントをあげる
+		 * 
+		 * @param resultData サーバから送られた競合のレスポンス
+		 */
+		_dispatchConflictEvent: function(resultData) {
+			// 衝突あり
+			
+			var eventType;  // 競合イベントタイプ 
+			var conflicted; // 競合アイテムリスト
+
+			if (resultData.uploadCommonData.conflictType === CONFLICT_TYPE_DUPLICATE_ID) {
+				// IDの重複が起きたとき
+				eventType = EVENT_DUPLICATE_ID;
+				conflicted = this._getItemsOfDuplicatedIds(resultData.resourceItems);
+			} else if (resultData.uploadCommonData.conflictType === CONFLICT_TYPE_UPDATED) {
+				// 更新しようとして競合が起きたとき
+				eventType = EVENT_UPDATED;
+				conflicted = this._getConflictItems(resultData.resourceItems);
+			} else {
+				throw new Error(ERR_MSG_INVALID_CONFLICT_TYPE);
+			}
+
+			// モデルごとに競合イベントを発生させる
+			var models = this.dataModelManager.models;
+			for (var modelName in conflicted) {
+				models[modelName].dispatchEvent({
+					type: eventType,
+					conflicted: conflicted[modelName]
+				});
+			}
+
+			// 複数のモデルを含んだ競合イベントを発生させる
+			this.dispatchEvent({
+				type: eventType,
+				conflicted: conflicted
+			});
+		},
+
+		/**
+		 * 送られてきた競合結果のリストをもとに、競合オブジェクトのリストを得る
+		 * 
+		 * @param serverItems 競合したアイテムのサーバ側のデータリスト
+		 * @returns {Array} 競合オブジェクトのリスト
+		 */
+		_getConflictItems: function(serverItems) {
+			var conflicted = {};
+			for ( var modelName in serverItems) {
+				// 更新による競合の場合は、
+				// サーバの更新アイテムと削除アイテムをそれぞれリストで返す
+				conflicted[modelName] = {};
+				
+				var items = serverItems[modelName];
+				for ( var i = 0, len = items.length; i < len; i++) {
+					var itemCommonData = items[i].itemCommonData;
+					var serverItem = items[i].item;
+
+					var model = this.dataModelManager.models[itemCommonData.resourceName];
+
+					var id = serverItem[model.idKey];
+					
+					conflictItem = {
+						model: model,
+						localItem: model.get(id)
+					};
+
+					if (itemCommonData.action === ACTION_TYPE_DELETE) {
+						conflictItem.serverItem = null;
+						conflictItem.updateType = ACTION_TYPE_DELETE;
+					} else if (itemCommonData.action === ACTION_TYPE_UPDATE) {
+						conflictItem.serverItem = serverItem;
+						conflictItem.updateType = ACTION_TYPE_UPDATE;
+					} else {
+						throw new Error(ERR_MSG_INVALID_ACTION_TYPE);
+					}
+					conflicted[modelName][id] = conflictItem;
+					
+					// itemのlastModifiedを更新する
+					// itemの共通データはredoログに参照が入っているので、そこを更新すれば十分である
+					// (削除されている場合、データモデルの管理下から外れてしまうため)
+					for ( var j = 0, l = this.redoLogs.length; j < l; j++) {
+						var redoLog = this.redoLogs[j];
+						if (redoLog.itemCommonData.resoureceItemId === itemCommonData.resoureceItemId) {
+							// 一番最初に見つかったもののみ書き換えれば、他の同じアイテムも同じitemCommonDataを参照しているのでよい。
+							redoLog.itemCommonData.lastModified = itemCommonData.lastModified;
+							break;
+						}
+					}
+				}
+				
+				// すべての競合オブジェクトを管理するリストに、今回の競合オブジェクトを加える
+				if (!this.conflictItems[modelName]) {
+					this.conflictItems[modelName] = {};
+				}		
+				$.extend(this.conflictItems[modelName], conflicted[modelName]);
+			}
+			return conflicted;
+		},
+
+		/**
+		 * 送られてきた競合結果のリストをもとに、重複したIDのサーバ側のアイテムとローカルのアイテムのリストを得る
+		 * 
+		 * @param serverItems 競合したアイテムのサーバ側のデータリスト
+		 * @returns {Array} 重複したIDのサーバ側のアイテムとローカルのアイテムを含むリスト
+		 */
+		_getItemsOfDuplicatedIds: function(serverItems) {
+			var conflicted = {};
+			for ( var modelName in serverItems) {
+				conflicted[modelName] = {};
+				
+				var items = serverItems[modelName];
+				for ( var i = 0, len = items.length; i < len; i++) {
+					var serverItem = items[i].item;
+					var id = serverItem[model.idKey];
+
+					var model = this.dataModelManager.models[items[i].itemCommonData.resourceName];
+
+					conflicted[modelName][id] = {
+						model: model,
+						localItem: model.get(id),
+						serverItem: serverItem
+					};
+				}
+			}
+			return conflicted;
+		},
+		
+		/**
+		 * redoログリストからサーバに送る更新情報のリストを作成する
+		 */
+		_getUploadResourceItems: function() {
+			var resourceItems = [];
+			var len = this._unsentRedoLogsLength !== 0 ? this._unsentRedoLogsLength
+					: this.redoLogs.length;
+			for (var i = 0; i < len; i++) {
+				var redoLog = this.redoLogs[i];
+
+				// 送信データ
+				var resourceItem = {};
+				resourceItem.itemCommonData = $.extend({}, redoLog.itemCommonData,
+						{
+							action: redoLog.action,
+							resourceName: redoLog.modelName
+						});
+
+
+				if (redoLog.action != ACTION_TYPE_DELETE) {
+					resourceItem.item = redoLog.item;
+				}
+				resourceItems.push(resourceItem);
+			}
+			return resourceItems;
+		},
+
+		/**
+		 * @private 更新成功時に、クライアント共通のデータをセットする
+		 */
+		_saveDownloadCommonData: function(downloadCommonData) {
+			// 初回起動時は、ストレージIDを取得
+			if (!this._storageId) {
+				this._storageId = downloadCommonData.storageId;
+				if (h5.api.storage.isSupported) {
+					h5.api.storage.local.setItem(STORAGE_ID_KEY, this._storageId);
+				}
+			}
+
+			// 各リソースの同期時刻を更新
+			for (var modelName in this._queries) {
+				var conditions = this._queries[modelName];
+				for (var i=0, len=conditions.length; i<len; i++) {
+					conditions[i].lastDownloadTime = downloadCommonData.lastDownloadTime;									
+				}
+			}
+		},
+
+		/**
+		 * @private レスポンスを解析し、データをローカルに反映する
+		 * @param serverItems サーバのアイテムが入ったリスト
+		 * @returns 更新したアイテムのリスト
+		 */
+		_saveServerItems: function(serverItems) {
+			var items = {};							
+			this.dataModelManager.beginUpdate();
+		
+			for ( var modelName in serverItems) {
+				var model = this.dataModelManager.models[modelName];
+				items[modelName] = [];
+				var serverItemsOfModel = serverItems[modelName];
+				for ( var i = 0, len = serverItemsOfModel.length; i < len; i++) {
+					var itemCommonData = serverItemsOfModel[i].itemCommonData;
+					var item = serverItemsOfModel[i].item;
+
+					if (itemCommonData.action === ACTION_TYPE_DELETE) {
+						var localItem = model.remove(item[model.idKey]);
+						if (localItem) {
+							localItem._isServerUpdate = true;											
+						}
+						continue;
+					}
+					// ローカルになければアイテムを作成し、あれば更新する
+					var localItem = model.create(item);
+					localItem._commonData = itemCommonData;
+					localItem._isServerUpdate = true;
+					delete localItem._commonData.action;
+					items[modelName].push(localItem);
+				}
+			}							
+
+			this.dataModelManager.endUpdate();
+			
+			// もう一度ループを回して_isServerUpdateを削除する。
+			for (var modelName in items) {
+				for (var i=0, len=items[modelName].length; i<len; i++) {
+					delete items[modelName][i]._isServerUpdate;
+				}
+			}
+			
+			return items;
+		},
+		
+		_createItemsChangeListener: function() {
+				var that = this;
+			
+				/**
+				 * redoLogリストに更新情報を登録。 redoLogの要素は{item(plain), itemCommonData,
+				 * resourceName, action}の構成
+				 */
+				function addRedoLog(item, model, action) {
+					//TODO: 更新順序の保存は要検討。現在はアイテムをそのままの順で保存するのみ（重複可）。
+					
+					var plainItem = undefined;
+					
+					switch(action) {
+					case ACTION_TYPE_UPDATE: // 更新時
+						plainItem = toPlainItem(item); // itemのコピーを保持しておく(参照だと変更されてしまう可能性があるため)
+						break;
+					case ACTION_TYPE_DELETE: // 削除時
+						// redoログの中にcreateのログが残っている場合は、このアイテムのログはなかったことにする。
+						var indexOfCreateItem = that.redoLogs.length;
+						for (var i=0, len=that.redoLogs.length; i<len;i++) {
+							var log = that.redoLogs[j];
+							if (log.item[model.idKey] === item.get(model.idKey)	
+									&& log.modelName === model.name
+									&& log.action === ACTION_TYPE_CREATE) {
+								indexOfCreateItem = i;
+								break;
+							}
+						}
+
+						if (indexOfCreateItem < that.redoLogs.length) {
+							// 後ろからたどって、このアイテムのログを削除していく(createしたところまで)
+							for (var j=that.redoLogs.length-1; j>=indexOfCreateItem; j--) {
+								if (log.item[model.idKey] === item.get(model.idKey)	&& log.modelName === model.name ){
+									that.redoLogs.splice(j,1);
+								}
+							}
+							// 保存しないで終了
+							return;
+						}
+						
+						// 削除時はidのみ保存
+						plainItem = {};
+						plainItem[model.idKey] = item.get(model.idKey);
+						break;
+					case ACTION_TYPE_CREATE: // 作成時
+						for (var j=0, len=that.redoLogs.length; j<len; j++) {
+							var log = that.redoLogs[j];
+							if (log.item[model.idKey] !== item.get(model.idKey)	|| log.modelName !== model.name) {
+								continue;
+							}
+							// アイテムがcreateされたとき、redoログ内に同じモデルの同じidを持つアイテムがあるときは、
+							// ローカルでアイテムを削除して、競合が起きたのでそれを解決するためにアイテムを作成しなおしたときか、
+							// 重複IDしたデータを再度登録するときである。
+							// 削除していた（競合していた）場合は、削除のログを消して、更新データとしてログを登録する。
+							// IDの重複のときは、redoログ内の旧アイテムのID部分を変更し、同じく更新としてログに登録する。
+							// ただし、IDの変更は、FWに旧IDと新IDを教えておくことで対応している(resolveDuplicateメソッド内)。
+							// したがって、ユーザはresolveDuplicateをアイテム再生成の前に呼び出しておく必要がある。
+							// TODO: 方法については要再検討
+
+							if(log.action === ACTION_TYPE_DELETE) {
+								// 一度削除されてまだサーバに送信されていない場合は、
+								// 削除したことをなくし、更新としてサーバに伝える
+								that.redoLogs.splice(j,1);
+								
+							}
+							item._commonData = log.itemCommonData;
+							action = ACTION_TYPE_UPDATE;
+							break;
+						}
+						plainItem = toPlainItem(item);
+						break;
+					default: // ここに来るとエラー
+						throw new Error(ERR_MSG_INVALID_ACTION_TYPE);
+					} 									
+
+					that.redoLogs.push({
+						item : plainItem,
+						itemCommonData: item._commonData,
+						modelName: model.name,
+						action: action
 					});
+					if (h5.api.storage.isSupported) {
+						h5.api.storage.local.setItem(REDOLOG_LIST_KEY, that.redoLogs);
+					}
+				}
+				
+				function itemsChangeListener(event) {
+					var model = event.target;
+					
+					// アイテムを挿入
+					var created = event.created;
+					for ( var i = 0, len = created.length; i < len; i++) {
+						// ローカルに保存
+						setItemToStorage(created[i]);
+
+						if (created[i]._isServerUpdate) {
+							delete created[i]._isServerUpdate;
+							continue;
+						}
+						
+						var itemId = created[i].get(model.idKey);
+						created[i]._commonData = {
+								resourceItemId: itemId ? itemId : that.getGlobalItemId(model)
+						};
+						// クライアントでの更新時は、redoログに追加
+						addRedoLog(created[i], model, ACTION_TYPE_CREATE);
+					}
+
+					// アイテムを変更
+					var changed = event.changed;
+					for ( var i = 0, len = changed.length; i < len; i++) {
+						var item = changed[i].target;
+						// ローカルに変更結果を保存
+						setItemToStorage(item);						
+
+						if (item._isServerUpdate) {
+							delete item._isServerUpdate;
+							continue;
+						}
+
+						// クライアントの操作での更新の場合は、redoログに追加
+						addRedoLog(item, model, ACTION_TYPE_UPDATE);
+					}
+
+					// アイテムを削除
+					var removed = event.removed;
+					for ( var i = 0, len = removed.length; i < len; i++) {
+						// ローカルのデータを削除
+						removeItemFromStorage(removed[i], model);
+
+						if (removed[i]._isServerUpdate) {
+							delete removed[i]._isServerUpdate;
+							continue;
+						}
+
+						// クライアントでの更新時は、redoログに追加
+						addRedoLog(removed[i], model, ACTION_TYPE_DELETE);
+					}
+				}
+				return itemsChangeListener;
+		}
+	});
 
 	/**
 	 * SyncManagerの初期化処理および取得をします。
