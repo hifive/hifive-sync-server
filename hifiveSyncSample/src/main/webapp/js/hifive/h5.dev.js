@@ -12263,22 +12263,22 @@ var h5internal = {
 		 */
 		_getItemsOfDuplicatedIds: function(serverItems) {
 			var conflicted = {};
-			for ( var modelName in serverItems) {
-				conflicted[modelName] = {};
-				
+			for ( var modelName in serverItems) {				
+				var conflictedItems = {};
 				var items = serverItems[modelName];
+				var model = this.dataModelManager.models[modelName];
+
 				for ( var i = 0, len = items.length; i < len; i++) {
 					var serverItem = items[i].item;
 					var id = serverItem[model.idKey];
 
-					var model = this.dataModelManager.models[items[i].itemCommonData.resourceName];
-
-					conflicted[modelName][id] = {
+					conflictedItems[id] = {
 						model: model,
 						localItem: model.get(id),
 						serverItem: serverItem
 					};
 				}
+				conflicted[modelName] = conflictedItems;
 			}
 			return conflicted;
 		},
