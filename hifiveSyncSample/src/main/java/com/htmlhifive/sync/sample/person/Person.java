@@ -16,6 +16,8 @@
  */
 package com.htmlhifive.sync.sample.person;
 
+import java.io.Serializable;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -31,7 +33,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 @Entity
 @Table(name = "PERSON")
-public class Person {
+public class Person implements Serializable {
+
+    private static final long serialVersionUID = 3881722131922039865L;
 
     /**
      * このエンティティのID.<br>

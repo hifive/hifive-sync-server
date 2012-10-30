@@ -30,6 +30,7 @@ import org.junit.Test;
  *
  * @author kishigam
  */
+@SuppressWarnings("serial")
 public class PersonTest {
 
     /**

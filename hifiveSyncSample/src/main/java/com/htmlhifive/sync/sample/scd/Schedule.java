@@ -16,6 +16,7 @@
  */
 package com.htmlhifive.sync.sample.scd;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,249 +43,262 @@ import com.htmlhifive.sync.sample.person.Person;
  */
 @Entity
 @Table(name = "SCHEDULE")
-public class Schedule {
+public class Schedule implements Serializable {
 
-	/**
-	 * このエンティティのID.<br>
-	 */
-	@Id
-	private String scheduleId;
+    private static final long serialVersionUID = 8489164830423292774L;
 
-	/**
-	 * 予定の対象となっている人.
-	 */
-	@ManyToMany
-	@JoinTable(name = "SCHEDULE_PERSON", joinColumns = { @JoinColumn(name = "SCHEDULEID") }, inverseJoinColumns = { @JoinColumn(name = "PERSONID") })
-	private List<Person> userBeans;
+    /**
+     * このエンティティのID.<br>
+     */
+    @Id
+    private String scheduleId;
 
-	/**
-	 * 予定のタイトル.
-	 */
-	private String title;
+    /**
+     * 予定の対象となっている人.
+     */
+    @ManyToMany
+    @JoinTable(
+            name = "SCHEDULE_PERSON", joinColumns = { @JoinColumn(name = "SCHEDULEID") },
+            inverseJoinColumns = { @JoinColumn(name = "PERSONID") })
+    private List<Person> userBeans;
 
-	/**
-	 * この予定の種類.
-	 */
-	private String category;
+    /**
+     * 予定のタイトル.
+     */
+    private String title;
 
-	/**
-	 * 予定日付のリスト.
-	 */
-	@OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
-	private List<ScheduleDate> dateBeans;
+    /**
+     * この予定の種類.
+     */
+    private String category;
 
-	/**
-	 * 予定の開始時刻(24時間・コロン区切り).<br>
-	 * 予定の種類によっては、開始－終了でない単一時刻も保持します.
-	 */
-	private String startTime;
+    /**
+     * 予定日付のリスト.
+     */
+    @OneToMany(mappedBy = "schedule", cascade = CascadeType.ALL)
+    private List<ScheduleDate> dateBeans;
 
-	/**
-	 * 予定の終了時刻(24時間・コロン区切り).<br>
-	 * 開始－終了でない単一時刻の予定の場合、設定する必要はありません.
-	 */
-	private String finishTime;
+    /**
+     * 予定の開始時刻(24時間・コロン区切り).<br>
+     * 予定の種類によっては、開始－終了でない単一時刻も保持します.
+     */
+    private String startTime;
 
-	/**
-	 * 予定の詳細を表す文字列.
-	 */
-	private String detail;
+    /**
+     * 予定の終了時刻(24時間・コロン区切り).<br>
+     * 開始－終了でない単一時刻の予定の場合、設定する必要はありません.
+     */
+    private String finishTime;
 
-	/**
-	 * 予定されている場所を表す文字列.
-	 */
-	private String place;
+    /**
+     * 予定の詳細を表す文字列.
+     */
+    private String detail;
 
-	/**
-	 * 予定を作成した人.
-	 */
-	@ManyToOne
-	private Person createUser;
+    /**
+     * 予定されている場所を表す文字列.
+     */
+    private String place;
 
-	/**
-	 * 予定インスタンスを生成します.
-	 */
-	public Schedule() {
-		// リストフィールドに空のリストインスタンスを設定
-		userBeans = new ArrayList<>();
-		dateBeans = new ArrayList<>();
-	}
+    /**
+     * 予定を作成した人.
+     */
+    @ManyToOne
+    private Person createUser;
 
-	/**
-	 * 予定IDを指定して予定インスタンスを生成します.
-	 *
-	 * @param scheduleId
-	 */
-	public Schedule(String scheduleId) {
-		this();
-		this.scheduleId = scheduleId;
-	}
+    /**
+     * 予定インスタンスを生成します.
+     */
+    public Schedule() {
+        // リストフィールドに空のリストインスタンスを設定
+        userBeans = new ArrayList<>();
+        dateBeans = new ArrayList<>();
+    }
 
-	/**
-	 * @see Object#equals()
-	 */
-	@Override
-	public boolean equals(Object obj) {
+    /**
+     * 予定IDを指定して予定インスタンスを生成します.
+     *
+     * @param scheduleId
+     */
+    public Schedule(String scheduleId) {
+        this();
+        this.scheduleId = scheduleId;
+    }
 
-		if (this == obj)
-			return true;
+    /**
+     * @see Object#equals()
+     */
+    @Override
+    public boolean equals(Object obj) {
 
-		if (!(obj instanceof Schedule))
-			return false;
+        if (this == obj)
+            return true;
 
-		Schedule otherObj = (Schedule) obj;
+        if (!(obj instanceof Schedule))
+            return false;
 
-		return EqualsBuilder.reflectionEquals(this, otherObj);
-	}
+        Schedule otherObj = (Schedule)obj;
 
-	/**
-	 * @see Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
+        return EqualsBuilder.reflectionEquals(this, otherObj);
+    }
 
-		return HashCodeBuilder.reflectionHashCode(this);
-	}
+    /**
+     * @see Object#hashCode()
+     */
+    @Override
+    public int hashCode() {
 
-	/**
-	 * @see Object#toString()
-	 */
-	@Override
-	public String toString() {
+        return HashCodeBuilder.reflectionHashCode(this);
+    }
 
-		return ToStringBuilder.reflectionToString(this);
-	}
+    /**
+     * @see Object#toString()
+     */
+    @Override
+    public String toString() {
 
-	/**
-	 * @return scheduleId
-	 */
-	public String getScheduleId() {
-		return scheduleId;
-	}
+        return ToStringBuilder.reflectionToString(this);
+    }
 
-	/**
-	 * @return userBeans
-	 */
-	public List<Person> getUserBeans() {
-		return userBeans;
-	}
+    /**
+     * @return scheduleId
+     */
+    public String getScheduleId() {
+        return scheduleId;
+    }
 
-	/**
-	 * @param userBeans セットする userBeans
-	 */
-	public void setUserBeans(List<Person> userBeans) {
-		this.userBeans = userBeans;
-	}
+    /**
+     * @return userBeans
+     */
+    public List<Person> getUserBeans() {
+        return userBeans;
+    }
 
-	/**
-	 * @return title
-	 */
-	public String getTitle() {
-		return title;
-	}
+    /**
+     * @param userBeans
+     *            セットする userBeans
+     */
+    public void setUserBeans(List<Person> userBeans) {
+        this.userBeans = userBeans;
+    }
 
-	/**
-	 * @param title セットする title
-	 */
-	public void setTitle(String title) {
-		this.title = title;
-	}
+    /**
+     * @return title
+     */
+    public String getTitle() {
+        return title;
+    }
 
-	/**
-	 * @return category
-	 */
-	public String getCategory() {
-		return category;
-	}
+    /**
+     * @param title
+     *            セットする title
+     */
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
-	/**
-	 * @param category セットする category
-	 */
-	public void setCategory(String category) {
-		this.category = category;
-	}
+    /**
+     * @return category
+     */
+    public String getCategory() {
+        return category;
+    }
 
-	/**
-	 * @return dateBeans
-	 */
-	public List<ScheduleDate> getDateBeans() {
-		return dateBeans;
-	}
+    /**
+     * @param category
+     *            セットする category
+     */
+    public void setCategory(String category) {
+        this.category = category;
+    }
 
-	/**
-	 * @param dateBeans セットする dateBeans
-	 */
-	public void setDateBeans(List<ScheduleDate> dateBeans) {
-		this.dateBeans = dateBeans;
-	}
+    /**
+     * @return dateBeans
+     */
+    public List<ScheduleDate> getDateBeans() {
+        return dateBeans;
+    }
 
-	/**
-	 * @return startTime
-	 */
-	public String getStartTime() {
-		return startTime;
-	}
+    /**
+     * @param dateBeans
+     *            セットする dateBeans
+     */
+    public void setDateBeans(List<ScheduleDate> dateBeans) {
+        this.dateBeans = dateBeans;
+    }
 
-	/**
-	 * @param startTime セットする startTime
-	 */
-	public void setStartTime(String startTime) {
-		this.startTime = startTime;
-	}
+    /**
+     * @return startTime
+     */
+    public String getStartTime() {
+        return startTime;
+    }
 
-	/**
-	 * @return finishTime
-	 */
-	public String getFinishTime() {
-		return finishTime;
-	}
+    /**
+     * @param startTime
+     *            セットする startTime
+     */
+    public void setStartTime(String startTime) {
+        this.startTime = startTime;
+    }
 
-	/**
-	 * @param finishTime セットする finishTime
-	 */
-	public void setFinishTime(String finishTime) {
-		this.finishTime = finishTime;
-	}
+    /**
+     * @return finishTime
+     */
+    public String getFinishTime() {
+        return finishTime;
+    }
 
-	/**
-	 * @return detail
-	 */
-	public String getDetail() {
-		return detail;
-	}
+    /**
+     * @param finishTime
+     *            セットする finishTime
+     */
+    public void setFinishTime(String finishTime) {
+        this.finishTime = finishTime;
+    }
 
-	/**
-	 * @param detail セットする detail
-	 */
-	public void setDetail(String detail) {
-		this.detail = detail;
-	}
+    /**
+     * @return detail
+     */
+    public String getDetail() {
+        return detail;
+    }
 
-	/**
-	 * @return place
-	 */
-	public String getPlace() {
-		return place;
-	}
+    /**
+     * @param detail
+     *            セットする detail
+     */
+    public void setDetail(String detail) {
+        this.detail = detail;
+    }
 
-	/**
-	 * @param place セットする place
-	 */
-	public void setPlace(String place) {
-		this.place = place;
-	}
+    /**
+     * @return place
+     */
+    public String getPlace() {
+        return place;
+    }
 
-	/**
-	 * @return createUser
-	 */
-	public Person getCreateUser() {
-		return createUser;
-	}
+    /**
+     * @param place
+     *            セットする place
+     */
+    public void setPlace(String place) {
+        this.place = place;
+    }
 
-	/**
-	 * @param createUser セットする createUser
-	 */
-	public void setCreateUser(Person createUser) {
-		this.createUser = createUser;
-	}
+    /**
+     * @return createUser
+     */
+    public Person getCreateUser() {
+        return createUser;
+    }
+
+    /**
+     * @param createUser
+     *            セットする createUser
+     */
+    public void setCreateUser(Person createUser) {
+        this.createUser = createUser;
+    }
 }
