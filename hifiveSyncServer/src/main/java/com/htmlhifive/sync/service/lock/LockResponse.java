@@ -1,6 +1,5 @@
 package com.htmlhifive.sync.service.lock;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -14,9 +13,7 @@ import com.htmlhifive.sync.resource.ResourceItemWrapper;
  */
 @SuppressWarnings("deprecation")
 @Deprecated
-public class LockResponse implements Serializable {
-
-	private static final long serialVersionUID = -4984583761406153552L;
+public class LockResponse {
 
 	/**
 	 * ロック取得共通データ.<br>

@@ -16,7 +16,6 @@
  */
 package com.htmlhifive.sync.service.upload;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -33,9 +32,7 @@ import com.htmlhifive.sync.resource.ResourceItemWrapper;
  *
  * @author kishigam
  */
-public class UploadResponse implements Serializable {
-
-	private static final long serialVersionUID = -6587501050789907690L;
+public class UploadResponse {
 
 	/**
 	 * 上り更新共通データ.<br>

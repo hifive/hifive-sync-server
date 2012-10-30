@@ -16,7 +16,6 @@
  */
 package com.htmlhifive.sync.service.download;
 
-import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -32,9 +31,7 @@ import com.htmlhifive.sync.resource.ResourceItemWrapper;
  *
  * @author kishigam
  */
-public class DownloadResponse implements Serializable {
-
-	private static final long serialVersionUID = 228616805897669396L;
+public class DownloadResponse {
 
 	/**
 	 * 下り更新共通データ.<br>
