@@ -105,6 +105,10 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	@Override
 	public List<ResourceItemWrapper<I>> get(SyncCommonData syncCommon, List<ResourceItemCommonData> commonDataList) {
 
+		if (syncCommon == null) {
+			throw new NullPointerException("SyncCommonData is null.");
+		}
+
 		// TODO 次期バージョンにて実装予定
 		//		if (requiredLockStatus == ResourceLockStatusType.EXCLUSIVE) {
 		//			for (ResourceItemCommonData itemCommon : commonDataList) {
@@ -112,6 +116,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		//			}
 		//		}
 
+		List<ResourceItemCommonData> idRecreatingCommonDataList = new ArrayList<>();
 		List<String> idList = new ArrayList<>();
 		for (ResourceItemCommonData itemCommon : commonDataList) {
 
@@ -130,11 +135,12 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 				}
 			}
 
+			idRecreatingCommonDataList.add(common);
 			idList.add(common.getTargetItemId());
 		}
 
 		Map<String, I> items = doGet(idList.toArray(new String[] {}));
-		List<ResourceItemWrapper<I>> resultList = wrapResourceItem(commonDataList, items);
+		List<ResourceItemWrapper<I>> resultList = wrapResourceItem(idRecreatingCommonDataList, items);
 
 		return countOfVerification == 0 ? resultList : verify(resultList, countOfVerification);
 	}
@@ -231,8 +237,8 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		}
 
 		// 検証回数残がある場合、リソースアイテムを再取得
-		List<ResourceItemWrapper<I>> nextList = wrapResourceItem(comparisonCommonMap.values(),
-				doGet(comparisonCommonMap.keySet().toArray(new String[] {})));
+		Map<String, I> getAgain = doGet(comparisonCommonMap.keySet().toArray(new String[] {}));
+		List<ResourceItemWrapper<I>> nextList = wrapResourceItem(comparisonCommonMap.values(), getAgain);
 
 		return verify(nextList, count);
 	}
@@ -346,25 +352,13 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			// 競合判定
 			// 競合がなければ、更新対象は渡されたitemとなる
 			I updateItem = item;
-
 			if (
 			// TODO 次期バージョンにて実装予定
 			//		requiredLockStatus == ResourceLockStatusType.UNLOCK &&
 			isConflicted(itemCommon, currentCommon, uploadCommon)) {
 
-				// サーバで保持しているアイテムを取得
-				// 論理削除のため、削除済みリソースアイテム(IDのみ設定)の取得にdoDeleteを使用できる
-				I currentItem;
-				if (currentCommon.getAction() == SyncAction.DELETE) {
-					currentItem = doDelete(currentCommon.getTargetItemId());
-				} else {
-					currentItem = doGet(currentCommon.getTargetItemId()).get(currentCommon.getTargetItemId());
-				}
-
 				try {
-					// 競合解決、更新アイテムを決定し、更新対象のリソースアイテムを上書き
-					updateItem = updateStrategy.resolveConflict(itemCommon, item, currentCommon, currentItem);
-
+					updateItem = resolveConflict(itemCommon, item, currentCommon);
 				} catch (ItemUpdatedException e) {
 
 					// 更新を行わずリターン(例外から取得した共通データには競合タイプがセットされている)
@@ -375,7 +369,8 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			if (updateItem == null) {
 
 				itemCommon.setAction(SyncAction.DELETE);
-				doDelete(currentCommon.getTargetItemId());
+				// doDeleteの結果、IDのみ設定されたアイテムが返される
+				updateItem = doDelete(currentCommon.getTargetItemId());
 			} else {
 
 				itemCommon.setAction(SyncAction.UPDATE);
@@ -392,6 +387,32 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			// TODO 次期バージョンにて実装予定
 			//			lockStrategy.unlock(uploadCommon, itemCommon);
 		}
+	}
+
+	/**
+	 * 更新競合発生時にリソースアイテムデータおよび共通データの情報から競合解決を行います.<br>
+	 * このリソースに設定されている競合解決戦略を実行します.
+	 *
+	 * @param itemCommon 今回の更新後リソースアイテム共通データ
+	 * @param item 今回の更新後リソースアイテム
+	 * @param currentCommon 現在のリソースアイテム共通データ
+	 * @return 競合解決後のリソースアイテム
+	 * @throws ItemUpdatedException 競合が解決できないとき
+	 */
+	private I resolveConflict(ResourceItemCommonData itemCommon, I item, ResourceItemCommonData currentCommon)
+			throws ItemUpdatedException {
+
+		// サーバで保持しているアイテムを取得
+		// 論理削除のため、削除状態の場合は明示的にnullを用いる必要がある
+		I currentItem;
+		if (currentCommon.getAction() == SyncAction.DELETE) {
+			currentItem = null;
+		} else {
+			currentItem = doGet(currentCommon.getTargetItemId()).get(currentCommon.getTargetItemId());
+		}
+
+		// 競合解決、更新アイテムを決定し、更新対象のリソースアイテムを上書き
+		return updateStrategy.resolveConflict(itemCommon, item, currentCommon, currentItem);
 	}
 
 	/**
