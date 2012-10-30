@@ -94,8 +94,9 @@ public class JsonSyncController {
 				response.getDownloadCommonData().setStorageId(null);
 			}
 
+			// TODO 次期バージョンにて実装予定
 			// ロックトークンをレスポンスデータから除外するためnullをセット
-			response.getDownloadCommonData().setLockToken(null);
+			//			response.getDownloadCommonData().setLockToken(null);
 
 			// HTTPレスポンスをリターン
 			return createHttpResponseEntity(response, HttpStatus.OK);
@@ -228,7 +229,6 @@ public class JsonSyncController {
 
 		HttpHeaders responseHeaders = new HttpHeaders();
 		responseHeaders.setContentType(MediaType.APPLICATION_JSON);
-		//		responseHeaders.add("Content-Type", "application/json;charset=utf-8");
 
 		return new ResponseEntity<>(null, responseHeaders, status);
 	}
