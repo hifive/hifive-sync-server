@@ -1,5 +1,6 @@
 package com.htmlhifive.sync.service.lock;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
@@ -10,11 +11,16 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import com.htmlhifive.sync.resource.ResourceQueryConditions;
 
 /**
- * ロック取得リクエスト内容全体を表現するデータクラス.
+ * ロック取得リクエスト内容全体を表現するデータクラス.<br>
+ * TODO 次期バージョンにて実装予定
  *
  * @author kishigam
  */
-public class LockRequest {
+@SuppressWarnings("deprecation")
+@Deprecated
+public class LockRequest implements Serializable {
+
+	private static final long serialVersionUID = 365885989955291242L;
 
 	/**
 	 * ロック取得共通データ.<br>

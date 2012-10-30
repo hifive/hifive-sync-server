@@ -16,6 +16,7 @@
  */
 package com.htmlhifive.sync.resource;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,7 +29,9 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  *
  * @author kishigam
  */
-public class ResourceQueryConditions {
+public class ResourceQueryConditions implements Serializable {
+
+	private static final long serialVersionUID = 1692199470282648825L;
 
 	/**
 	 * リソースごとにダウンロード対象アイテムを絞り込む条件. <br>

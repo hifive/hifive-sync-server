@@ -1,5 +1,7 @@
 package com.htmlhifive.sync.resource.common;
 
+import java.io.Serializable;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -18,7 +20,9 @@ import com.htmlhifive.sync.service.SyncCommonData;
 @Deprecated
 @Entity
 @Table(name = "RESOURCE_ITEM_COMMON_LOCK")
-public class ResourceItemCommonLockData {
+public class ResourceItemCommonLockData implements Serializable {
+
+	private static final long serialVersionUID = -8777225510558803335L;
 
 	/**
 	 * リソースアイテム共通データのIDオブジェクト.

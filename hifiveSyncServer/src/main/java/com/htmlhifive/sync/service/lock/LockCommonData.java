@@ -1,5 +1,7 @@
 package com.htmlhifive.sync.service.lock;
 
+import java.io.Serializable;
+
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
@@ -7,11 +9,15 @@ import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 import com.htmlhifive.sync.service.SyncCommonData;
 
 /**
- * ロック取得に関する共通情報を保持するデータクラス.
+ * ロック取得に関する共通情報を保持するデータクラス.<br>
+ * TODO 次期バージョンにて実装予定
  *
  * @author kishigam
  */
-public class LockCommonData implements SyncCommonData {
+@Deprecated
+public class LockCommonData implements SyncCommonData, Serializable {
+
+	private static final long serialVersionUID = -5832494043088305292L;
 
 	/**
 	 * クライアントのストレージID.<br>

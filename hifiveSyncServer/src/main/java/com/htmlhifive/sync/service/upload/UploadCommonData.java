@@ -16,6 +16,8 @@
  */
 package com.htmlhifive.sync.service.upload;
 
+import java.io.Serializable;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -38,7 +40,9 @@ import com.htmlhifive.sync.service.SyncCommonData;
  */
 @Entity
 @Table(name = "UPLOAD_COMMON_DATA")
-public class UploadCommonData implements SyncCommonData {
+public class UploadCommonData implements SyncCommonData, Serializable {
+
+	private static final long serialVersionUID = -7882358942437646831L;
 
 	/**
 	 * クライアントのストレージID.<br>
@@ -75,8 +79,10 @@ public class UploadCommonData implements SyncCommonData {
 	 * リクエストの対象となっているロックトークン.<br>
 	 * このフィールドはクライアントへのレスポンスに含みません.<br>
 	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.<br>
-	 * また、永続化の対象外です.
+	 * また、永続化の対象外です.<br>
+	 * TODO 次期バージョンにて実装予定
 	 */
+	@Deprecated
 	@Transient
 	private String lockToken;
 
@@ -187,10 +193,12 @@ public class UploadCommonData implements SyncCommonData {
 	}
 
 	/**
-	 * クライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.
+	 * クライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.<br>
+	 * TODO 次期バージョンにて実装予定
 	 *
 	 * @return lockToken
 	 */
+	@Deprecated
 	@JsonSerialize(include = Inclusion.NON_EMPTY)
 	@Override
 	public String getLockToken() {
@@ -198,8 +206,11 @@ public class UploadCommonData implements SyncCommonData {
 	}
 
 	/**
+	 * TODO 次期バージョンにて実装予定
+	 *
 	 * @param lockToken セットする lockToken
 	 */
+	@Deprecated
 	public void setLockToken(String lockToken) {
 		this.lockToken = lockToken;
 	}
