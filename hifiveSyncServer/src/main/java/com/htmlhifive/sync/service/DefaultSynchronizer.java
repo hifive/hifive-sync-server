@@ -61,6 +61,7 @@ import com.htmlhifive.sync.service.upload.UploadResponse;
  *
  * @author kishigam
  */
+@SuppressWarnings("deprecation")
 @Service
 public class DefaultSynchronizer implements Synchronizer {
 
@@ -261,7 +262,6 @@ public class DefaultSynchronizer implements Synchronizer {
 
 			List<ResourceItemCommonData> itemCommonDataList = reservedCommonDataMap.get(resourceName);
 
-			@SuppressWarnings("deprecation")
 			List<? extends ResourceItemWrapper<?>> lockedItemWrappers = resource.lock(lockCommon, itemCommonDataList);
 
 			resultBuilder.addAll(resourceName, lockedItemWrappers);
@@ -509,7 +509,6 @@ public class DefaultSynchronizer implements Synchronizer {
 	 * @param request ロックリクエストデータ
 	 */
 	@Deprecated
-	@SuppressWarnings("deprecation")
 	@Override
 	public void releaseLock(LockRequest request) {
 

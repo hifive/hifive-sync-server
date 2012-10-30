@@ -28,6 +28,7 @@ import com.htmlhifive.sync.service.upload.UploadResponse;
  *
  * @author kishigam
  */
+@SuppressWarnings("deprecation")
 public interface Synchronizer {
 
 	/**
