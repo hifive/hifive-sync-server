@@ -34,7 +34,6 @@ import org.springframework.stereotype.Service;
 
 import com.htmlhifive.sync.exception.SyncException;
 import com.htmlhifive.sync.resource.lock.LockStrategy;
-import com.htmlhifive.sync.resource.lock.ResourceItemCommonLockStrategy;
 import com.htmlhifive.sync.resource.lock.ResourceLockStatusType;
 import com.htmlhifive.sync.resource.update.UpdateStrategy;
 
@@ -202,11 +201,6 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 
 		if (resourceClass == null) {
 			return null;
-		}
-
-		for(String a :context.getBeansOfType(ResourceItemCommonLockStrategy.class).keySet()){
-		System.out.println(a);
-		System.out.println(context.getBeansOfType(ResourceItemCommonLockStrategy.class).get(a));
 		}
 
 		SyncResource<?> resource = context.getBean(resourceClass);
