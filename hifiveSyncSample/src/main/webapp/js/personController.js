@@ -54,13 +54,16 @@ $(function() {
 			
 			this.personDataModel.addEventListener('duplicateId', function(event) {
 				// 今回競合した分のデータを競合データリストに入れる
-				var conflictItems = event.conflicted[that.personDataModel.name];
+				var conflictItems = event.conflicted;
 				if (!conflictItems) {
 					return;
 				}
 				alert('IDがすでに使用されています。他のIDを使用してください。');
+				
+				var key = Object.keys(conflictItems)[0]; // ID重複で返ってくるアイテムは１つにしている
+				
 				scheduleSample.common.showDialog(that.view.get('conflict', {
-					conflictItem: conflictItems[0]
+					conflictItem: conflictItems[key]
 				}), {
 					top: '0'
 				});
