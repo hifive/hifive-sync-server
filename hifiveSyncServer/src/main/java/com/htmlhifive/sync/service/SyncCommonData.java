@@ -36,7 +36,9 @@ public interface SyncCommonData {
 
 	/**
 	 * ロックトークン.<br>
-	 * ロックを必要とする処理において設定、参照されるトークンを返します.
+	 * ロックを必要とする処理において設定、参照されるトークンを返します.<br>
+	 * TODO 次期バージョンにて実装予定
 	 */
+	@Deprecated
 	String getLockToken();
 }
