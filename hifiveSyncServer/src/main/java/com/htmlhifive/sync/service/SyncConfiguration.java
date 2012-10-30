@@ -58,4 +58,13 @@ public interface SyncConfiguration {
 	 * @return 継続する時true
 	 */
 	boolean isContinueOnConflictOfUpdated();
+
+	/**
+	 * 上り更新および下り更新に使用される同期時刻を返します.<br>
+	 * リクエスト処理時刻として使用されます.<br>
+	 * また上り更新では、各更新対象リソースアイテムの最終更新時刻として使用されます.<br>
+	 *
+	 * @return 同期時刻
+	 */
+	long generateSyncTime();
 }

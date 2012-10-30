@@ -54,6 +54,17 @@ public class DefaultSynchronizerConfiguration implements SyncConfiguration {
 	 */
 	private boolean continueOnConflictOfUpdated = false;
 
+	/**
+	 * 上り更新および下り更新に使用される同期時刻を返します.<br>
+	 * システム時刻を用います.
+	 *
+	 * @return 同期時刻
+	 */
+	@Override
+	public long generateSyncTime() {
+		return System.currentTimeMillis();
+	}
+
 	@Override
 	public int bufferTimeForDownload() {
 
