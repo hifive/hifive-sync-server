@@ -12396,7 +12396,7 @@ var h5internal = {
 						// redoログの中にcreateのログが残っている場合は、このアイテムのログはなかったことにする。
 						var indexOfCreateItem = that.redoLogs.length;
 						for (var i=0, len=that.redoLogs.length; i<len;i++) {
-							var log = that.redoLogs[j];
+							var log = that.redoLogs[i];
 							if (log.item[model.idKey] === item.get(model.idKey)	
 									&& log.modelName === model.name
 									&& log.action === ACTION_TYPE_CREATE) {
@@ -12408,6 +12408,7 @@ var h5internal = {
 						if (indexOfCreateItem < that.redoLogs.length) {
 							// 後ろからたどって、このアイテムのログを削除していく(createしたところまで)
 							for (var j=that.redoLogs.length-1; j>=indexOfCreateItem; j--) {
+								var log = that.redoLogs[j];
 								if (log.item[model.idKey] === item.get(model.idKey)	&& log.modelName === model.name ){
 									that.redoLogs.splice(j,1);
 								}
