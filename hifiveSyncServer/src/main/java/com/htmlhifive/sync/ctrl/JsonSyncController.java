@@ -53,6 +53,7 @@ import com.htmlhifive.sync.service.upload.UploadResponse;
  *
  * @author kishigam
  */
+@SuppressWarnings("deprecation")
 @Controller
 public class JsonSyncController {
 
@@ -135,7 +136,9 @@ public class JsonSyncController {
 			// ストレージID、競合タイプ(NONE)、ロックトークンをレスポンスデータから除外するためnullをセット
 			response.getUploadCommonData().setStorageId(null);
 			response.getUploadCommonData().setConflictType(null);
-			response.getUploadCommonData().setLockToken(null);
+
+			// TODO 次期バージョンにて実装予定
+			//			response.getUploadCommonData().setLockToken(null);
 
 			// レスポンスデータを生成し、リターン
 			return createHttpResponseEntity(response, HttpStatus.OK);
@@ -163,7 +166,6 @@ public class JsonSyncController {
 
 		try {
 			// ロック取得サービスを呼び出し
-			@SuppressWarnings("deprecation")
 			LockResponse response = synchronizer.getLock(request);
 
 			// ストレージIDをレスポンスデータから除外するためnullをセット
@@ -185,7 +187,6 @@ public class JsonSyncController {
 	 * @param request ロックリクエストデータ
 	 * @return ロックレスポンスデータ(JSON形式)
 	 */
-	@SuppressWarnings("deprecation")
 	@Deprecated
 	@RequestMapping(value = "/releaselock", method = RequestMethod.POST, params = {}, headers = {
 			"Content-Type=application/json", "Accept=application/json" })
