@@ -92,8 +92,8 @@ public class ScheduleDate implements Serializable {
 
         ScheduleDate dateBean = (ScheduleDate)obj;
 
-        return new EqualsBuilder().append(this.date, dateBean.date).append(
-                this.schedule, dateBean.schedule).isEquals();
+        // scheduleは同一性判定に含めない
+        return new EqualsBuilder().append(this.date, dateBean.date).isEquals();
     }
 
     /**
@@ -102,7 +102,7 @@ public class ScheduleDate implements Serializable {
     @Override
     public int hashCode() {
 
-        return new HashCodeBuilder(17, 37).append(this.date).append(this.schedule).hashCode();
+        return new HashCodeBuilder(17, 37).append(this.date).hashCode();
     }
 
     /**

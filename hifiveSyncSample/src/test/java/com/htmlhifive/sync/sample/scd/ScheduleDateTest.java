@@ -50,18 +50,19 @@ public class ScheduleDateTest {
     public void testEquals() {
 
         Schedule schedule = new Schedule("scheduleId1");
-        Schedule anotherSchedule = new Schedule("scheduleId2");
+        Schedule otherSchedule = new Schedule("scheduleId2");
 
         int date = 20010101;
-        int anotherDate = 20111111;
+        int otherDate = 20111111;
 
         ScheduleDate target = new ScheduleDate(schedule, date);
-        ScheduleDate eq = new ScheduleDate(schedule, date);
-        ScheduleDate ne1 = new ScheduleDate(anotherSchedule, date);
-        ScheduleDate ne2 = new ScheduleDate(schedule, anotherDate);
+        ScheduleDate eq1 = new ScheduleDate(schedule, date);
+        ScheduleDate eq2 = new ScheduleDate(otherSchedule, date);
+        ScheduleDate ne = new ScheduleDate(schedule, otherDate);
 
-        assertThat(target.equals(eq), is(true));
-        assertThat(target.equals(ne1), is(false));
-        assertThat(target.equals(ne2), is(false));
+        assertThat(target.equals(eq1), is(true));
+        // scheduleは同一性判定に含めない
+        assertThat(target.equals(eq2), is(true));
+        assertThat(target.equals(ne), is(false));
     }
 }

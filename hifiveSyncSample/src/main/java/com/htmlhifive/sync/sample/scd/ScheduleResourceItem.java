@@ -114,9 +114,14 @@ public class ScheduleResourceItem implements Serializable {
             return false;
         }
 
-        ScheduleResourceItem otherObj = (ScheduleResourceItem)obj;
+        ScheduleResourceItem item = (ScheduleResourceItem)obj;
 
-        return EqualsBuilder.reflectionEquals(this, otherObj);
+        return new EqualsBuilder().append(this.scheduleId, item.scheduleId).append(
+                this.userIds, item.userIds).append(this.title, item.title).append(
+                this.category, item.category).append(this.dates, item.dates).append(
+                this.startTime, item.startTime).append(this.finishTime, item.finishTime).append(
+                this.detail, item.detail).append(this.place, item.place).append(
+                this.createUserName, item.createUserName).isEquals();
     }
 
     /**
@@ -125,7 +130,9 @@ public class ScheduleResourceItem implements Serializable {
     @Override
     public int hashCode() {
 
-        return HashCodeBuilder.reflectionHashCode(this);
+        return new HashCodeBuilder(17, 37).append(this.scheduleId).append(this.userIds).append(
+                this.title).append(this.category).append(this.dates).append(this.startTime).append(
+                this.finishTime).append(this.detail).append(this.place).append(this.createUserName).hashCode();
     }
 
     /**

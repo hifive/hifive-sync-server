@@ -45,7 +45,7 @@ import com.htmlhifive.sync.sample.person.Person;
 @Table(name = "SCHEDULE")
 public class Schedule implements Serializable {
 
-    private static final long serialVersionUID = 8489164830423292774L;
+    private static final long serialVersionUID = 7778106673541238346L;
 
     /**
      * このエンティティのID.<br>
@@ -137,9 +137,16 @@ public class Schedule implements Serializable {
         if (!(obj instanceof Schedule))
             return false;
 
-        Schedule otherObj = (Schedule)obj;
+        Schedule scheduleBean = (Schedule)obj;
 
-        return EqualsBuilder.reflectionEquals(this, otherObj);
+        // IDやcreateUserを含むすべての同一性を含む
+        // リストフィールドは順不同ではない
+        return new EqualsBuilder().append(this.scheduleId, scheduleBean.scheduleId).append(
+                this.userBeans, scheduleBean.userBeans).append(this.title, scheduleBean.title).append(
+                this.category, scheduleBean.category).append(this.dateBeans, scheduleBean.dateBeans).append(
+                this.startTime, scheduleBean.startTime).append(
+                this.finishTime, scheduleBean.finishTime).append(this.detail, scheduleBean.detail).append(
+                this.place, scheduleBean.place).append(this.createUser, scheduleBean.createUser).isEquals();
     }
 
     /**
@@ -148,7 +155,9 @@ public class Schedule implements Serializable {
     @Override
     public int hashCode() {
 
-        return HashCodeBuilder.reflectionHashCode(this);
+        return new HashCodeBuilder(17, 37).append(this.scheduleId).append(this.userBeans).append(
+                this.title).append(this.category).append(this.dateBeans).append(this.startTime).append(
+                this.finishTime).append(this.detail).append(this.place).append(this.createUser).hashCode();
     }
 
     /**
@@ -165,6 +174,14 @@ public class Schedule implements Serializable {
      */
     public String getScheduleId() {
         return scheduleId;
+    }
+
+    /**
+     * @param scheduleId
+     *            セットする scheduleId
+     */
+    public void setScheduleId(String scheduleId) {
+        this.scheduleId = scheduleId;
     }
 
     /**
