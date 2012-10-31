@@ -18,7 +18,6 @@ package com.htmlhifive.sync.resource.common;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
@@ -85,12 +84,12 @@ public class ResourceItemCommonDataIdTest {
 		ResourceItemCommonDataId target = new ResourceItemCommonDataId("resourceName0", "resourceItemId0");
 
 		ResourceItemCommonDataId eq = new ResourceItemCommonDataId(target.getResourceName(), target.getResourceItemId());
-		assertThat(target, is(equalTo(eq)));
+		assertThat(target.equals(eq), is(true));
 
 		ResourceItemCommonDataId ne1 = new ResourceItemCommonDataId("resourceName1", target.getResourceItemId());
-		assertThat(target, is(not(equalTo(ne1))));
+		assertThat(target.equals(ne1), is(false));
 
 		ResourceItemCommonDataId ne2 = new ResourceItemCommonDataId(target.getResourceName(), "resourceItemId1");
-		assertThat(target, is(not(equalTo(ne2))));
+		assertThat(target.equals(ne2), is(false));
 	}
 }

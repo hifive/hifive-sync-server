@@ -73,7 +73,7 @@ public class PersonTest {
                 setAge(person.getAge());
             }
         };
-        assertThat(person, is(equalTo(eq)));
+        assertThat(person.equals(eq), is(true));
 
         Person ne1 = new Person() {
             {
@@ -83,7 +83,7 @@ public class PersonTest {
                 setAge(person.getAge());
             }
         };
-        assertThat(person, is(not(equalTo(ne1))));
+        assertThat(person.equals(ne1), is(false));
 
         Person ne2 = new Person() {
             {
@@ -93,7 +93,7 @@ public class PersonTest {
                 setAge(person.getAge());
             }
         };
-        assertThat(person, is(not(equalTo(ne2))));
+        assertThat(person.equals(ne2), is(false));
 
         Person ne3 = new Person() {
             {
@@ -103,7 +103,7 @@ public class PersonTest {
                 setAge(person.getAge());
             }
         };
-        assertThat(person, is(not(equalTo(ne3))));
+        assertThat(person.equals(ne3), is(false));
 
         Person ne4 = new Person() {
             {
@@ -113,8 +113,7 @@ public class PersonTest {
                 setAge(10);
             }
         };
-        assertThat(person, is(not(equalTo(ne4))));
-
+        assertThat(person.equals(ne4), is(false));
     }
 
     /**

@@ -16,9 +16,7 @@
  */
 package com.htmlhifive.sync.resource;
 
-import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 
@@ -102,9 +100,9 @@ public class ResourceItemWrapperTest {
 		ResourceItemWrapper<String> ne3 = new ResourceItemWrapper<>(itemCommonData2, item2);
 
 		// Assert：結果が正しいこと
-		assertThat(target, is(equalTo(eq)));
-		assertThat(target, is(not(equalTo(ne1))));
-		assertThat(target, is(not(equalTo(ne2))));
-		assertThat(target, is(not(equalTo(ne3))));
+		assertThat(target.equals(eq), is(true));
+		assertThat(target.equals(ne1), is(false));
+		assertThat(target.equals(ne2), is(false));
+		assertThat(target.equals(ne3), is(false));
 	}
 }

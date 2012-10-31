@@ -18,7 +18,6 @@ package com.htmlhifive.sync.resource.common;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.junit.Assert.assertThat;
 import mockit.Mocked;
@@ -95,45 +94,45 @@ public class ResourceItemCommonDataTest {
 		eq.setAction(target.getAction());
 		eq.setLastModified(target.getLastModified());
 		eq.setConflictType(SyncConflictType.UPDATED);
-		assertThat(target, is(equalTo(eq)));
+		assertThat(target.equals(eq), is(true));
 
 		eq.setConflictType(target.getConflictType());
 		eq.setForUpdate(false);
-		assertThat(target, is(equalTo(eq)));
+		assertThat(target.equals(eq), is(true));
 
 		eq.setForUpdate(target.isForUpdate());
 		eq.setKeepLock(false);
-		assertThat(target, is(equalTo(eq)));
+		assertThat(target.equals(eq), is(true));
 
 		ResourceItemCommonData ne1 = new ResourceItemCommonData(new ResourceItemCommonDataId("resourceName1", target
 				.getId().getResourceItemId()), target.getTargetItemId());
 		ne1.setAction(target.getAction());
 		ne1.setLastModified(target.getLastModified());
-		assertThat(target, is(not(equalTo(ne1))));
+		assertThat(target.equals(ne1), is(false));
 
 		ResourceItemCommonData ne2 = new ResourceItemCommonData(new ResourceItemCommonDataId(target.getId()
 				.getResourceName(), "resourceItemId1"), target.getTargetItemId());
 		ne2.setAction(target.getAction());
 		ne2.setLastModified(target.getLastModified());
-		assertThat(target, is(not(equalTo(ne2))));
+		assertThat(target.equals(ne2), is(false));
 
 		ResourceItemCommonData ne3 = new ResourceItemCommonData(new ResourceItemCommonDataId(target.getId()
 				.getResourceName(), target.getId().getResourceItemId()), "targetItemId1");
 		ne3.setAction(target.getAction());
 		ne3.setLastModified(target.getLastModified());
-		assertThat(target, is(not(equalTo(ne3))));
+		assertThat(target.equals(ne3), is(false));
 
 		ResourceItemCommonData ne4 = new ResourceItemCommonData(new ResourceItemCommonDataId(target.getId()
 				.getResourceName(), target.getId().getResourceItemId()), target.getTargetItemId());
 		eq.setAction(SyncAction.UPDATE);
 		eq.setLastModified(target.getLastModified());
-		assertThat(target, is(not(equalTo(ne4))));
+		assertThat(target.equals(ne4), is(false));
 
 		ResourceItemCommonData ne5 = new ResourceItemCommonData(new ResourceItemCommonDataId(target.getId()
 				.getResourceName(), target.getId().getResourceItemId()), target.getTargetItemId());
 		eq.setAction(target.getAction());
 		eq.setLastModified(1);
-		assertThat(target, is(not(equalTo(ne5))));
+		assertThat(target.equals(ne5), is(false));
 	}
 
 	/**
