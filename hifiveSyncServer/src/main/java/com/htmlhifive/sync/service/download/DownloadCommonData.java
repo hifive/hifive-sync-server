@@ -86,7 +86,17 @@ public class DownloadCommonData implements SyncCommonData, Serializable {
 	@Override
 	public boolean equals(Object obj) {
 
-		return EqualsBuilder.reflectionEquals(this, obj);
+		if (obj == this)
+			return true;
+		if (!(obj instanceof DownloadCommonData))
+			return false;
+
+		DownloadCommonData downloadCommon = (DownloadCommonData) obj;
+
+		return new EqualsBuilder().append(this.storageId, downloadCommon.storageId)
+				.append(this.lastDownloadTime, downloadCommon.lastDownloadTime)
+				.append(this.syncTime, downloadCommon.syncTime).append(this.lockToken, downloadCommon.lockToken)
+				.isEquals();
 	}
 
 	/**
@@ -95,7 +105,8 @@ public class DownloadCommonData implements SyncCommonData, Serializable {
 	@Override
 	public int hashCode() {
 
-		return HashCodeBuilder.reflectionHashCode(this);
+		return new HashCodeBuilder(17, 37).append(this.storageId).append(this.lastDownloadTime).append(this.syncTime)
+				.append(this.lockToken).hashCode();
 	}
 
 	/**
