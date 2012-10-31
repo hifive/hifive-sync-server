@@ -11951,7 +11951,7 @@ var h5internal = {
 		
 		/**
 		 * IDの重複を解決した場合に、redoログの古いIDを新しいIDに置き換える。
-		 * また、redoログ内のアイテムIDのリストを持ったresolveDuplicateIdイベントをあげる。
+		 * また、redoログ内のアイテムのリストを持ったresolveDuplicateIdイベントをあげる。
 		 * 
 		 * @param newId 置き換えた後のID
 		 * @param oldId 置き換える前のID
@@ -11960,7 +11960,7 @@ var h5internal = {
 		 * 
 		 */
 		resolveDuplicate: function(newId, oldId, model) {
-			var updateIdLog = {}; // redoLogをモデルごとに集約したIdのリスト
+			var updateItems = {}; // redoLogをモデルごとに集約したIdのリスト
 			
 			var isOldItemDeleted = false;
 			
@@ -11981,13 +11981,10 @@ var h5internal = {
 				}
 				
 				// アイテムのIDをリストに追加する
-				if (!updateIdLog[redoLog.modelName]) {
-					updateIdLog[redoLog.modelName] = [];
+				if (!updateItems[redoLog.modelName]) {
+					updateItems[redoLog.modelName] = [];
 				}
-				var itemId = redoLog.item[this.dataModelManager.models[redoLog.modelName].idKey];
-				if (updateIdLog[redoLog.modelName].indexOf(itemId) === -1) {
-					updateIdLog[redoLog.modelName].push(itemId);									
-				}
+				updateItems[redoLog.modelName].push(redoLog.item);									
 			}
 			
 			// 古いアイテムは削除しておく
@@ -11996,14 +11993,26 @@ var h5internal = {
 				item._isServerUpdate = true;
 				model.remove(oldId);
 			}
+			
+			// モデルごとにイベントをあげる
+			var models = this.dataModelManager.models;
+			for (var modelName in updateItems) {
+				models[modelName].dispatchEvent({
+					type : 'resolveDuplicateId',
+					target : model.get(newId),
+					oldId : oldId,
+					newId : newId,
+					updateItems : updateItems[modelName]
+				});
+			}
 										
-			// 新旧のIDとredoログ内のアイテムのIDのリストをもったイベントをあげる
+			// SyncManagerからイベントをあげる
 			this.dispatchEvent({
 				type : 'resolveDuplicateId',
 				target : model.get(newId),
 				oldId : oldId,
 				newId : newId,
-				updateIdLog : updateIdLog 
+				updateItems : updateItems 
 			});
 		},
 
