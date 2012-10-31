@@ -18,9 +18,9 @@ package com.htmlhifive.sync.service;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -180,7 +180,9 @@ public class DefaultSynchronizer implements Synchronizer {
 	 */
 	private long calcDownloadTime(DownloadCommonData downloadCommon) {
 
-		long result = downloadCommon.getSyncTime() - syncConfiguration.bufferTimeForDownload() * 1000L;
+		long buffer = new Integer(syncConfiguration.bufferTimeForDownload()).longValue() * 1000L;
+
+		long result = downloadCommon.getSyncTime() - buffer;
 
 		return result < 0 ? 0 : result;
 	}
@@ -337,6 +339,7 @@ public class DefaultSynchronizer implements Synchronizer {
 
 		// AVOID_DEADLOCKタイプの場合は更新順をソートした結果に変更する
 		List<? extends ResourceItemWrapper<? extends Map<String, Object>>> itemsToUpload = request.getResourceItems();
+
 		if (this.syncConfiguration.uploadControl() == UploadControlType.AVOID_DEADLOCK) {
 			itemsToUpload = new ArrayList<>(request.getResourceItems());
 			Collections.sort(itemsToUpload);
@@ -345,8 +348,13 @@ public class DefaultSynchronizer implements Synchronizer {
 		// 競合の種類ごとに、競合しているリソースアイテムを収集
 		Map<SyncConflictType, ResourceItemsMapBuilder<ResourceItemWrapper<?>>> resultBuilderMap = createBuilderMap();
 
+		responseCommon.setConflictType(SyncConflictType.NONE);
+
 		// リソースアイテムごとに処理(上り更新リクエストデータでは、ResourceItemWrapperにリソース名を持つ)
-		for (ResourceItemWrapper<? extends Map<String, Object>> uploadingItemWrapper : itemsToUpload) {
+		for (Iterator<? extends ResourceItemWrapper<? extends Map<String, Object>>> itr = itemsToUpload.iterator(); itr
+				.hasNext();) {
+
+			ResourceItemWrapper<? extends Map<String, Object>> uploadingItemWrapper = itr.next();
 
 			String resourceName = uploadingItemWrapper.getItemCommonData().getId().getResourceName();
 
@@ -359,13 +367,13 @@ public class DefaultSynchronizer implements Synchronizer {
 			// 結果をresultBuilderに加える
 			resultBuilderMap.get(conflictType).add(resourceName, itemWrapperAfterUpload);
 
-			// 処理継続を判断、継続しない場合ConflictExceptionをスロー
-			if (!continueOnConflict(conflictType)) {
-				throwConflictException(conflictType, resultBuilderMap);
+			// リクエスト全体の競合ステータスを設定
+			if (isConflictTypeChanging(responseCommon.getConflictType(), conflictType)) {
+				responseCommon.setConflictType(conflictType);
 			}
 
-			// 継続の場合ステータスに設定
-			responseCommon.setConflictType(conflictType);
+			if (!continueOnConflict(responseCommon.getConflictType()))
+				break;
 		}
 
 		// 以下の優先順で競合アイテムリストをConflictExceptionに含めスロー
@@ -482,6 +490,17 @@ public class DefaultSynchronizer implements Synchronizer {
 	}
 
 	/**
+	 * 現在の競合タイプが、今回のリソースアイテム更新における競合タイプで更新されるときtrueを返します.
+	 *
+	 * @param currentConflictType 現在の競合タイプ
+	 * @param conflictType 今回のリソースアイテム更新における競合タイプ
+	 * @return 今回のリソースアイテム更新における競合タイプで現在のタイプが更新されるときtrue
+	 */
+	private boolean isConflictTypeChanging(SyncConflictType currentConflictType, SyncConflictType conflictType) {
+		return currentConflictType == SyncConflictType.NONE || conflictType == SyncConflictType.DUPLICATE_ID;
+	}
+
+	/**
 	 * 上り更新レスポンスを競合発生時の例外に設定し、スローします.
 	 *
 	 * @param conflictType 競合タイプ
@@ -546,16 +565,17 @@ public class DefaultSynchronizer implements Synchronizer {
 	private Map<String, List<ResourceItemCommonData>> getItemsForUpdate(
 			Map<String, List<ResourceItemCommonData>> reservingItemsMap) {
 
-		// 予約結果を保持するMap
+		// 結果を保持するMap
 		Map<String, List<ResourceItemCommonData>> reservedCommonDataMap = new HashMap<>();
 
-		// 予約対象をリソース名でソート
+		// 対象をリソース名でソート
 		TreeMap<String, List<ResourceItemCommonData>> sortedItemsMap = new TreeMap<>(reservingItemsMap);
 
 		for (String resourceName : sortedItemsMap.keySet()) {
 
 			SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
 			try {
+
 				reservedCommonDataMap.put(resourceName, resource.forUpdate(sortedItemsMap.get(resourceName)));
 			} catch (PessimisticLockException | LockTimeoutException e) {
 
@@ -575,7 +595,7 @@ public class DefaultSynchronizer implements Synchronizer {
 	 */
 	private long generateSyncTime() {
 
-		return new Date().getTime();
+		return syncConfiguration.generateSyncTime();
 	}
 
 	/**
