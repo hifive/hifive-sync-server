@@ -119,7 +119,7 @@ public class UploadCommonData implements SyncCommonData, Serializable {
 	 * @return 最終上り更新時刻が後の場合true
 	 */
 	public boolean isLaterUploadThan(UploadCommonData uploadCommonData) {
-		return this.lastUploadTime > uploadCommonData.getLastUploadTime();
+		return this.lastUploadTime >= uploadCommonData.getLastUploadTime();
 	}
 
 	/**
