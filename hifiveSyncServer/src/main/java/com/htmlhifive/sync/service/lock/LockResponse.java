@@ -19,6 +19,10 @@ package com.htmlhifive.sync.service.lock;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 
 /**
@@ -51,6 +55,41 @@ public class LockResponse {
 	public LockResponse(LockCommonData lockCommonData) {
 
 		this.lockCommonData = lockCommonData;
+	}
+
+	/**
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+
+		if (this == obj)
+			return true;
+		if (!(obj instanceof LockResponse))
+			return false;
+
+		LockResponse request = (LockResponse) obj;
+
+		return new EqualsBuilder().append(this.lockCommonData, request.lockCommonData)
+				.append(this.resourceItems, request.resourceItems).isEquals();
+	}
+
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+
+		return new HashCodeBuilder(17, 37).append(this.lockCommonData).append(this.resourceItems).hashCode();
+	}
+
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+
+		return ToStringBuilder.reflectionToString(this);
 	}
 
 	/**

@@ -18,6 +18,9 @@ package com.htmlhifive.sync.service.lock;
 
 import java.io.Serializable;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
@@ -33,7 +36,7 @@ import com.htmlhifive.sync.service.SyncCommonData;
 @Deprecated
 public class LockCommonData implements SyncCommonData, Serializable {
 
-	private static final long serialVersionUID = -5832494043088305292L;
+	private static final long serialVersionUID = -1459457437886127285L;
 
 	/**
 	 * クライアントのストレージID.<br>
@@ -54,6 +57,42 @@ public class LockCommonData implements SyncCommonData, Serializable {
 	 * 設定されているときのみレスポンスに含めるため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.
 	 */
 	private String lockToken;
+
+	/**
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+
+		if (this == obj)
+			return true;
+		if (!(obj instanceof LockCommonData))
+			return false;
+
+		LockCommonData common = (LockCommonData) obj;
+
+		return new EqualsBuilder().append(this.storageId, common.storageId).append(this.syncTime, common.syncTime)
+				.append(this.lockToken, common.lockToken).isEquals();
+	}
+
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+
+		return new HashCodeBuilder(17, 37).append(this.storageId).append(this.syncTime).append(this.lockToken)
+				.hashCode();
+	}
+
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+
+		return ToStringBuilder.reflectionToString(this);
+	}
 
 	/**
 	 * レスポンスから除外するため、{@link JsonSerialize}を追加しています.
