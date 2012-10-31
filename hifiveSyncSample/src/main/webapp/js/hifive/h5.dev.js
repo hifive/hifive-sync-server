@@ -11951,7 +11951,7 @@ var h5internal = {
 		
 		/**
 		 * IDの重複を解決した場合に、redoログの古いIDを新しいIDに置き換える。
-		 * また、redoログ内のアイテムIDのリストを持ったresolveDuplicateIdイベントをあげる。
+		 * また、redoログ内のアイテムのリストを持ったresolveDuplicateIdイベントをあげる。
 		 * 
 		 * @param newId 置き換えた後のID
 		 * @param oldId 置き換える前のID
@@ -11960,7 +11960,7 @@ var h5internal = {
 		 * 
 		 */
 		resolveDuplicate: function(newId, oldId, model) {
-			var updateIdLog = {}; // redoLogをモデルごとに集約したIdのリスト
+			var updateItems = {}; // redoLogをモデルごとに集約したIdのリスト
 			
 			var isOldItemDeleted = false;
 			
@@ -11981,13 +11981,10 @@ var h5internal = {
 				}
 				
 				// アイテムのIDをリストに追加する
-				if (!updateIdLog[redoLog.modelName]) {
-					updateIdLog[redoLog.modelName] = [];
+				if (!updateItems[redoLog.modelName]) {
+					updateItems[redoLog.modelName] = [];
 				}
-				var itemId = redoLog.item[this.dataModelManager.models[redoLog.modelName].idKey];
-				if (updateIdLog[redoLog.modelName].indexOf(itemId) === -1) {
-					updateIdLog[redoLog.modelName].push(itemId);									
-				}
+				updateItems[redoLog.modelName].push(redoLog.item);									
 			}
 			
 			// 古いアイテムは削除しておく
@@ -11996,14 +11993,26 @@ var h5internal = {
 				item._isServerUpdate = true;
 				model.remove(oldId);
 			}
+			
+			// モデルごとにイベントをあげる
+			var models = this.dataModelManager.models;
+			for (var modelName in updateItems) {
+				models[modelName].dispatchEvent({
+					type : 'resolveDuplicateId',
+					target : model.get(newId),
+					oldId : oldId,
+					newId : newId,
+					updateItems : updateItems[modelName]
+				});
+			}
 										
-			// 新旧のIDとredoログ内のアイテムのIDのリストをもったイベントをあげる
+			// SyncManagerからイベントをあげる
 			this.dispatchEvent({
 				type : 'resolveDuplicateId',
 				target : model.get(newId),
 				oldId : oldId,
 				newId : newId,
-				updateIdLog : updateIdLog 
+				updateItems : updateItems 
 			});
 		},
 
@@ -12263,22 +12272,22 @@ var h5internal = {
 		 */
 		_getItemsOfDuplicatedIds: function(serverItems) {
 			var conflicted = {};
-			for ( var modelName in serverItems) {
-				conflicted[modelName] = {};
-				
+			for ( var modelName in serverItems) {				
+				var conflictedItems = {};
 				var items = serverItems[modelName];
+				var model = this.dataModelManager.models[modelName];
+
 				for ( var i = 0, len = items.length; i < len; i++) {
 					var serverItem = items[i].item;
 					var id = serverItem[model.idKey];
 
-					var model = this.dataModelManager.models[items[i].itemCommonData.resourceName];
-
-					conflicted[modelName][id] = {
+					conflictedItems[id] = {
 						model: model,
 						localItem: model.get(id),
 						serverItem: serverItem
 					};
 				}
+				conflicted[modelName] = conflictedItems;
 			}
 			return conflicted;
 		},
@@ -12396,7 +12405,7 @@ var h5internal = {
 						// redoログの中にcreateのログが残っている場合は、このアイテムのログはなかったことにする。
 						var indexOfCreateItem = that.redoLogs.length;
 						for (var i=0, len=that.redoLogs.length; i<len;i++) {
-							var log = that.redoLogs[j];
+							var log = that.redoLogs[i];
 							if (log.item[model.idKey] === item.get(model.idKey)	
 									&& log.modelName === model.name
 									&& log.action === ACTION_TYPE_CREATE) {
@@ -12408,6 +12417,7 @@ var h5internal = {
 						if (indexOfCreateItem < that.redoLogs.length) {
 							// 後ろからたどって、このアイテムのログを削除していく(createしたところまで)
 							for (var j=that.redoLogs.length-1; j>=indexOfCreateItem; j--) {
+								var log = that.redoLogs[j];
 								if (log.item[model.idKey] === item.get(model.idKey)	&& log.modelName === model.name ){
 									that.redoLogs.splice(j,1);
 								}

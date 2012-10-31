@@ -6,16 +6,15 @@
 		this.syncManager = scheduleSample.sync.manager;
 		this.loginPersonId = null;
 		
-		this.syncManager.addEventListener('resolveDuplicateId', function(event) {
-			var updateIds = event.updateIdLog.schedule;
+		this.scheduleDataModel.addEventListener('resolveDuplicateId', function(event) {
+			var updateItems = event.updateItems;
 			
-			if (!updateIds) {
+			if (!updateItems) {
 				return;
 			}
 			
-			for (var i=0, len=updateIds.length; i<len; i++) {
-				var item = this.scheduleDataModel.get(updateIds[i]);
-				var userIds = item.get('userIds');
+			for (var i=0, len=updateItems.length; i<len; i++) {
+				var userIds = updateItems[i].userIds;
 				var index = userIds.indexOf(event.oldId);
 				if (index !== -1) {
 					userIds[index] = event.newId;					
