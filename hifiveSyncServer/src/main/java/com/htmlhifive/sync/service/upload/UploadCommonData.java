@@ -62,8 +62,10 @@ public class UploadCommonData implements SyncCommonData, Serializable {
 	/**
 	 * この更新リクエストが実行される時刻.<br>
 	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
+	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.<br>
+	 * また、永続化の対象外です.
 	 */
+	@Transient
 	private long syncTime;
 
 	/**
