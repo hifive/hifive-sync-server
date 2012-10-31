@@ -94,7 +94,17 @@ public class UploadCommonData implements SyncCommonData, Serializable {
 	@Override
 	public boolean equals(Object obj) {
 
-		return EqualsBuilder.reflectionEquals(this, obj);
+		if (obj == this)
+			return true;
+		if (!(obj instanceof UploadCommonData))
+			return false;
+
+		UploadCommonData uploadCommon = (UploadCommonData) obj;
+
+		return new EqualsBuilder().append(this.storageId, uploadCommon.storageId)
+				.append(this.lastUploadTime, uploadCommon.lastUploadTime).append(this.syncTime, uploadCommon.syncTime)
+				.append(this.conflictType, uploadCommon.conflictType).append(this.lockToken, uploadCommon.lockToken)
+				.isEquals();
 	}
 
 	/**
@@ -103,7 +113,8 @@ public class UploadCommonData implements SyncCommonData, Serializable {
 	@Override
 	public int hashCode() {
 
-		return HashCodeBuilder.reflectionHashCode(this);
+		return new HashCodeBuilder(17, 37).append(this.storageId).append(this.lastUploadTime).append(this.syncTime)
+				.append(this.conflictType).append(this.lockToken).hashCode();
 	}
 
 	/**
