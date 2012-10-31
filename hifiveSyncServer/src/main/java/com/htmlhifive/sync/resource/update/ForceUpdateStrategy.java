@@ -30,13 +30,13 @@ import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 public class ForceUpdateStrategy implements UpdateStrategy {
 
 	/**
-	 * 競合を解決せず、ItemUpdateExceptionをスローします.
+	 * 競合解決結果として、無条件に今回の更新のアイテムを返します.
 	 */
 	@Override
 	public <T> T resolveConflict(ResourceItemCommonData itemCommon, T item, ResourceItemCommonData serverCommon,
 			T serverItem) throws ItemUpdatedException {
 
-		return serverItem;
+		return item;
 	}
 
 }
