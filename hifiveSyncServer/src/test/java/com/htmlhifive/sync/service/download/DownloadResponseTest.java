@@ -66,14 +66,14 @@ public class DownloadResponseTest {
 	public void testEquals() {
 
 		final DownloadCommonData common = new DownloadCommonData("storageId");
-		final DownloadCommonData anotherCommon = new DownloadCommonData("another storageId");
+		final DownloadCommonData otherCommon = new DownloadCommonData("other storageId");
 
 		final Map<String, List<ResourceItemWrapper<?>>> resourceItems = new HashMap<String, List<ResourceItemWrapper<?>>>() {
 			{
 				put("resource1", new ArrayList<ResourceItemWrapper<?>>());
 			}
 		};
-		final Map<String, List<ResourceItemWrapper<?>>> anothereResourceItems = new HashMap<String, List<ResourceItemWrapper<?>>>() {
+		final Map<String, List<ResourceItemWrapper<?>>> othereResourceItems = new HashMap<String, List<ResourceItemWrapper<?>>>() {
 			{
 				put("resource2", new ArrayList<ResourceItemWrapper<?>>());
 			}
@@ -91,7 +91,7 @@ public class DownloadResponseTest {
 			}
 		};
 
-		DownloadResponse ne1 = new DownloadResponse(anotherCommon) {
+		DownloadResponse ne1 = new DownloadResponse(otherCommon) {
 			{
 				setResourceItems(target.getResourceItems());
 			}
@@ -99,7 +99,7 @@ public class DownloadResponseTest {
 
 		DownloadResponse ne2 = new DownloadResponse(target.getDownloadCommonData()) {
 			{
-				setResourceItems(anothereResourceItems);
+				setResourceItems(othereResourceItems);
 			}
 		};
 

@@ -68,9 +68,9 @@ public class LockRequestTest {
 			}
 		};
 
-		final LockCommonData anotherCommon = new LockCommonData() {
+		final LockCommonData otherCommon = new LockCommonData() {
 			{
-				setStorageId("another storageId");
+				setStorageId("other storageId");
 			}
 		};
 
@@ -80,7 +80,7 @@ public class LockRequestTest {
 			}
 		};
 
-		final Map<String, List<ResourceQueryConditions>> anotherQueries = new HashMap<String, List<ResourceQueryConditions>>() {
+		final Map<String, List<ResourceQueryConditions>> otherQueries = new HashMap<String, List<ResourceQueryConditions>>() {
 			{
 				put("resource2", new ArrayList<ResourceQueryConditions>());
 			}
@@ -105,7 +105,7 @@ public class LockRequestTest {
 		final LockRequest ne1 = new LockRequest() {
 
 			{
-				setLockCommonData(anotherCommon);
+				setLockCommonData(otherCommon);
 				setQueries(queries);
 			}
 		};
@@ -114,7 +114,7 @@ public class LockRequestTest {
 
 			{
 				setLockCommonData(common);
-				setQueries(anotherQueries);
+				setQueries(otherQueries);
 			}
 		};
 

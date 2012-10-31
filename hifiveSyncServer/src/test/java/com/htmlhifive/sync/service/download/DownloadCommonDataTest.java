@@ -72,7 +72,7 @@ public class DownloadCommonDataTest {
 		eq.setSyncTime(target.getSyncTime());
 		eq.setLockToken(target.getLockToken());
 
-		DownloadCommonData ne1 = new DownloadCommonData("another storage");
+		DownloadCommonData ne1 = new DownloadCommonData("other storage");
 		ne1.setLastDownloadTime(target.getLastDownloadTime());
 		ne1.setSyncTime(target.getSyncTime());
 		ne1.setLockToken(target.getLockToken());
@@ -90,7 +90,7 @@ public class DownloadCommonDataTest {
 		DownloadCommonData ne4 = new DownloadCommonData(target.getStorageId());
 		ne4.setLastDownloadTime(target.getLastDownloadTime());
 		ne4.setSyncTime(target.getSyncTime());
-		ne4.setLockToken("another token");
+		ne4.setLockToken("other token");
 
 		// Act
 		// Assert：結果が正しいこと

@@ -61,7 +61,7 @@ public class DownloadRequestTest {
 	public void testEquals() {
 
 		final DownloadCommonData common = new DownloadCommonData("storageId");
-		final DownloadCommonData anotherCommon = new DownloadCommonData("another storageId");
+		final DownloadCommonData otherCommon = new DownloadCommonData("other storageId");
 
 		final Map<String, List<ResourceQueryConditions>> queries = new HashMap<String, List<ResourceQueryConditions>>() {
 			{
@@ -69,7 +69,7 @@ public class DownloadRequestTest {
 			}
 		};
 
-		final Map<String, List<ResourceQueryConditions>> anotherQueries = new HashMap<String, List<ResourceQueryConditions>>() {
+		final Map<String, List<ResourceQueryConditions>> otherQueries = new HashMap<String, List<ResourceQueryConditions>>() {
 			{
 				put("resource2", new ArrayList<ResourceQueryConditions>());
 			}
@@ -91,7 +91,7 @@ public class DownloadRequestTest {
 
 		DownloadRequest ne1 = new DownloadRequest() {
 			{
-				setDownloadCommonData(anotherCommon);
+				setDownloadCommonData(otherCommon);
 				setQueries(target.getQueries());
 			}
 		};
@@ -99,7 +99,7 @@ public class DownloadRequestTest {
 		DownloadRequest ne2 = new DownloadRequest() {
 			{
 				setDownloadCommonData(target.getDownloadCommonData());
-				setQueries(anotherQueries);
+				setQueries(otherQueries);
 			}
 		};
 

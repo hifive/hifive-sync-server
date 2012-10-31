@@ -80,7 +80,7 @@ public class UploadCommonDataTest {
 
 		UploadCommonData ne1 = new UploadCommonData() {
 			{
-				setStorageId("another storageId");
+				setStorageId("other storageId");
 				setLastUploadTime(target.getLastUploadTime());
 				setSyncTime(target.getSyncTime());
 				setConflictType(target.getConflictType());
@@ -124,7 +124,7 @@ public class UploadCommonDataTest {
 				setLastUploadTime(target.getLastUploadTime());
 				setSyncTime(target.getSyncTime());
 				setConflictType(target.getConflictType());
-				setLockToken("another token");
+				setLockToken("other token");
 			}
 		};
 		// Act

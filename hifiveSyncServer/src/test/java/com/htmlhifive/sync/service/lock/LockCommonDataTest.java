@@ -73,7 +73,7 @@ public class LockCommonDataTest {
 
 		LockCommonData ne1 = new LockCommonData() {
 			{
-				setStorageId("another storageId");
+				setStorageId("other storageId");
 				setSyncTime(target.getSyncTime());
 				setLockToken(target.getLockToken());
 			}
@@ -91,7 +91,7 @@ public class LockCommonDataTest {
 			{
 				setStorageId(target.getStorageId());
 				setSyncTime(target.getSyncTime());
-				setLockToken("another token");
+				setLockToken("other token");
 			}
 		};
 

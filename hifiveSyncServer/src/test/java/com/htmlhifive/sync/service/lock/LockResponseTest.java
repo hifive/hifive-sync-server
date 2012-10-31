@@ -78,9 +78,9 @@ public class LockResponseTest {
 				setStorageId("storageId");
 			}
 		};
-		final LockCommonData anotherCommon = new LockCommonData() {
+		final LockCommonData otherCommon = new LockCommonData() {
 			{
-				setStorageId("another storageId");
+				setStorageId("other storageId");
 			}
 		};
 
@@ -89,7 +89,7 @@ public class LockResponseTest {
 				put("resource1", new ArrayList<ResourceItemWrapper<?>>());
 			}
 		};
-		final Map<String, List<ResourceItemWrapper<?>>> anothereResourceItems = new HashMap<String, List<ResourceItemWrapper<?>>>() {
+		final Map<String, List<ResourceItemWrapper<?>>> othereResourceItems = new HashMap<String, List<ResourceItemWrapper<?>>>() {
 			{
 				put("resource2", new ArrayList<ResourceItemWrapper<?>>());
 			}
@@ -107,7 +107,7 @@ public class LockResponseTest {
 			}
 		};
 
-		LockResponse ne1 = new LockResponse(anotherCommon) {
+		LockResponse ne1 = new LockResponse(otherCommon) {
 			{
 				setResourceItems(target.getResourceItems());
 			}
@@ -115,7 +115,7 @@ public class LockResponseTest {
 
 		LockResponse ne2 = new LockResponse(target.getLockCommonData()) {
 			{
-				setResourceItems(anothereResourceItems);
+				setResourceItems(othereResourceItems);
 			}
 		};
 

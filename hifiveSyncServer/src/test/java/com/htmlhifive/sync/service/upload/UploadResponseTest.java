@@ -73,9 +73,9 @@ public class UploadResponseTest {
 				setStorageId("storageId");
 			}
 		};
-		final UploadCommonData anotherCommon = new UploadCommonData() {
+		final UploadCommonData otherCommon = new UploadCommonData() {
 			{
-				setStorageId("another storageId");
+				setStorageId("other storageId");
 			}
 		};
 
@@ -84,7 +84,7 @@ public class UploadResponseTest {
 				put("resource1", new ArrayList<ResourceItemWrapper<?>>());
 			}
 		};
-		final Map<String, List<ResourceItemWrapper<?>>> anothereResourceItems = new HashMap<String, List<ResourceItemWrapper<?>>>() {
+		final Map<String, List<ResourceItemWrapper<?>>> otherResourceItems = new HashMap<String, List<ResourceItemWrapper<?>>>() {
 			{
 				put("resource2", new ArrayList<ResourceItemWrapper<?>>());
 			}
@@ -102,7 +102,7 @@ public class UploadResponseTest {
 			}
 		};
 
-		UploadResponse ne1 = new UploadResponse(anotherCommon) {
+		UploadResponse ne1 = new UploadResponse(otherCommon) {
 			{
 				setResourceItems(target.getResourceItems());
 			}
@@ -110,7 +110,7 @@ public class UploadResponseTest {
 
 		UploadResponse ne2 = new UploadResponse(target.getUploadCommonData()) {
 			{
-				setResourceItems(anothereResourceItems);
+				setResourceItems(otherResourceItems);
 			}
 		};
 

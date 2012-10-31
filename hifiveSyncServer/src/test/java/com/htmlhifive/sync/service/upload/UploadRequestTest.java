@@ -67,9 +67,9 @@ public class UploadRequestTest {
 				setStorageId("storageId");
 			}
 		};
-		final UploadCommonData anotherCommon = new UploadCommonData() {
+		final UploadCommonData otherCommon = new UploadCommonData() {
 			{
-				setStorageId("another storageId");
+				setStorageId("other storageId");
 			}
 		};
 
@@ -82,7 +82,7 @@ public class UploadRequestTest {
 			}
 		};
 
-		final List<ResourceItemWrapper<? extends Map<String, Object>>> anotherQueries = new ArrayList<ResourceItemWrapper<? extends Map<String, Object>>>() {
+		final List<ResourceItemWrapper<? extends Map<String, Object>>> otherQueries = new ArrayList<ResourceItemWrapper<? extends Map<String, Object>>>() {
 			{
 				ResourceItemCommonData resourceItemCommonData = new ResourceItemCommonData(
 						new ResourceItemCommonDataId("resourceName2", "resourceItemId2"), "targetItemId2");
@@ -107,7 +107,7 @@ public class UploadRequestTest {
 
 		UploadRequest ne1 = new UploadRequest() {
 			{
-				setUploadCommonData(anotherCommon);
+				setUploadCommonData(otherCommon);
 				setResourceItems(queries);
 			}
 		};
@@ -115,7 +115,7 @@ public class UploadRequestTest {
 		UploadRequest ne2 = new UploadRequest() {
 			{
 				setUploadCommonData(target.getUploadCommonData());
-				setResourceItems(anotherQueries);
+				setResourceItems(otherQueries);
 			}
 		};
 
