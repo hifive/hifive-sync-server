@@ -37,14 +37,14 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 @Table(name = "SCHEDULE_DATE")
 public class ScheduleDate implements Serializable {
 
-    private static final long serialVersionUID = -137235495281828377L;
+    private static final long serialVersionUID = 8658446519798521096L;
 
     /**
      * このエンティティのID.
      */
     @Id
     @GeneratedValue
-    private int id;
+    private long id;
 
     /**
      * 予定日付("yyyyMMdd"の8桁整数).
@@ -79,7 +79,6 @@ public class ScheduleDate implements Serializable {
     }
 
     /**
-     * IDを除くフィールドの値が同一の時、同一とします.
      *
      * @see Object#equals(Object)
      */
@@ -118,7 +117,7 @@ public class ScheduleDate implements Serializable {
     /**
      * @return id
      */
-    public int getId() {
+    public long getId() {
         return id;
     }
 
@@ -126,7 +125,7 @@ public class ScheduleDate implements Serializable {
      * @param id
      *            セットする id
      */
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
