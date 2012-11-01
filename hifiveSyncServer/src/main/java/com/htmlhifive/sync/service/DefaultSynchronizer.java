@@ -35,7 +35,6 @@ import org.springframework.stereotype.Service;
 
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.ConflictException;
-import com.htmlhifive.sync.exception.LockException;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.ResourceQueryConditions;
 import com.htmlhifive.sync.resource.SyncConflictType;
@@ -46,9 +45,6 @@ import com.htmlhifive.sync.service.download.DownloadCommonData;
 import com.htmlhifive.sync.service.download.DownloadControlType;
 import com.htmlhifive.sync.service.download.DownloadRequest;
 import com.htmlhifive.sync.service.download.DownloadResponse;
-import com.htmlhifive.sync.service.lock.LockCommonData;
-import com.htmlhifive.sync.service.lock.LockRequest;
-import com.htmlhifive.sync.service.lock.LockResponse;
 import com.htmlhifive.sync.service.upload.UploadCommonData;
 import com.htmlhifive.sync.service.upload.UploadCommonDataRepository;
 import com.htmlhifive.sync.service.upload.UploadControlType;
@@ -61,7 +57,6 @@ import com.htmlhifive.sync.service.upload.UploadResponse;
  *
  * @author kishigam
  */
-@SuppressWarnings("deprecation")
 @Service
 public class DefaultSynchronizer implements Synchronizer {
 
@@ -188,90 +183,6 @@ public class DefaultSynchronizer implements Synchronizer {
 	}
 
 	/**
-	 * ロックの取得を実行します.<br>
-	 * リソースごとに、指定されたクエリでリソースアイテムを検索、AVOID_DEADLOCKモードで各リソースアイテムのロックを行います.<br>
-	 * 全ての対象リソースアイテムがロックできた場合のみ、各リソースアイテムを上り更新するためのロックトークンを返します.<br>
-	 * 1件でもロックに失敗した場合、LockExceptionがスローされ、他の全てのリソースアイテムもロックされません.<br>
-	 * ロックを取得していない場合、ロックの取得をサポートしないロック方式の場合は空の結果が返ります.<br>
-	 * TODO 次期バージョンにて実装予定
-	 *
-	 * @param request ロックリクエストデータ
-	 * @return ロック取得レスポンスデータ
-	 */
-	@Deprecated
-	@Override
-	public LockResponse getLock(LockRequest request) {
-
-		LockCommonData requestCommon = request.getLockCommonData();
-		// 今回のロック取得実行時刻を共通データへセット
-		requestCommon.setSyncTime(generateSyncTime());
-		// ロックトークンを発行し、共通データへセット
-		requestCommon.setLockToken(generateLockToken(request));
-
-		// ロック対象アイテムを取得
-		Map<String, List<ResourceItemWrapper<?>>> lockingItems = getItems(request.getQueries(), requestCommon);
-
-		// ロック対象アイテムの予約
-		Map<String, List<ResourceItemCommonData>> reservedCommonDataMap = getItemsReadLock(lockingItems);
-
-		// ロック実行
-		Map<String, List<ResourceItemWrapper<?>>> lockeditems = doLock(requestCommon, reservedCommonDataMap);
-
-		// レスポンス用共通データ
-		LockCommonData responseCommon = new LockCommonData();
-		responseCommon.setStorageId(requestCommon.getStorageId());
-		responseCommon.setLockToken(requestCommon.getLockToken());
-
-		// ロック取得レスポンスに結果を設定
-		LockResponse response = new LockResponse(responseCommon);
-		response.setResourceItems(lockeditems);
-
-		return response;
-	}
-
-	/**
-	 * リソースのロックを取得する際に使用するロックトークンを発行します.<br>
-	 * TODO 次期バージョンにて実装予定
-	 *
-	 * @param request ロックリクエストデータ
-	 * @return ロックトークン
-	 */
-	@Deprecated
-	protected String generateLockToken(LockRequest request) {
-
-		// デフォルト実装として、ストレージIDを使用する
-		return request.getLockCommonData().getStorageId();
-	}
-
-	/**
-	 * リソースアイテムのロックを実行します.<br>
-	 * TODO 次期バージョンにて実装予定
-	 *
-	 * @param lockCommon ロック取得共通データ
-	 * @param reservedCommonDataMap 予約済みリソースアイテムの共通データ(リソース別Map)
-	 * @return ロック取得済みリソースアイテム(ラッパーオブジェクト)リストのMap
-	 */
-	@Deprecated
-	private Map<String, List<ResourceItemWrapper<?>>> doLock(LockCommonData lockCommon,
-			Map<String, List<ResourceItemCommonData>> reservedCommonDataMap) {
-
-		ResourceItemsMapBuilder<ResourceItemWrapper<?>> resultBuilder = new ResourceItemsMapBuilder<>();
-
-		// リソースごとにロックを実行
-		for (String resourceName : reservedCommonDataMap.keySet()) {
-
-			SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-
-			List<ResourceItemCommonData> itemCommonDataList = reservedCommonDataMap.get(resourceName);
-
-			List<? extends ResourceItemWrapper<?>> lockedItemWrappers = resource.lock(lockCommon, itemCommonDataList);
-
-			resultBuilder.addAll(resourceName, lockedItemWrappers);
-		}
-		return resultBuilder.build();
-	}
-
-	/**
 	 * リソースアイテムの読み取りロックを行い、アイテムを占有操作できるようにします.<br>
 	 * {@link ResourceItemWrapper}のリストを{@link ResourceItemCommonData}のリストに変換してから処理します.
 	 *
@@ -284,12 +195,6 @@ public class DefaultSynchronizer implements Synchronizer {
 		// リソースアイテム共通データリストのMapに変換
 		Map<String, List<ResourceItemCommonData>> commonListMap = new HashMap<>();
 		for (String resourceName : reservingItemsMap.keySet()) {
-
-			// TODO 次期バージョンにて実装予定
-			//			// リソースが悲観的・排他ロックを用いている場合、読み取りロックは不要
-			//			if (resourceManager.locateSyncResource(resourceName).requiredLockStatus() == ResourceLockStatusType.EXCLUSIVE) {
-			//				continue;
-			//			}
 
 			List<ResourceItemCommonData> commonList = new ArrayList<>();
 			for (ResourceItemWrapper<?> wrapper : reservingItemsMap.get(resourceName)) {
@@ -322,7 +227,6 @@ public class DefaultSynchronizer implements Synchronizer {
 		// サーバ側で管理されている前回上り更新時刻より前の場合、二重送信等で処理済みと判断し、そのまま返す.
 		if (responseCommon.isLaterUploadThan(requestCommon)) {
 
-			// TODO: ロギング整備の時に見直し
 			LoggerFactory.getLogger(DefaultSynchronizer.class).info(
 					new StringBuilder().append("info : duplicate uploading detected. storageId : ")
 							.append(responseCommon.getStorageId()).append(", lastUpdateTime : ")
@@ -426,13 +330,6 @@ public class DefaultSynchronizer implements Synchronizer {
 
 			String resourceName = itemWrapper.getItemCommonData().getId().getResourceName();
 
-			// TODO 次期バージョンにて実装予定
-			//			// リソースが悲観的(排他・共有)ロックを用いている場合、そのリソースのアイテムの予約は不要
-			//			ResourceLockStatusType lockType = resourceManager.locateSyncResource(resourceName).requiredLockStatus();
-			//			if (lockType == ResourceLockStatusType.EXCLUSIVE || lockType == ResourceLockStatusType.SHARED) {
-			//				continue;
-			//			}
-
 			mapBuilder.add(resourceName, itemWrapper.getItemCommonData());
 		}
 
@@ -518,43 +415,6 @@ public class DefaultSynchronizer implements Synchronizer {
 	}
 
 	/**
-	 * ロックの開放を実行します.<br>
-	 * ロックが開放できない場合、LockExceptionがスローされます. <br>
-	 * この処理は悲観的ロック方式を採用しているリソースが対象です.<br>
-	 * その他のロック方式の場合は何も起こりません. <br>
-	 * TODO 次期バージョンにて実装予定
-	 *
-	 * @param request ロックリクエストデータ
-	 */
-	@Deprecated
-	@Override
-	public void releaseLock(LockRequest request) {
-
-		LockCommonData requestCommon = request.getLockCommonData();
-		// 今回のロック開放実行時刻を共通データへセット
-		requestCommon.setSyncTime(generateSyncTime());
-
-		// 全てのリソースに対してロックしているリソースアイテムの情報を取得
-		Map<String, List<ResourceItemCommonData>> lockedItemsMap = new HashMap<>();
-
-		for (String resourceName : resourceManager.allResourcNames()) {
-
-			SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-			lockedItemsMap.put(resourceName, resource.lockedItemsList(request.getLockCommonData()));
-		}
-
-		// 対象アイテムを予約
-		Map<String, List<ResourceItemCommonData>> reservedLockedItems = getItemsForUpdate(lockedItemsMap);
-
-		// リソースごとにリリースの開放を実行
-		for (String resourceName : reservedLockedItems.keySet()) {
-
-			SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-			resource.releaseLock(requestCommon, reservedLockedItems.get(resourceName));
-		}
-	}
-
-	/**
 	 * リソースアイテムに対して"for update"操作を行い、そのリソースアイテム共通データを返します.<br>
 	 * アイテムの内容は取得されません.
 	 *
@@ -579,7 +439,7 @@ public class DefaultSynchronizer implements Synchronizer {
 			} catch (PessimisticLockException | LockTimeoutException e) {
 
 				// for update操作のタイムアウト
-				throw new LockException("Failed to get readLock for download or reserve for upload.", e);
+				throw new BadRequestException("Failed to get readLock for download or reserve for upload.", e);
 			}
 		}
 

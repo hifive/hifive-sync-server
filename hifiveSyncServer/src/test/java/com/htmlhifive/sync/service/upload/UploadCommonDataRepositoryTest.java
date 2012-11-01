@@ -39,7 +39,6 @@ import com.htmlhifive.sync.resource.SyncConflictType;
  *
  * @author kishigam
  */
-@SuppressWarnings("deprecation")
 @ContextConfiguration(locations = "classpath:test-context.xml")
 @TransactionConfiguration(transactionManager = "txManager")
 public class UploadCommonDataRepositoryTest extends AbstractTransactionalJUnit4SpringContextTests {
@@ -63,7 +62,6 @@ public class UploadCommonDataRepositoryTest extends AbstractTransactionalJUnit4S
 		data1.setLastUploadTime(100);
 		data1.setSyncTime(1000);
 		data1.setConflictType(SyncConflictType.NONE);
-		data1.setLockToken("token");
 
 		data2 = new UploadCommonData();
 		data2.setStorageId("storageId2");
@@ -99,7 +97,5 @@ public class UploadCommonDataRepositoryTest extends AbstractTransactionalJUnit4S
 		assertThat(actual.getLastUploadTime(), is(equalTo(data1.getLastUploadTime())));
 		assertThat(actual.getSyncTime(), is(equalTo(0L)));
 		assertThat(actual.getConflictType(), is(nullValue()));
-		assertThat(actual.getLockToken(), is(nullValue()));
 	}
-
 }

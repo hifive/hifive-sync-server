@@ -26,10 +26,7 @@ import com.htmlhifive.sync.service.upload.UploadResponse;
  */
 public class ConflictException extends RuntimeException {
 
-	/**
-	 * シリアルバージョンUID.
-	 */
-	private static final long serialVersionUID = 6836676332372951677L;
+	private static final long serialVersionUID = -6733909764577838821L;
 
 	/**
 	 * 上り更新レスポンスオブジェクト.

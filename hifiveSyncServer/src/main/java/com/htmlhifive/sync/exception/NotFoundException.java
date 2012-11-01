@@ -28,45 +28,41 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(value = HttpStatus.NOT_FOUND, reason = "No such content")
 public class NotFoundException extends RuntimeException {
 
-    /**
-     * シリアルバージョンUID.
-     */
-    private static final long serialVersionUID = -1751829506458796410L;
+	private static final long serialVersionUID = -1751829506458796410L;
 
-    /**
-     * @see RuntimeException
-     */
-    public NotFoundException() {
-        super();
-    }
+	/**
+	 * @see RuntimeException
+	 */
+	public NotFoundException() {
+		super();
+	}
 
-    /**
-     * @see RuntimeException
-     */
-    public NotFoundException(
-            String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
+	/**
+	 * @see RuntimeException
+	 */
+	public NotFoundException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+		super(message, cause, enableSuppression, writableStackTrace);
+	}
 
-    /**
-     * @see RuntimeException
-     */
-    public NotFoundException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * @see RuntimeException
+	 */
+	public NotFoundException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * @see RuntimeException
-     */
-    public NotFoundException(String message) {
-        super(message);
-    }
+	/**
+	 * @see RuntimeException
+	 */
+	public NotFoundException(String message) {
+		super(message);
+	}
 
-    /**
-     * @see RuntimeException
-     */
-    public NotFoundException(Throwable cause) {
-        super(cause);
-    }
+	/**
+	 * @see RuntimeException
+	 */
+	public NotFoundException(Throwable cause) {
+		super(cause);
+	}
 
 }

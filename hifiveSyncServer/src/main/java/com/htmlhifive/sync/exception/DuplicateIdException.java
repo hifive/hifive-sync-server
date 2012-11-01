@@ -24,7 +24,7 @@ package com.htmlhifive.sync.exception;
  */
 public class DuplicateIdException extends Exception {
 
-	private static final long serialVersionUID = -1708837543557342515L;
+	private static final long serialVersionUID = 5560074889154984358L;
 
 	/**
 	 * 競合対象のサーバ側対象リソースアイテムのID.

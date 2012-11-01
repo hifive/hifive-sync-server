@@ -28,7 +28,6 @@ import org.junit.Test;
  *
  * @author kishigam
  */
-@SuppressWarnings("deprecation")
 public class DownloadCommonDataTest {
 
 	/**
@@ -65,32 +64,22 @@ public class DownloadCommonDataTest {
 		DownloadCommonData target = new DownloadCommonData(storageId);
 		target.setLastDownloadTime(10);
 		target.setSyncTime(100);
-		target.setLockToken("token");
 
 		DownloadCommonData eq = new DownloadCommonData(target.getStorageId());
 		eq.setLastDownloadTime(target.getLastDownloadTime());
 		eq.setSyncTime(target.getSyncTime());
-		eq.setLockToken(target.getLockToken());
 
 		DownloadCommonData ne1 = new DownloadCommonData("other storage");
 		ne1.setLastDownloadTime(target.getLastDownloadTime());
 		ne1.setSyncTime(target.getSyncTime());
-		ne1.setLockToken(target.getLockToken());
 
 		DownloadCommonData ne2 = new DownloadCommonData(target.getStorageId());
 		ne2.setLastDownloadTime(20);
 		ne2.setSyncTime(target.getSyncTime());
-		ne2.setLockToken(target.getLockToken());
 
 		DownloadCommonData ne3 = new DownloadCommonData(target.getStorageId());
 		ne3.setLastDownloadTime(target.getLastDownloadTime());
 		ne3.setSyncTime(200);
-		ne3.setLockToken(target.getLockToken());
-
-		DownloadCommonData ne4 = new DownloadCommonData(target.getStorageId());
-		ne4.setLastDownloadTime(target.getLastDownloadTime());
-		ne4.setSyncTime(target.getSyncTime());
-		ne4.setLockToken("other token");
 
 		// Act
 		// Assert：結果が正しいこと
@@ -98,6 +87,5 @@ public class DownloadCommonDataTest {
 		assertThat(target.equals(ne1), is(false));
 		assertThat(target.equals(ne2), is(false));
 		assertThat(target.equals(ne3), is(false));
-		assertThat(target.equals(ne4), is(false));
 	}
 }

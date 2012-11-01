@@ -1683,11 +1683,6 @@ public class AbstractSyncResourceTest {
 			public String getStorageId() {
 				return "storageId";
 			}
-
-			@Override
-			public String getLockToken() {
-				return null;
-			}
 		};
 	}
 

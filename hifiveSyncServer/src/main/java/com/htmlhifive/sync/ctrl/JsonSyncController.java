@@ -30,13 +30,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import com.htmlhifive.sync.exception.ConflictException;
-import com.htmlhifive.sync.exception.LockException;
 import com.htmlhifive.sync.service.Synchronizer;
 import com.htmlhifive.sync.service.download.DownloadCommonData;
 import com.htmlhifive.sync.service.download.DownloadRequest;
 import com.htmlhifive.sync.service.download.DownloadResponse;
-import com.htmlhifive.sync.service.lock.LockRequest;
-import com.htmlhifive.sync.service.lock.LockResponse;
 import com.htmlhifive.sync.service.upload.UploadRequest;
 import com.htmlhifive.sync.service.upload.UploadResponse;
 
@@ -46,14 +43,11 @@ import com.htmlhifive.sync.service.upload.UploadResponse;
  * <ul>
  * <li>リソースアイテムの下り更新(download) ： /download
  * <li>リソースアイテムの上り更新(upload) ： /upload
- * <li>リソースアイテムのロック(getLock) ： /getlock
- * <li>リソースアイテムのロック開放(releaseLock) ： /releaselock
  * </ul>
  * いずれの機能も、JSONによってデータを送受信します.
  *
  * @author kishigam
  */
-@SuppressWarnings("deprecation")
 @Controller
 public class JsonSyncController {
 
@@ -93,8 +87,6 @@ public class JsonSyncController {
 			request.setDownloadCommonData(requestCommon);
 		}
 
-		// TODO 次期バージョンにて実装予定
-		//		try {
 		// 下り更新サービスを呼び出し
 		DownloadResponse response = synchronizer.download(request);
 
@@ -103,18 +95,8 @@ public class JsonSyncController {
 			response.getDownloadCommonData().setStorageId(null);
 		}
 
-		// TODO 次期バージョンにて実装予定
-		// ロックトークンをレスポンスデータから除外するためnullをセット
-		//			response.getDownloadCommonData().setLockToken(null);
-
 		// HTTPレスポンスをリターン
 		return createHttpResponseEntity(response, HttpStatus.OK);
-
-		// TODO 次期バージョンにて実装予定
-		//		} catch (LockException e) {
-		//			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
-		//			return createHttpResponseEntity(HttpStatus.LOCKED);
-		//		}
 	}
 
 	/**
@@ -145,8 +127,6 @@ public class JsonSyncController {
 			// ストレージID、競合タイプ(NONE)、ロックトークンをレスポンスデータから除外するためnullをセット
 			response.getUploadCommonData().setStorageId(null);
 			response.getUploadCommonData().setConflictType(null);
-			// TODO 次期バージョンにて実装予定
-			//			response.getUploadCommonData().setLockToken(null);
 
 			// レスポンスデータを生成し、リターン
 			return createHttpResponseEntity(response, HttpStatus.OK);
@@ -154,64 +134,6 @@ public class JsonSyncController {
 		} catch (ConflictException e) {
 			// 競合発生時は409レスポンスをリターンする
 			return createHttpResponseEntity(e.getResponse(), HttpStatus.CONFLICT);
-
-			// TODO 次期バージョンにて実装予定
-			//		} catch (LockException e) {
-			//			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
-			//			return createHttpResponseEntity(HttpStatus.LOCKED);
-		}
-	}
-
-	/**
-	 * リソースアイテムをロックするクライアントからのリクエストを処理し、結果をレスポンスとして返します.<br>
-	 * TODO 次期バージョンにて実装予定
-	 *
-	 * @param request ロック取得リクエストデータ
-	 * @return ロックレスポンスデータ(JSON形式)
-	 */
-	@Deprecated
-	@RequestMapping(value = "/getlock", method = RequestMethod.POST, params = {}, headers = {
-			"Content-Type=application/json", "Accept=application/json" })
-	public ResponseEntity<LockResponse> getLock(@RequestBody LockRequest request) {
-
-		try {
-			// ロック取得サービスを呼び出し
-			LockResponse response = synchronizer.getLock(request);
-
-			// ストレージIDをレスポンスデータから除外するためnullをセット
-			response.getLockCommonData().setStorageId(null);
-
-			// レスポンスデータを生成し、リターン
-			return createHttpResponseEntity(response, HttpStatus.OK);
-
-		} catch (LockException e) {
-			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
-			return createHttpResponseEntity(HttpStatus.LOCKED);
-		}
-	}
-
-	/**
-	 * ロックを開放するクライアントからのリクエストを処理し、結果をレスポンスとして返します.<br>
-	 * TODO 次期バージョンにて実装予定
-	 *
-	 * @param request ロックリクエストデータ
-	 * @return ロックレスポンスデータ(JSON形式)
-	 */
-	@Deprecated
-	@RequestMapping(value = "/releaselock", method = RequestMethod.POST, params = {}, headers = {
-			"Content-Type=application/json", "Accept=application/json" })
-	public ResponseEntity<Void> releaseLock(@RequestBody LockRequest request) {
-
-		try {
-			// ロック開放サービスを呼び出し
-			synchronizer.releaseLock(request);
-
-			// ボディなしのレスポンスデータを生成し、リターン
-			return createHttpResponseEntity(HttpStatus.OK);
-
-		} catch (LockException e) {
-			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
-			return createHttpResponseEntity(HttpStatus.LOCKED);
 		}
 	}
 
@@ -228,19 +150,5 @@ public class JsonSyncController {
 		responseHeaders.setContentType(MediaType.APPLICATION_JSON);
 
 		return new ResponseEntity<>(body, responseHeaders, status);
-	}
-
-	/**
-	 * ステータスコードからボディを含まないHTTPレスポンスエンティティを返します.
-	 *
-	 * @param status ステータスコードオブジェクト
-	 * @return HTTPレスポンスエンティティ
-	 */
-	private <T> ResponseEntity<T> createHttpResponseEntity(HttpStatus status) {
-
-		HttpHeaders responseHeaders = new HttpHeaders();
-		responseHeaders.setContentType(MediaType.APPLICATION_JSON);
-
-		return new ResponseEntity<>(null, responseHeaders, status);
 	}
 }

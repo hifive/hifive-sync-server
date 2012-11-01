@@ -42,7 +42,7 @@ import com.htmlhifive.sync.service.SyncCommonData;
 @Table(name = "UPLOAD_COMMON_DATA")
 public class UploadCommonData implements SyncCommonData, Serializable {
 
-	private static final long serialVersionUID = -7882358942437646831L;
+	private static final long serialVersionUID = -1362415452954148958L;
 
 	/**
 	 * クライアントのストレージID.<br>
@@ -78,17 +78,6 @@ public class UploadCommonData implements SyncCommonData, Serializable {
 	private SyncConflictType conflictType;
 
 	/**
-	 * リクエストの対象となっているロックトークン.<br>
-	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.<br>
-	 * また、永続化の対象外です.<br>
-	 * TODO 次期バージョンにて実装予定
-	 */
-	@Deprecated
-	@Transient
-	private String lockToken;
-
-	/**
 	 * @see Object#equals(Object)
 	 */
 	@Override
@@ -103,8 +92,7 @@ public class UploadCommonData implements SyncCommonData, Serializable {
 
 		return new EqualsBuilder().append(this.storageId, uploadCommon.storageId)
 				.append(this.lastUploadTime, uploadCommon.lastUploadTime).append(this.syncTime, uploadCommon.syncTime)
-				.append(this.conflictType, uploadCommon.conflictType).append(this.lockToken, uploadCommon.lockToken)
-				.isEquals();
+				.append(this.conflictType, uploadCommon.conflictType).isEquals();
 	}
 
 	/**
@@ -114,7 +102,7 @@ public class UploadCommonData implements SyncCommonData, Serializable {
 	public int hashCode() {
 
 		return new HashCodeBuilder(17, 37).append(this.storageId).append(this.lastUploadTime).append(this.syncTime)
-				.append(this.conflictType).append(this.lockToken).hashCode();
+				.append(this.conflictType).hashCode();
 	}
 
 	/**
@@ -203,28 +191,5 @@ public class UploadCommonData implements SyncCommonData, Serializable {
 	 */
 	public void setConflictType(SyncConflictType conflictType) {
 		this.conflictType = conflictType;
-	}
-
-	/**
-	 * クライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.<br>
-	 * TODO 次期バージョンにて実装予定
-	 *
-	 * @return lockToken
-	 */
-	@Deprecated
-	@JsonSerialize(include = Inclusion.NON_EMPTY)
-	@Override
-	public String getLockToken() {
-		return lockToken;
-	}
-
-	/**
-	 * TODO 次期バージョンにて実装予定
-	 *
-	 * @param lockToken セットする lockToken
-	 */
-	@Deprecated
-	public void setLockToken(String lockToken) {
-		this.lockToken = lockToken;
 	}
 }

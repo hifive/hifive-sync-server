@@ -34,7 +34,7 @@ import com.htmlhifive.sync.service.SyncCommonData;
  */
 public class DownloadCommonData implements SyncCommonData, Serializable {
 
-	private static final long serialVersionUID = 3364037999085593958L;
+	private static final long serialVersionUID = -6156228658566046747L;
 
 	/**
 	 * クライアントのストレージID.<br>
@@ -54,15 +54,6 @@ public class DownloadCommonData implements SyncCommonData, Serializable {
 	 * リクエスト、レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
 	 */
 	private long syncTime;
-
-	/**
-	 * リクエストの対象となっているロックトークン.<br>
-	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.<br>
-	 * TODO 次期バージョンにて実装予定
-	 */
-	@Deprecated
-	private String lockToken;
 
 	/**
 	 * フレームワーク、ライブラリが使用するプライベートデフォルトコンストラクタ.
@@ -95,8 +86,7 @@ public class DownloadCommonData implements SyncCommonData, Serializable {
 
 		return new EqualsBuilder().append(this.storageId, downloadCommon.storageId)
 				.append(this.lastDownloadTime, downloadCommon.lastDownloadTime)
-				.append(this.syncTime, downloadCommon.syncTime).append(this.lockToken, downloadCommon.lockToken)
-				.isEquals();
+				.append(this.syncTime, downloadCommon.syncTime).isEquals();
 	}
 
 	/**
@@ -106,7 +96,7 @@ public class DownloadCommonData implements SyncCommonData, Serializable {
 	public int hashCode() {
 
 		return new HashCodeBuilder(17, 37).append(this.storageId).append(this.lastDownloadTime).append(this.syncTime)
-				.append(this.lockToken).hashCode();
+				.hashCode();
 	}
 
 	/**
@@ -165,28 +155,5 @@ public class DownloadCommonData implements SyncCommonData, Serializable {
 	 */
 	public void setSyncTime(long syncTime) {
 		this.syncTime = syncTime;
-	}
-
-	/**
-	 * クライアントへのレスポンスから除外するため、{@link JsonSerialize}を追加しています.<br>
-	 * TODO 次期バージョンにて実装予定
-	 *
-	 * @return lockToken
-	 */
-	@Deprecated
-	@JsonSerialize(include = Inclusion.NON_DEFAULT)
-	@Override
-	public String getLockToken() {
-		return lockToken;
-	}
-
-	/**
-	 * TODO 次期バージョンにて実装予定
-	 *
-	 * @param lockToken セットする lockToken
-	 */
-	@Deprecated
-	public void setLockToken(String lockToken) {
-		this.lockToken = lockToken;
 	}
 }

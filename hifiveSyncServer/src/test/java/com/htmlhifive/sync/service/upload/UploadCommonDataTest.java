@@ -29,7 +29,6 @@ import com.htmlhifive.sync.resource.SyncConflictType;
  *
  * @author kishigam
  */
-@SuppressWarnings("deprecation")
 public class UploadCommonDataTest {
 
 	/**
@@ -64,7 +63,6 @@ public class UploadCommonDataTest {
 				setLastUploadTime(10);
 				setSyncTime(100);
 				setConflictType(SyncConflictType.NONE);
-				setLockToken("token");
 			}
 		};
 
@@ -74,7 +72,6 @@ public class UploadCommonDataTest {
 				setLastUploadTime(target.getLastUploadTime());
 				setSyncTime(target.getSyncTime());
 				setConflictType(target.getConflictType());
-				setLockToken(target.getLockToken());
 			}
 		};
 
@@ -84,7 +81,6 @@ public class UploadCommonDataTest {
 				setLastUploadTime(target.getLastUploadTime());
 				setSyncTime(target.getSyncTime());
 				setConflictType(target.getConflictType());
-				setLockToken(target.getLockToken());
 			}
 		};
 
@@ -94,7 +90,6 @@ public class UploadCommonDataTest {
 				setLastUploadTime(20);
 				setSyncTime(target.getSyncTime());
 				setConflictType(target.getConflictType());
-				setLockToken(target.getLockToken());
 			}
 		};
 
@@ -104,7 +99,6 @@ public class UploadCommonDataTest {
 				setLastUploadTime(target.getLastUploadTime());
 				setSyncTime(30);
 				setConflictType(target.getConflictType());
-				setLockToken(target.getLockToken());
 			}
 		};
 
@@ -114,19 +108,9 @@ public class UploadCommonDataTest {
 				setLastUploadTime(target.getLastUploadTime());
 				setSyncTime(target.getSyncTime());
 				setConflictType(SyncConflictType.UPDATED);
-				setLockToken(target.getLockToken());
 			}
 		};
 
-		UploadCommonData ne5 = new UploadCommonData() {
-			{
-				setStorageId(target.getStorageId());
-				setLastUploadTime(target.getLastUploadTime());
-				setSyncTime(target.getSyncTime());
-				setConflictType(target.getConflictType());
-				setLockToken("other token");
-			}
-		};
 		// Act
 		// Assert：結果が正しいこと
 		assertThat(target.equals(eq), is(true));
@@ -134,7 +118,6 @@ public class UploadCommonDataTest {
 		assertThat(target.equals(ne2), is(false));
 		assertThat(target.equals(ne3), is(false));
 		assertThat(target.equals(ne4), is(false));
-		assertThat(target.equals(ne5), is(false));
 	}
 
 	/**

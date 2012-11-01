@@ -19,13 +19,9 @@ package com.htmlhifive.sync.resource;
 import java.util.List;
 import java.util.Properties;
 
-import com.htmlhifive.sync.exception.LockException;
 import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
-import com.htmlhifive.sync.resource.lock.LockStrategy;
-import com.htmlhifive.sync.resource.lock.ResourceLockStatusType;
 import com.htmlhifive.sync.resource.update.UpdateStrategy;
 import com.htmlhifive.sync.service.SyncCommonData;
-import com.htmlhifive.sync.service.lock.LockCommonData;
 import com.htmlhifive.sync.service.upload.UploadCommonData;
 
 /**
@@ -35,7 +31,6 @@ import com.htmlhifive.sync.service.upload.UploadCommonData;
  *
  * @param <I> アイテムのデータ型
  */
-@SuppressWarnings("deprecation")
 public interface SyncResource<I> {
 
 	/**
@@ -44,7 +39,6 @@ public interface SyncResource<I> {
 	 * @param syncCommon 同期共通データ
 	 * @param itemCommonDataList リソースアイテム共通データのリスト
 	 * @return リソースアイテムのラッパーオブジェクトのリスト
-	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
 	List<ResourceItemWrapper<I>> get(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonDataList);
 
@@ -54,7 +48,6 @@ public interface SyncResource<I> {
 	 * @param downloadCommon 共通データ
 	 * @param query クエリオブジェクト
 	 * @return 条件に合致するリソースアイテムのリスト
-	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
 	List<ResourceItemWrapper<I>> getByQuery(SyncCommonData syncCommon, ResourceQueryConditions query);
 
@@ -76,7 +69,6 @@ public interface SyncResource<I> {
 	 * @param itemCommon リソースアイテム共通データ
 	 * @param item アイテム
 	 * @return 更新されたアイテムの情報を含むラッパーオブジェクト
-	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
 	ResourceItemWrapper<I> update(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon, I item);
 
@@ -86,43 +78,8 @@ public interface SyncResource<I> {
 	 * @param uploadCommon 上り更新共通データ
 	 * @param itemCommon リソースアイテム共通データ
 	 * @return 更新されたアイテムの情報を含むラッパーオブジェクト
-	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
 	ResourceItemWrapper<I> delete(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon);
-
-	/**
-	 * 指定されたリソースアイテムをロックします.<br>
-	 * TODO: 次期バージョンにて実装予定
-	 *
-	 * @param lockCommon ロック取得共通データ
-	 * @param itemCommonDataList リソースアイテム共通データのリスト
-	 * @return ロックしたアイテムの情報を含むラッパーオブジェクトのリスト
-	 * @throws LockException ロックできなかった場合
-	 */
-	@Deprecated
-	List<ResourceItemWrapper<I>> lock(LockCommonData lockCommon, List<ResourceItemCommonData> itemCommonDataList);
-
-	/**
-	 * 指定されたリソースアイテムのロックを開放します.<br>
-	 * TODO: 次期バージョンにて実装予定
-	 *
-	 * @param lockCommon ロック取得共通データ
-	 * @param itemCommonList リソースアイテム共通データのリスト
-	 * @throws LockException ロックの開放に失敗した場合
-	 */
-	@Deprecated
-	void releaseLock(LockCommonData lockCommon, List<ResourceItemCommonData> itemCommonList);
-
-	/**
-	 * ロックされている全リソースアイテムの共通データを返します.<br>
-	 * TODO: 次期バージョンにて実装予定
-	 *
-	 * @param lockCommonData ロック取得共通データ
-	 * @return リソースアイテム共通データのリスト
-	 * @throws LockException 対象リソースアイテムがロックされていた場合
-	 */
-	@Deprecated
-	List<ResourceItemCommonData> lockedItemsList(LockCommonData lockCommonData);
 
 	/**
 	 * 他のリクエストの影響を防止するために、指定されたリソースアイテムを"for update"状態にします.<br>
@@ -130,7 +87,6 @@ public interface SyncResource<I> {
 	 *
 	 * @param itemCommonList リソースアイテム共通データのリスト
 	 * @return アクセス権を取得したリソースアイテム共通データのリスト
-	 * @throws LockException 対象リソースアイテムがロックされていた場合
 	 */
 	List<ResourceItemCommonData> forUpdate(List<ResourceItemCommonData> itemCommonList);
 
@@ -149,15 +105,6 @@ public interface SyncResource<I> {
 	Class<I> itemType();
 
 	/**
-	 * このリソースへアクセスする際に要求されるロック方式を返します.<br>
-	 * TODO: 次期バージョンにて実装予定
-	 *
-	 * @return リソースロック状態タイプ
-	 */
-	@Deprecated
-	ResourceLockStatusType requiredLockStatus();
-
-	/**
 	 * このリソースのアイテム型に変換するためのコンバータオブジェクトを返します.
 	 *
 	 * @return アイテムの型を表すClassオブジェクト
@@ -172,26 +119,6 @@ public interface SyncResource<I> {
 	 * @param resourceConfigurations 適用する設定情報
 	 */
 	void applyResourceConfigurations(Properties resourceConfigurations);
-
-	/**
-	 * このリソースが要求するロック状態を設定します.<br>
-	 * 通常、アプリケーションから使用することはありません.<br>
-	 * TODO: 次期バージョンにて実装予定
-	 *
-	 * @param requiredLockStatus セットする requiredLockStatus
-	 */
-	@Deprecated
-	void setRequiredLockStatus(ResourceLockStatusType requiredLockStatus);
-
-	/**
-	 * リソースのロックを管理するマネージャを設定します.<br>
-	 * 通常、アプリケーションから使用することはありません.<br>
-	 * TODO: 次期バージョンにて実装予定
-	 *
-	 * @param lockManager セットする lockManager
-	 */
-	@Deprecated
-	void setLockStrategy(LockStrategy lockManager);
 
 	/**
 	 * ロックエラー発生時の更新方法を指定するストラテジーオブジェクトを設定します.<br>

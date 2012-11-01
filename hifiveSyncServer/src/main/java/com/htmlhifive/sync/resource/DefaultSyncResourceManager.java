@@ -33,8 +33,6 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
 import com.htmlhifive.sync.exception.SyncException;
-import com.htmlhifive.sync.resource.lock.LockStrategy;
-import com.htmlhifive.sync.resource.lock.ResourceLockStatusType;
 import com.htmlhifive.sync.resource.update.UpdateStrategy;
 
 /**
@@ -43,7 +41,6 @@ import com.htmlhifive.sync.resource.update.UpdateStrategy;
  *
  * @author kishigam
  */
-@SuppressWarnings("deprecation")
 @Service
 public class DefaultSyncResourceManager implements SyncResourceManager {
 
@@ -57,20 +54,6 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	 * アプリケーション内のリソースを保持するMap
 	 */
 	private Map<String, Class<? extends SyncResource<?>>> resourceMap;
-
-	/**
-	 * リソースごとのロックモードを保持するMap.<br>
-	 * TODO 次期バージョンにて実装予定
-	 */
-	@Deprecated
-	private Map<String, ResourceLockStatusType> requiredLockStatusMap;
-
-	/**
-	 * リソースごとのロック戦略オブジェクトを保持するMap.<br>
-	 * TODO 次期バージョンにて実装予定
-	 */
-	@Deprecated
-	private Map<String, Class<? extends LockStrategy>> lockStrategyMap;
 
 	/**
 	 * リソースごとの更新戦略オブジェクトを保持するMap.<br>
@@ -98,12 +81,6 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	public DefaultSyncResourceManager(String syncResourceBaseTypeName, Properties resourceConfigurations) {
 
 		this.resourceMap = new HashMap<>();
-
-		// TODO 次期バージョンにて実装予定
-		this.requiredLockStatusMap = new HashMap<>();
-
-		// TODO 次期バージョンにて実装予定
-		this.lockStrategyMap = new HashMap<>();
 
 		this.updateStrategyMap = new HashMap<>();
 
@@ -147,14 +124,6 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 				continue;
 			}
 			resourceMap.put(resourceName, resourceClass);
-
-			// ロック状態タイプを特定する
-			// TODO 次期バージョンにて実装予定
-			requiredLockStatusMap.put(resourceName, resourceAnnotation.requiredLockStatus());
-
-			// ロックマネージャを特定する
-			// TODO 次期バージョンにて実装予定
-			lockStrategyMap.put(resourceName, resourceAnnotation.lockStrategy());
 
 			// 更新戦略オブジェクトを特定する
 			updateStrategyMap.put(resourceName, resourceAnnotation.updateStrategy());
@@ -206,12 +175,6 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 		SyncResource<?> resource = context.getBean(resourceClass);
 
 		// LockStrategy,UpdateStrategyのセット
-
-		// TODO 次期バージョンにて実装予定
-		resource.setRequiredLockStatus(requiredLockStatusMap.get(resourceName));
-
-		// TODO 次期バージョンにて実装予定
-		resource.setLockStrategy(context.getBean(lockStrategyMap.get(resourceName)));
 
 		resource.setUpdateStrategy(context.getBean(updateStrategyMap.get(resourceName)));
 

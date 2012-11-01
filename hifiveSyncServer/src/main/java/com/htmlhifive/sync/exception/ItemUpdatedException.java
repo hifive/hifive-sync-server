@@ -27,7 +27,7 @@ import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
  */
 public class ItemUpdatedException extends Exception {
 
-	private static final long serialVersionUID = -3921862565343901104L;
+	private static final long serialVersionUID = -3612660489368099360L;
 
 	/**
 	 * 競合対象のサーバ側対象リソースアイテム共通データ.

@@ -23,9 +23,6 @@ package com.htmlhifive.sync.exception;
  */
 public class SyncException extends RuntimeException {
 
-	/**
-	 * シリアルバージョンUID.
-	 */
 	private static final long serialVersionUID = 4598815832929604945L;
 
 	/**

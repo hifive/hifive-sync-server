@@ -23,9 +23,6 @@ import java.lang.annotation.Target;
 
 import org.springframework.stereotype.Service;
 
-import com.htmlhifive.sync.resource.lock.LockStrategy;
-import com.htmlhifive.sync.resource.lock.ResourceItemCommonLockStrategy;
-import com.htmlhifive.sync.resource.lock.ResourceLockStatusType;
 import com.htmlhifive.sync.resource.update.ClientResolvingStrategy;
 import com.htmlhifive.sync.resource.update.UpdateStrategy;
 
@@ -34,7 +31,6 @@ import com.htmlhifive.sync.resource.update.UpdateStrategy;
  *
  * @author kishigam
  */
-@SuppressWarnings("deprecation")
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Service
@@ -46,25 +42,6 @@ public @interface SyncResourceService {
 	 * @return リソース名
 	 */
 	String resourceName();
-
-	/**
-	 * リソースが採用する(要求する)ロック状態のタイプ.<br>
-	 * TODO 次期バージョンにて実装予定
-	 *
-	 * @return ロック状態タイプ
-	 */
-	@Deprecated
-	ResourceLockStatusType requiredLockStatus() default ResourceLockStatusType.UNLOCK;
-
-	/**
-	 * リソースが使用するロック戦略の実装クラス.<br>
-	 * requiredLockStatusが{@link ResourceLockStatusType#UNLOCK}の場合は使用されません.<br>
-	 * TODO 次期バージョンにて実装予定
-	 *
-	 * @return LockManagerのクラスオブジェクト
-	 */
-	@Deprecated
-	Class<? extends LockStrategy> lockStrategy() default ResourceItemCommonLockStrategy.class;
 
 	/**
 	 * リソースが使用する競合発生時のリソースアイテム更新戦略の実装クラス.<br>

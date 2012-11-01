@@ -28,45 +28,41 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 @ResponseStatus(value = HttpStatus.BAD_REQUEST, reason = "Bad Requst")
 public class BadRequestException extends RuntimeException {
 
-    /**
-     * シリアルバージョンUID.
-     */
-    private static final long serialVersionUID = -8730623190768211005L;
+	private static final long serialVersionUID = -8730623190768211005L;
 
-    /**
-     * @see RuntimeException
-     */
-    public BadRequestException() {
-        super();
-    }
+	/**
+	 * @see RuntimeException
+	 */
+	public BadRequestException() {
+		super();
+	}
 
-    /**
-     * @see RuntimeException
-     */
-    public BadRequestException(
-            String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
+	/**
+	 * @see RuntimeException
+	 */
+	public BadRequestException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+		super(message, cause, enableSuppression, writableStackTrace);
+	}
 
-    /**
-     * @see RuntimeException
-     */
-    public BadRequestException(String message, Throwable cause) {
-        super(message, cause);
-    }
+	/**
+	 * @see RuntimeException
+	 */
+	public BadRequestException(String message, Throwable cause) {
+		super(message, cause);
+	}
 
-    /**
-     * @see RuntimeException
-     */
-    public BadRequestException(String message) {
-        super(message);
-    }
+	/**
+	 * @see RuntimeException
+	 */
+	public BadRequestException(String message) {
+		super(message);
+	}
 
-    /**
-     * @see RuntimeException
-     */
-    public BadRequestException(Throwable cause) {
-        super(cause);
+	/**
+	 * @see RuntimeException
+	 */
+	public BadRequestException(Throwable cause) {
+		super(cause);
 
-    }
+	}
 }
