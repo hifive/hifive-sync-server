@@ -36,7 +36,7 @@ import org.springframework.test.context.transaction.TransactionConfiguration;
 /**
  * <H3>
  * PersonRepositoryのテストクラス.</H3>
- *
+ * 
  * @author kishigam
  */
 @ContextConfiguration(locations = "classpath:test-context.xml")
@@ -113,7 +113,8 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
 
     /**
      * {@link PersonRepository#findAll(org.springframework.data.jpa.domain.Specification)}
-     * 用テストメソッド. アイテムの識別子の条件に合致しない場合は結果に含まれない.
+     * 用テストメソッド. <br>
+     * アイテムの識別子の条件に合致しない場合は結果に含まれない.
      */
     @Test
     public void testNotFoundBecaouseOfCommonDataCond() {
@@ -136,7 +137,8 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
     }
 
     /**
-     *
+     * {@link PersonRepository#findAll(org.springframework.data.jpa.domain.Specification)}
+     * クエリ条件が空の場合はアイテムの識別子の条件のみで検索する.
      */
     @Test
     public void testFindAllBySpecOfCommonDataCondOnly() {
@@ -156,4 +158,6 @@ public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringConte
         assertThat(actual.contains(personB), is(true));
         assertThat(actual.contains(personC), is(true));
     }
+    
+    
 }
