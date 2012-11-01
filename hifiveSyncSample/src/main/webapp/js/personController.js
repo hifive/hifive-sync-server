@@ -79,7 +79,8 @@ $(function() {
 						that.personDataModel.remove(id);
 					}
 				}
-				alert('ユーザのデータが更新されていました。確認後、再度更新しなおしてください');				
+				alert('ユーザのデータが更新されていました。確認後、再度更新しなおしてください');
+				that.plotPerson();
 			});
 
 		},
@@ -192,6 +193,9 @@ $(function() {
 			promise.always(function() {
 				that.plotPerson();
 				scheduleSample.common.closeDialog();
+				if (obj && obj.status === 409) {
+					return;
+				}
 				alert('ユーザ情報を変更しました。');
 			});
 		},
@@ -213,6 +217,9 @@ $(function() {
 			
 			promise.always( function() {
 					that.plotPerson();
+					if (obj && obj.status === 409) {
+						return;
+					}
 					alert('削除しました。');
 					$('#dialog .closebutton').trigger('click');
 			});
