@@ -82,7 +82,7 @@ public class ResourceItemCommonDataRepositoryCustomTest extends AbstractTransact
 	 * nullが渡されると、{@link InvalidDataAccessApiUsageException}がスローされる.
 	 */
 	@Test(expected = InvalidDataAccessApiUsageException.class)
-	public void testFindOneReturnNull() {
+	public void testFindOneFailBecauseOfNullInput() {
 
 		target.findOne(null);
 
