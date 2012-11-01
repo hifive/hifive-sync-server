@@ -148,18 +148,18 @@ public class UploadCommonDataTest {
 		final UploadCommonData current = new UploadCommonData();
 
 		// 二重送信
-		last.setLastUploadTime(100);
+		last.setLastUploadTime(200);
 		current.setLastUploadTime(100);
 		assertThat(last.isLaterUploadThan(current), is(true));
 
 		// 通常の上り更新リクエスト
 		last.setLastUploadTime(100);
-		current.setLastUploadTime(200);
+		current.setLastUploadTime(100);
 		assertThat(last.isLaterUploadThan(current), is(false));
 
 		// 起こりえない状態
-		last.setLastUploadTime(200);
-		current.setLastUploadTime(100);
-		assertThat(last.isLaterUploadThan(current), is(true));
+		last.setLastUploadTime(100);
+		current.setLastUploadTime(200);
+		assertThat(last.isLaterUploadThan(current), is(false));
 	}
 }

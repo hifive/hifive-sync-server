@@ -856,6 +856,110 @@ public class DefaultSynchronizerTest {
 
 	/**
 	 * {@link DefaultSynchronizer#upload(UploadRequest)}用テストメソッド.<br>
+	 * 前回上り更新時刻が0(各ストレージIDごとに初回)の場合は、当然二重送信にはならない.
+	 */
+	@Test
+	public void testUploadFirst() {
+
+		// Arrange：正常系
+		final DefaultSynchronizer target = new DefaultSynchronizer();
+
+		final String storageId = "storageId";
+
+		final UploadCommonData requestCommon = new UploadCommonData() {
+			{
+				setStorageId(storageId);
+				setLastUploadTime(0);
+			}
+		};
+
+		final ResourceItemWrapper<? extends Map<String, Object>> item1 = createUploadItemWrapper("1", "1",
+				SyncAction.CREATE);
+
+		final UploadRequest request = new UploadRequest() {
+			{
+				setUploadCommonData(requestCommon);
+				setResourceItems(new ArrayList<ResourceItemWrapper<? extends Map<String, Object>>>() {
+					{
+						add(item1);
+					}
+				});
+			}
+		};
+
+		final long syncTime = 4000;
+
+		final ResourceItemConverter<Object> itemConverter = getTestConverter();
+
+		final UploadCommonData responseCommon = new UploadCommonData() {
+			{
+				setStorageId(storageId);
+				setLastUploadTime(syncTime);
+				setConflictType(SyncConflictType.NONE);
+			}
+		};
+
+		new Expectations() {
+			{
+				setField(target, syncConfiguration);
+				setField(target, resourceManager);
+				setField(target, repository);
+
+				syncConfiguration.generateSyncTime();
+				result = syncTime;
+
+				repository.findOne(storageId);
+				result = null;
+
+				syncConfiguration.uploadControl();
+				result = UploadControlType.NONE;
+
+				syncConfiguration.uploadControl();
+				result = UploadControlType.NONE;
+
+				// resource1(1)
+
+				resourceManager.locateSyncResource("resource1");
+				result = resource1;
+
+				resource1.itemConverter();
+				result = itemConverter;
+
+				resource1.itemType();
+				result = Object.class;
+
+				// item1
+
+				resource1.create(requestCommon, item1.getItemCommonData(),
+						itemConverter.convertToItem(item1.getItem(), Object.class));
+				result = new Delegate() {
+					@SuppressWarnings("unused")
+					ResourceItemWrapper<Object> create(UploadCommonData uploadCommon,
+							ResourceItemCommonData itemCommon, Object item) {
+						itemCommon.setConflictType(SyncConflictType.NONE);
+
+						return new ResourceItemWrapper<Object>(itemCommon, item);
+					}
+				};
+
+				// result
+
+				repository.save(responseCommon);
+				result = responseCommon;
+			}
+		};
+
+		// Act
+		UploadResponse actual = target.upload(request);
+
+		// Assert：結果が正しいこと
+		UploadResponse expected = new UploadResponse(responseCommon);
+
+		assertThat(actual, is(equalTo(expected)));
+	}
+
+	/**
+	 * {@link DefaultSynchronizer#upload(UploadRequest)}用テストメソッド.<br>
 	 * {@link UploadControlType#AVOID_DEADLOCK}が設定されている場合、順序をソートして実行する.
 	 */
 	@Test
@@ -1295,7 +1399,7 @@ public class DefaultSynchronizerTest {
 		final UploadCommonData lastCommon = new UploadCommonData() {
 			{
 				setStorageId(storageId);
-				setLastUploadTime(1000);
+				setLastUploadTime(2000);
 			}
 		};
 
