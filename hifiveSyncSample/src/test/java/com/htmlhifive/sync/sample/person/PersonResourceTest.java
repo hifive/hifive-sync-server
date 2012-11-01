@@ -173,8 +173,8 @@ public class PersonResourceTest {
     }
 
     /**
-     * {@link PersonResource#doGet(String...)}用テストメソッド. 存在しない場合
-     * {@link BadRequestException}がスローされる.
+     * {@link PersonResource#doGet(String...)}用テストメソッド.<br>
+     * 存在しない場合 {@link BadRequestException}がスローされる.
      */
     @Test(expected = BadRequestException.class)
     public void testDoGetFailBecausePersonNotExists() {
@@ -266,7 +266,7 @@ public class PersonResourceTest {
 
     /**
      * {@link PersonResource#doGetByQuery(Map, String...)}用テストメソッド.
-     * 共通データリストがnullの時は例外をそのままスロー.
+     * 識別子リストがnullの時は例外をそのままスロー.
      */
     @Test(expected = Exception.class)
     public void testDoGetByQueryFailBecauseOfNullIds() {
@@ -386,7 +386,8 @@ public class PersonResourceTest {
     }
 
     /**
-     * {@link PersonResource#doCreate(Person)}用テストメソッド.
+     * {@link PersonResource#doCreate(Person)}用テストメソッド. <br>
+     * キー重複が発生した場合 {@link DuplicateIdException}がスローされる.
      */
     @Test(expected = DuplicateIdException.class)
     public void testDoCreateFailBecauseOfDuplicatePerson() throws Exception {
