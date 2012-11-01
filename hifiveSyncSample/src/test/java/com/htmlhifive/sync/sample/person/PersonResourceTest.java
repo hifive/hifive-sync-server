@@ -35,7 +35,16 @@ import org.springframework.data.jpa.domain.Specifications;
 
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
+import com.htmlhifive.sync.exception.ItemUpdatedException;
+import com.htmlhifive.sync.resource.ResourceItemConverter;
+import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.ResourceQuerySpecifications;
+import com.htmlhifive.sync.resource.SyncAction;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonDataId;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonDataService;
+import com.htmlhifive.sync.resource.update.UpdateStrategy;
+import com.htmlhifive.sync.service.upload.UploadCommonData;
 
 /**
  * <H3>
@@ -488,6 +497,96 @@ public class PersonResourceTest {
 
         // Assert：結果が正しいこと
         assertThat(actual, is(equalTo(personId)));
+    }
+
+    /**
+     * {@link PersonResource#update(UploadCommonData, ResourceItemCommonData, Person)}
+     * 用テストメソッド.<br>
+     * 競合が発生し解決ができない場合で、サーバ側アイテムデータが削除されている場合はIDのみのオブジェクトを返す.
+     */
+    @Test
+    public void testUpdateOccursConflictAndReturnDeletedItem() throws Exception {
+
+        // Arrange：例外系
+        final PersonResource target = new PersonResource();
+
+        final long syncTime = 50;
+        final UploadCommonData uploadCommon = new UploadCommonData() {
+            {
+                setSyncTime(syncTime);
+            }
+        };
+
+        final String targetItemId = "personId1";
+
+        final ResourceItemCommonDataId id = new ResourceItemCommonDataId("person", "1");
+        final ResourceItemCommonData updatingItemCommon =
+                new ResourceItemCommonData(id, targetItemId) {
+                    {
+                        setForUpdate(false);
+                        setAction(SyncAction.UPDATE);
+                        setLastModified(10);
+                    }
+                };
+        final Person updatingItem = new Person() {
+            {
+                setPersonId(targetItemId);
+                setName("update");
+            }
+        };
+
+        final ResourceItemCommonData itemCommonForUpdate =
+                new ResourceItemCommonData(id, targetItemId) {
+                    {
+                        setForUpdate(true);
+                        setAction(SyncAction.DELETE);
+                        setLastModified(20);
+                    }
+                };
+        final Person itemForUpdate = new Person() {
+            {
+                setPersonId(targetItemId);
+                setName("deleted");
+            }
+        };
+
+        new Expectations() {
+            UpdateStrategy updateStrategy;
+            ResourceItemConverter<Person> defaultItemConverter;
+            ResourceItemCommonDataService commonDataService;
+            {
+                setField(target, updateStrategy);
+                setField(target, defaultItemConverter);
+                setField(target, commonDataService);
+
+                setField(target, repository);
+
+                commonDataService.currentCommonDataForUpdate(id);
+                result = itemCommonForUpdate;
+
+                updateStrategy.resolveConflict(
+                        updatingItemCommon, updatingItem, itemCommonForUpdate, null);
+                result = new ItemUpdatedException(itemCommonForUpdate, null);
+
+                repository.findOne(targetItemId);
+                result = itemForUpdate;
+            }
+        };
+
+        // Act
+        ResourceItemWrapper<Person> actual =
+                target.update(uploadCommon, updatingItemCommon, updatingItem);
+
+        // Assert：結果が正しいこと
+        assertThat(actual.getItemCommonData(), is(equalTo(itemCommonForUpdate)));
+
+        Person expectedItem = new Person() {
+            {
+                setPersonId(targetItemId);
+            }
+        };
+
+        assertThat(actual.getItem(), is(equalTo(expectedItem)));
     }
 
     /**

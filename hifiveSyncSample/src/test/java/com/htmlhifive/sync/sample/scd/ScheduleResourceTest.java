@@ -25,9 +25,18 @@ import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
+import com.htmlhifive.sync.exception.ItemUpdatedException;
+import com.htmlhifive.sync.resource.ResourceItemConverter;
+import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.ResourceQuerySpecifications;
+import com.htmlhifive.sync.resource.SyncAction;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonDataId;
+import com.htmlhifive.sync.resource.common.ResourceItemCommonDataService;
+import com.htmlhifive.sync.resource.update.UpdateStrategy;
 import com.htmlhifive.sync.sample.person.Person;
 import com.htmlhifive.sync.sample.person.PersonRepository;
+import com.htmlhifive.sync.service.upload.UploadCommonData;
 
 /**
  * <H3>
@@ -799,6 +808,95 @@ public class ScheduleResourceTest {
 
         // Assert：結果が正しいこと
         assertThat(actual, is(equalTo(scheduleId)));
+    }
+
+    /**
+     * {@link ScheduleResource#update(UploadCommonData, ResourceItemCommonData, ScheduleResourceItem)}
+     * 用テストメソッド.<br>
+     * 競合が発生し解決ができない場合で、サーバ側アイテムデータが削除されている場合はIDのみのオブジェクトを返す.
+     */
+    @Test
+    public void testUpdateOccursConflictAndReturnDeletedItem() throws Exception {
+
+        // Arrange：例外系
+        final ScheduleResource target = new ScheduleResource();
+
+        final long syncTime = 50;
+        final UploadCommonData uploadCommon = new UploadCommonData() {
+            {
+                setSyncTime(syncTime);
+            }
+        };
+
+        final String targetItemId = "scheduleId1";
+
+        final ResourceItemCommonDataId id = new ResourceItemCommonDataId("schedule", "1");
+        final ResourceItemCommonData updatingItemCommon =
+                new ResourceItemCommonData(id, targetItemId) {
+                    {
+                        setForUpdate(false);
+                        setAction(SyncAction.UPDATE);
+                        setLastModified(10);
+                    }
+                };
+        final ScheduleResourceItem updatingItem = new ScheduleResourceItem(targetItemId) {
+            {
+                setUserIds(new ArrayList<String>());
+                setDates(new ArrayList<String>());
+                setTitle("update");
+            }
+        };
+
+        final ResourceItemCommonData itemCommonForUpdate =
+                new ResourceItemCommonData(id, targetItemId) {
+                    {
+                        setForUpdate(true);
+                        setAction(SyncAction.DELETE);
+                        setLastModified(20);
+                    }
+                };
+
+        final Schedule entityForUpdate = new Schedule(targetItemId) {
+            {
+                setUserBeans(new ArrayList<Person>());
+                setDateBeans(new ArrayList<ScheduleDate>());
+                setTitle("deleted");
+            }
+        };
+
+        new Expectations() {
+            UpdateStrategy updateStrategy;
+            ResourceItemConverter<ScheduleResourceItem> defaultItemConverter;
+            ResourceItemCommonDataService commonDataService;
+            {
+                setField(target, updateStrategy);
+                setField(target, defaultItemConverter);
+                setField(target, commonDataService);
+
+                setField(target, repository);
+
+                commonDataService.currentCommonDataForUpdate(id);
+                result = itemCommonForUpdate;
+
+                updateStrategy.resolveConflict(
+                        updatingItemCommon, updatingItem, itemCommonForUpdate, null);
+                result = new ItemUpdatedException(itemCommonForUpdate, null);
+
+                repository.findOne(targetItemId);
+                result = entityForUpdate;
+            }
+        };
+
+        // Act
+        ResourceItemWrapper<ScheduleResourceItem> actual =
+                target.update(uploadCommon, updatingItemCommon, updatingItem);
+
+        // Assert：結果が正しいこと
+        assertThat(actual.getItemCommonData(), is(equalTo(itemCommonForUpdate)));
+
+        ScheduleResourceItem expectedItem = new ScheduleResourceItem(targetItemId);
+
+        assertThat(actual.getItem(), is(equalTo(expectedItem)));
     }
 
     /**

@@ -362,7 +362,15 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 				} catch (ItemUpdatedException e) {
 
 					// 更新を行わずリターン(例外から取得した共通データには競合タイプがセットされている)
-					return new ResourceItemWrapper<>(e.getConflictedCommonData(), itemType().cast(e.getCurrentItem()));
+
+					I currentItem = itemType().cast(e.getCurrentItem());
+					if (currentItem == null) {
+						// nullはアイテムが削除されていることを表す
+						// クライアントに返す値としては論理削除後の状態(IDのみ設定されたアイテムオブジェクト)とする.
+						currentItem = doDelete(e.getConflictedCommonData().getTargetItemId());
+					}
+
+					return new ResourceItemWrapper<>(e.getConflictedCommonData(), currentItem);
 				}
 			}
 
