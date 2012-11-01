@@ -147,7 +147,9 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
         item.setFinishTime(bean.getFinishTime());
         item.setDetail(bean.getDetail());
         item.setPlace(bean.getPlace());
-        item.setCreateUserName(bean.getCreateUser().getName());
+
+        String createUserName = bean.getCreateUser() == null ? "" : bean.getCreateUser().getName();
+        item.setCreateUserName(createUserName);
 
         return item;
     }
@@ -165,7 +167,9 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 
         if (repository.exists(newItem.getScheduleId())) {
 
-            throw new DuplicateIdException(newItem.getScheduleId(), doGet(newItem.getScheduleId()));
+            throw new DuplicateIdException(
+                    newItem.getScheduleId(), doGet(newItem.getScheduleId()).get(
+                            newItem.getScheduleId()));
         }
 
         Schedule newEntity = new Schedule(newItem.getScheduleId());
