@@ -559,8 +559,12 @@ public class PersonResourceTest {
 
         final String personId = null;
 
-        final Person existing = new Person();
-        existing.setPersonId(personId);
+        final Person existing = new Person() {
+            {
+                setPersonId(personId);
+                setName("toDelete");
+            }
+        };
 
         new Expectations() {
             {
@@ -578,8 +582,13 @@ public class PersonResourceTest {
         Person actual = target.doDelete(personId);
 
         // Assert：結果が正しいこと
-        // 論理削除のため、削除対象のエンティティをそのまま返す
-        assertThat(actual, is(equalTo(existing)));
+        // 論理削除のため、personIdのみセットされたアイテムが返される.
+        final Person expected = new Person() {
+            {
+                setPersonId(personId);
+            }
+        };
+        assertThat(actual, is(equalTo(expected)));
     }
 
     /**
@@ -614,13 +623,13 @@ public class PersonResourceTest {
     }
 
     /**
-     * {@link PersonResource#doDelete(String)}用テストメソッド. nullが渡された場合
-     * {@link BadRequestException}がスローされる.
+     * {@link PersonResource#doDelete(String)}用テストメソッド.<br>
+     * nullが渡された場合 {@link BadRequestException}がスローされる.
      */
     @Test(expected = BadRequestException.class)
     public void testDoDeleteFailBecauseOfNullInput() {
 
-        // Arrange：正常系
+        // Arrange：異常系
         final PersonResource target = new PersonResource();
 
         new Expectations() {
