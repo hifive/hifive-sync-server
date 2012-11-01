@@ -370,10 +370,8 @@ $(function() {
 						
 			this.$fromDialog = $('#dialog .content>*').clone();
 			
-			var conflict;
-			if (!serverItem) {
-				conflict = {};
-			} else {
+			var conflict = {};
+			if (serverItem) {
 				// ローカルとサーバの異なるプロパティを抜き出す。
 				conflict = {};
 				if (serverItem.dates && !scheduleSample.common.equalArrays(schedule.get('dates'), serverItem.dates)) {
@@ -392,8 +390,8 @@ $(function() {
 					conflict.detail = serverItem.detail;
 				}
 
-				if (serverItem.userIds && scheduleSample.common.equalArrays(schedule.get('userIds'), serverItem.userIds)) {
-					conflict.date = serverItem.userIds;
+				if (serverItem.userIds && !scheduleSample.common.equalArrays(schedule.get('userIds'), serverItem.userIds)) {
+					conflict.userIds = serverItem.userIds;
 				}	
 			}
 			
