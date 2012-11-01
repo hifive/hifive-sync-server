@@ -75,37 +75,46 @@ public class JsonSyncController {
 
 		boolean isInitialDownload = false;
 
-		// 下り更新共通データがない場合、およびストレージIDが含まれていない場合は初回アクセス
-		// ストレージIDを生成、リクエストの下り更新共通データにセット
+		// 下り更新共通データがない場合、ストレージIDを生成、新規生成の下り更新共通データにセット
 		if (request.getDownloadCommonData() == null) {
 			isInitialDownload = true;
-			request.setDownloadCommonData(new DownloadCommonData(generateNewStorageId()));
+
+			request.setDownloadCommonData(new DownloadCommonData(null));
 		}
-		if (request.getDownloadCommonData().getStorageId() == null) {
+
+		DownloadCommonData requestCommon = request.getDownloadCommonData();
+
+		// 下り更新共通データにストレージIDが含まれていない場合、
+		// ストレージIDを生成、リクエストの下り更新共通データにセット
+		if (requestCommon.getStorageId() == null) {
 			isInitialDownload = true;
-			request.getDownloadCommonData().setStorageId(generateNewStorageId());
+
+			requestCommon.setStorageId(generateNewStorageId());
+			request.setDownloadCommonData(requestCommon);
 		}
 
-		try {
-			// 下り更新サービスを呼び出し
-			DownloadResponse response = synchronizer.download(request);
+		// TODO 次期バージョンにて実装予定
+		//		try {
+		// 下り更新サービスを呼び出し
+		DownloadResponse response = synchronizer.download(request);
 
-			// 初回アクセス以外はストレージIDをレスポンスデータから除外するためnullをセット
-			if (!isInitialDownload) {
-				response.getDownloadCommonData().setStorageId(null);
-			}
-
-			// TODO 次期バージョンにて実装予定
-			// ロックトークンをレスポンスデータから除外するためnullをセット
-			//			response.getDownloadCommonData().setLockToken(null);
-
-			// HTTPレスポンスをリターン
-			return createHttpResponseEntity(response, HttpStatus.OK);
-
-		} catch (LockException e) {
-			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
-			return createHttpResponseEntity(HttpStatus.LOCKED);
+		// 初回アクセス以外はストレージIDをレスポンスデータから除外するためnullをセット
+		if (!isInitialDownload) {
+			response.getDownloadCommonData().setStorageId(null);
 		}
+
+		// TODO 次期バージョンにて実装予定
+		// ロックトークンをレスポンスデータから除外するためnullをセット
+		//			response.getDownloadCommonData().setLockToken(null);
+
+		// HTTPレスポンスをリターン
+		return createHttpResponseEntity(response, HttpStatus.OK);
+
+		// TODO 次期バージョンにて実装予定
+		//		} catch (LockException e) {
+		//			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
+		//			return createHttpResponseEntity(HttpStatus.LOCKED);
+		//		}
 	}
 
 	/**
@@ -114,7 +123,7 @@ public class JsonSyncController {
 	 *
 	 * @return
 	 */
-	private String generateNewStorageId() {
+	protected String generateNewStorageId() {
 
 		return UUID.randomUUID().toString();
 	}
@@ -136,7 +145,6 @@ public class JsonSyncController {
 			// ストレージID、競合タイプ(NONE)、ロックトークンをレスポンスデータから除外するためnullをセット
 			response.getUploadCommonData().setStorageId(null);
 			response.getUploadCommonData().setConflictType(null);
-
 			// TODO 次期バージョンにて実装予定
 			//			response.getUploadCommonData().setLockToken(null);
 
@@ -146,9 +154,11 @@ public class JsonSyncController {
 		} catch (ConflictException e) {
 			// 競合発生時は409レスポンスをリターンする
 			return createHttpResponseEntity(e.getResponse(), HttpStatus.CONFLICT);
-		} catch (LockException e) {
-			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
-			return createHttpResponseEntity(HttpStatus.LOCKED);
+
+			// TODO 次期バージョンにて実装予定
+			//		} catch (LockException e) {
+			//			// 1件でもロックエラーが発生した場合、423レスポンスをリターンする
+			//			return createHttpResponseEntity(HttpStatus.LOCKED);
 		}
 	}
 

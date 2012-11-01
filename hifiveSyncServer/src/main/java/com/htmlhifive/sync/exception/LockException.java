@@ -18,9 +18,11 @@ package com.htmlhifive.sync.exception;
 
 /**
  * リソースに対するリクエストが、必要なロック処理が行われていないために失敗した場合にスローされる例外.<br>
+ * TODO 次期バージョンにて実装予定
  *
  * @author kishigam
  */
+@Deprecated
 public class LockException extends RuntimeException {
 
 	/**
