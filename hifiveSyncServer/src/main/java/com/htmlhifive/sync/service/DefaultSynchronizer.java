@@ -405,7 +405,6 @@ public class DefaultSynchronizer implements Synchronizer {
 		if (lastCommon == null) {
 			lastCommon = new UploadCommonData();
 			lastCommon.setStorageId(storageId);
-			// 最終上り更新時刻は初期値のため、isLaterUploadThan()は必ずfalseになる状態となる
 		}
 		return lastCommon;
 	}
