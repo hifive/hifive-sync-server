@@ -21,7 +21,7 @@
 		</constructor-arg>
 	</bean>
 
-	<!-- Synchronizer configuration -->
+	<!-- DefaultSynchronizer configuration -->
 	<bean id="syncConfiguration"
 		class="com.htmlhifive.sync.service.DefaultSynchronizerConfiguration">
 		<property name="bufferTimeForDownload">
@@ -29,8 +29,8 @@
 		</property>
 		<property name="uploadControlType" value="NONE" />
 		<property name="downloadControlType" value="NONE" />
-		<!-- <property name="continueOnConflictOfDuplicateId" value="false" /> -->
-		<property name="continueOnConflictOfUpdated" value="true" />
+		<property name="continueOnConflictOfDuplicateId" value="false" />
+		<property name="continueOnConflictOfUpdated" value="false" />
 	</bean>
 	<tx:advice id="synchronizerTxAdvice" transaction-manager="txManager">
 		<tx:attributes>
@@ -43,6 +43,9 @@
 		<aop:advisor advice-ref="synchronizerTxAdvice"
 			pointcut-ref="serviceTransactionBoundary" />
 	</aop:config>
+
+	<!-- Synchronizer configuration -->
+	<!-- <bean id="synchronizer" class="pkg.to.CustomSynchronizer"></bean> -->
 
 	<!-- Application Transaction configuration -->
 	<tx:advice id="personResourceTxAdvice" transaction-manager="txManager">
