@@ -14,42 +14,6 @@
 		resource="classpath:META-INF/spring/applicationContext-hifiveSyncServer.xml" />
 	<import resource="test-applicationContext-database.xml" />
 
-	<!-- SyncResource base configuration -->
-	<bean id="resourceManager" class="com.htmlhifive.sync.resource.DefaultSyncResourceManager">
-		<constructor-arg name="syncResourceBaseTypeName"
-			value="com.htmlhifive.sync.resource.AbstractSyncResource" />
-		<constructor-arg name="resourceConfigurations">
-			<props>
-				<prop key="AbstractSyncResource.countOfVerification">2</prop>
-			</props>
-		</constructor-arg>
-	</bean>
-
-	<!-- DefaultSynchronizer configuration -->
-	<bean id="syncConfiguration"
-		class="com.htmlhifive.sync.service.DefaultSynchronizerConfiguration">
-		<property name="bufferTimeForDownload">
-			<util:property-path path="txManager.defaultTimeout" />
-		</property>
-		<property name="uploadControlType" value="NONE" />
-		<property name="downloadControlType" value="NONE" />
-		<property name="continueOnConflictOfDuplicateId" value="false" />
-		<property name="continueOnConflictOfUpdated" value="false" />
-	</bean>
-	<tx:advice id="synchronizerTxAdvice" transaction-manager="txManager">
-		<tx:attributes>
-			<tx:method name="*" />
-		</tx:attributes>
-	</tx:advice>
-	<aop:config>
-		<aop:pointcut id="serviceTransactionBoundary"
-			expression="execution(* com.htmlhifive.sync.service.DefaultSynchronizer.*(..))" />
-		<aop:advisor advice-ref="synchronizerTxAdvice"
-			pointcut-ref="serviceTransactionBoundary" />
-	</aop:config>
-
-    <!-- Synchronizer configuration -->
-	<!-- <bean id="synchronizer" class="pkg.to.CustomSynchronizer"></bean> -->
 
 	<!-- JPA EntityManager settings -->
 	<bean id="entityManagerFactory" parent="abstractEntityManagerFactory">

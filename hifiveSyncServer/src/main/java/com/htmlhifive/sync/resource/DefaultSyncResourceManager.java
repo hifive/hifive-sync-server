@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -61,6 +62,11 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	private Map<String, Class<? extends UpdateStrategy>> updateStrategyMap;
 
 	/**
+	 * 検索対象リソースの抽象スーパークラス名.
+	 */
+	private String syncResourceBaseTypeName;
+
+	/**
 	 * リソース全体に適用するプロパティ.
 	 */
 	private Properties resourceConfigurations;
@@ -68,40 +74,28 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	/**
 	 * フレームワークが利用するデフォルトコンストラクタ.
 	 */
-	@SuppressWarnings("unused")
-	private DefaultSyncResourceManager() {
-	}
-
-	/**
-	 * インスタンスを生成し、Mapフィールドのセットアップを行います.
-	 *
-	 * @param syncResourceBaseTypeName リソースの基底タイプのクラス名
-	 * @param resourceConfigurations 全リソース共通設定情報
-	 */
-	public DefaultSyncResourceManager(String syncResourceBaseTypeName, Properties resourceConfigurations) {
+	public DefaultSyncResourceManager() {
 
 		this.resourceMap = new HashMap<>();
-
 		this.updateStrategyMap = new HashMap<>();
-
-		this.resourceConfigurations = resourceConfigurations;
-
-		init(syncResourceBaseTypeName);
 	}
 
 	/**
 	 * クラスパス上のリソースを検索し、Mapに保持してこのクラスのインスタンスを生成します.<br>
 	 * resourceBaseTypeNameのサブタイプで、{@link SyncResourceService} アノテーションを付与したクラスをリソースとします.
-	 *
-	 * @param syncResourceBaseTypeName リソースの基底タイプのクラス名
 	 */
-	private void init(String syncResourceBaseTypeName) {
+	@PostConstruct
+	private void init() {
+
+		// このクラスのBean定義がない場合はインジェクションされていないため終了
+		if (this.syncResourceBaseTypeName == null)
+			return;
 
 		Class<?> resourceBaseType;
 		try {
-			resourceBaseType = Class.forName(syncResourceBaseTypeName);
+			resourceBaseType = Class.forName(this.syncResourceBaseTypeName);
 		} catch (ClassNotFoundException e) {
-			throw new SyncException("Class of resource base type is not found. : " + syncResourceBaseTypeName, e);
+			throw new SyncException("Class of resource base type is not found. : " + this.syncResourceBaseTypeName, e);
 		}
 
 		ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider(false);
@@ -193,5 +187,19 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	public List<String> allResourcNames() {
 
 		return new ArrayList<>(resourceMap.keySet());
+	}
+
+	/**
+	 * @param syncResourceBaseTypeName セットする syncResourceBaseTypeName
+	 */
+	public void setSyncResourceBaseTypeName(String syncResourceBaseTypeName) {
+		this.syncResourceBaseTypeName = syncResourceBaseTypeName;
+	}
+
+	/**
+	 * @param resourceConfigurations セットする resourceConfigurations
+	 */
+	public void setResourceConfigurations(Properties resourceConfigurations) {
+		this.resourceConfigurations = resourceConfigurations;
 	}
 }

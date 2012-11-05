@@ -12,13 +12,13 @@
 
 	<!-- SyncResource base configuration -->
 	<bean id="resourceManager" class="com.htmlhifive.sync.resource.DefaultSyncResourceManager">
-		<constructor-arg name="syncResourceBaseTypeName"
+		<property name="syncResourceBaseTypeName"
 			value="com.htmlhifive.sync.resource.AbstractSyncResource" />
-		<constructor-arg name="resourceConfigurations">
+		<property name="resourceConfigurations">
 			<props>
 				<prop key="AbstractSyncResource.countOfVerification">2</prop>
 			</props>
-		</constructor-arg>
+		</property>
 	</bean>
 
 	<!-- DefaultSynchronizer configuration -->

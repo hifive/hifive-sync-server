@@ -7,13 +7,13 @@
 	<context:component-scan base-package="com.htmlhifive.sync.resource.test" />
 
 	<bean id="target" class="com.htmlhifive.sync.resource.DefaultSyncResourceManager">
-		<constructor-arg name="syncResourceBaseTypeName"
+		<property name="syncResourceBaseTypeName"
 			value="com.htmlhifive.sync.resource.test.TestAbstractSyncResource" />
-		<constructor-arg name="resourceConfigurations">
+		<property name="resourceConfigurations">
 			<props>
 				<prop key="testKey">testVal</prop>
 			</props>
-		</constructor-arg>
+		</property>
 	</bean>
 
 </beans>

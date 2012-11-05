@@ -14,77 +14,29 @@
 		resource="classpath:META-INF/spring/applicationContext-hifiveSyncServer.xml" />
 	<import resource="test-applicationContext-database.xml" />
 
+	<!-- Application JPA repository settings -->
+	<jpa:repositories base-package="com.htmlhifive.sync.sample"
+		transaction-manager-ref="txManager" />
 
-    <!-- SyncResource base configuration -->
-    <bean id="resourceManager" class="com.htmlhifive.sync.resource.DefaultSyncResourceManager">
-        <constructor-arg name="syncResourceBaseTypeName"
-            value="com.htmlhifive.sync.resource.AbstractSyncResource" />
-        <constructor-arg name="resourceConfigurations">
-            <props>
-                <prop key="AbstractSyncResource.countOfVerification">2</prop>
-            </props>
-        </constructor-arg>
-    </bean>
+	<!-- Application Context base package settings -->
+	<context:component-scan base-package="com.htmlhifive.sync.sample" />
 
-    <!-- Synchronizer configuration -->
-    <bean id="syncConfiguration"
-        class="com.htmlhifive.sync.service.DefaultSynchronizerConfiguration">
-        <property name="bufferTimeForDownload">
-            <util:property-path path="txManager.defaultTimeout" />
-        </property>
-        <property name="uploadControlType" value="NONE" />
-        <property name="downloadControlType" value="NONE" />
-        <!-- <property name="continueOnConflictOfDuplicateId" value="false" /> -->
-        <property name="continueOnConflictOfUpdated" value="true" />
-    </bean>
-    <tx:advice id="synchronizerTxAdvice" transaction-manager="txManager">
-        <tx:attributes>
-            <tx:method name="*" />
-        </tx:attributes>
-    </tx:advice>
-    <aop:config>
-        <aop:pointcut id="serviceTransactionBoundary"
-            expression="execution(* com.htmlhifive.sync.service.DefaultSynchronizer.*(..))" />
-        <aop:advisor advice-ref="synchronizerTxAdvice"
-            pointcut-ref="serviceTransactionBoundary" />
-    </aop:config>
-
-    <!-- Application Transaction configuration -->
-    <tx:advice id="personResourceTxAdvice" transaction-manager="txManager">
-        <tx:attributes>
-            <tx:method name="getResourceItemByPersonId" propagation="SUPPORTS" />
-        </tx:attributes>
-    </tx:advice>
-    <aop:config>
-        <aop:pointcut id="personResourceTransactionBoundary"
-            expression="execution(* com.htmlhifive.sync.sample.person.PersonResource.getResourceItemByPersonId(..))" />
-        <aop:advisor advice-ref="personResourceTxAdvice"
-            pointcut-ref="personResourceTransactionBoundary" />
-    </aop:config>
-
-    <!-- Application JPA repository settings -->
-    <jpa:repositories base-package="com.htmlhifive.sync.sample"
-        transaction-manager-ref="txManager" />
-
-    <!-- Application Context base package settings -->
-    <context:component-scan base-package="com.htmlhifive.sync.sample" />
-
-    <!-- JPA EntityManager settings -->
-    <bean id="entityManagerFactory" parent="abstractEntityManagerFactory">
-        <property name="packagesToScan">
-            <list merge="true">
-                <value>com.htmlhifive.sync.sample</value>
-            </list>
-        </property>
-        <property name="jpaVendorAdapter">
-            <bean id="jpaVendorAdapter"
-                class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
-                <property name="showSql" value="true" />
-                <property name="generateDdl" value="true" />
-                <property name="databasePlatform" value="org.hibernate.dialect.H2Dialect" />
-            </bean>
-        </property>
-        <property name="persistenceXmlLocation" value="test-persistence.xml" />
-    </bean>
+	<!-- JPA EntityManager settings -->
+	<bean id="entityManagerFactory" parent="abstractEntityManagerFactory">
+		<property name="packagesToScan">
+			<list merge="true">
+				<value>com.htmlhifive.sync.sample</value>
+			</list>
+		</property>
+		<property name="jpaVendorAdapter">
+			<bean id="jpaVendorAdapter"
+				class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+				<property name="showSql" value="true" />
+				<property name="generateDdl" value="true" />
+				<property name="databasePlatform" value="org.hibernate.dialect.H2Dialect" />
+			</bean>
+		</property>
+		<property name="persistenceXmlLocation" value="test-persistence.xml" />
+	</bean>
 
 </beans>
