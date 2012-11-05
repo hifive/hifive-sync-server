@@ -19,12 +19,8 @@
 		</encoder>
 	</appender>
 
-	<root level="DEBUG">
+	<root level="WARN">
+		<appender-ref ref="STDOUT" />
 		<appender-ref ref="FILE" />
 	</root>
-
-	<logger name="org.springframework" level="WARN">
-		<appender-ref ref="STDOUT" />
-	</logger>
-
 </configuration>
