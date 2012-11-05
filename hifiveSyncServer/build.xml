@@ -13,7 +13,7 @@
 
 	<target name="compile">
 		<mkdir dir="${compile}" />
-		<javac srcdir="${source}" destdir="${compile}" excludes="build.xml">
+		<javac srcdir="${source}" destdir="${compile}" excludes="build.xml" includeantruntime="false">
 			<classpath refid="classpath" />
 		</javac>
 	</target>

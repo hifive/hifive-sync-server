@@ -14,7 +14,7 @@
 
 	<target name="compile">
 		<mkdir dir="${compile}" />
-		<javac srcdir="${source}" destdir="${compile}" excludes="com/htmlhifive/sync/test/*.java">
+		<javac srcdir="${source}" destdir="${compile}" excludes="com/htmlhifive/sync/test/*.java" includeantruntime="false">
 			<classpath refid="classpath" />
 		</javac>
 	</target>
