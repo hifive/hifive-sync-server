@@ -66,7 +66,8 @@
 		<war destfile="./target/hifive-sync-sample-${version}.war" webxml="${webapp}/WEB-INF/web.xml">
 			<fileset dir="${dest.compile}" />
 			<fileset dir="${webapp}" excludes="**/web.xml" />
-			<lib dir="${lib}" includes="runtime/*.jar, hifiveSyncServer/*.jar" />
+			<lib dir="${lib}/runtime" includes="*.jar" />
+			<lib dir="${lib}/hifiveSyncServer" includes="*.jar" />
 		</war>
 	</target>
 
