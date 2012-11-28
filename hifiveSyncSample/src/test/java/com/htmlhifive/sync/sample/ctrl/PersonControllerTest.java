@@ -37,133 +37,130 @@ import com.htmlhifive.sync.sample.person.Person;
 import com.htmlhifive.sync.sample.person.PersonResource;
 
 /**
- * <H3>
- * PersonControllerのテストクラス.</H3>
+ * <H3>PersonControllerのテストクラス.</H3>
  *
  * @author kishigam
  */
 public class PersonControllerTest {
 
-    @Mocked
-    private PersonResource personResource;
+	@Mocked
+	private PersonResource personResource;
 
-    /**
-     * typeテストメソッド.
-     */
-    @Test
-    public void testType() {
-        assertThat(PersonController.class, notNullValue());
-    }
+	@Mocked
+	private Principal principal;
 
-    /**
-     * {@link PersonController#PersonController()}用テストメソッド.
-     */
-    @Test
-    public void testInstantiation() {
-        PersonController target = new PersonController();
-        assertThat(target, notNullValue());
-    }
+	/**
+	 * typeテストメソッド.
+	 */
+	@Test
+	public void testType() {
+		assertThat(PersonController.class, notNullValue());
+	}
 
-    /**
-     * {@link PersonController#getUserId(Principal)}用テストメソッド.
-     *
-     * @param principal
-     *            引数のモック
-     */
-    @SuppressWarnings("serial")
-    @Test
-    public void testGetUserId(@Mocked final Principal principal) {
+	/**
+	 * {@link PersonController#PersonController()}用テストメソッド.
+	 */
+	@Test
+	public void testInstantiation() {
+		PersonController target = new PersonController();
+		assertThat(target, notNullValue());
+	}
 
-        // Arrange：正常系
-        final PersonController target = new PersonController();
+	/**
+	 * {@link PersonController#getUserId(Principal)}用テストメソッド.
+	 *
+	 * @param principal 引数のモック
+	 */
+	@SuppressWarnings("serial")
+	@Test
+	public void testGetUserId() {
 
-        final String personId = "personId";
-        final Person expectedPerson = new Person() {
-            {
-                setPersonId(personId);
-            }
-        };
+		// Arrange：正常系
+		final PersonController target = new PersonController();
 
-        new Expectations() {
-            {
-                setField(target, personResource);
+		final String personId = "personId";
+		final Person expectedPerson = new Person() {
+			{
+				setPersonId(personId);
+			}
+		};
 
-                principal.getName();
-                result = "personId";
+		new Expectations() {
+			{
+				setField(target, personResource);
 
-                personResource.getResourceItemByPersonId(personId);
-                result = expectedPerson;
-            }
-        };
+				principal.getName();
+				result = "personId";
 
-        // Act
-        ResponseEntity<Person> actual = target.getUserId(principal);
+				personResource.getResourceItemByPersonId(personId);
+				result = expectedPerson;
+			}
+		};
 
-        // Assert：結果が正しいこと
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        ResponseEntity<Person> expected =
-                new ResponseEntity<>(expectedPerson, headers, HttpStatus.OK);
+		// Act
+		ResponseEntity<Person> actual = target.getUserId(principal);
 
-        assertThat(actual.getBody(), is(equalTo(expectedPerson)));
-        assertThat(actual.getHeaders(), is(equalTo(expected.getHeaders())));
-        assertThat(actual.getStatusCode(), is(equalTo(expected.getStatusCode())));
+		// Assert：結果が正しいこと
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		ResponseEntity<Person> expected = new ResponseEntity<>(expectedPerson, headers, HttpStatus.OK);
 
-        // 上記3プロパティがequalでもResponseEntityはequalにならない(equalsメソッドがObject#equalsのため)
-        // assertThat(actual, is(equalTo(expected)));
-    }
+		assertThat(actual.getBody(), is(equalTo(expectedPerson)));
+		assertThat(actual.getHeaders(), is(equalTo(expected.getHeaders())));
+		assertThat(actual.getStatusCode(), is(equalTo(expected.getStatusCode())));
 
-    /**
-     * {@link PersonController#getUserId(Principal)}用テストメソッド.<br>
-     * Personが存在せず{@link BadRequestException}
-     * がスローされた場合、principalオブジェクトのnameをIDとするPersonオブジェクトを返す.
-     *
-     * @param principal
-     *            引数のモック
-     */
-    @SuppressWarnings("serial")
-    @Test
-    public void testGetUserIdWhenPersonNotFound(@Mocked final Principal principal) {
+		// 上記3プロパティがequalでもResponseEntityはequalにならない(equalsメソッドがObject#equalsのため)
+		// assertThat(actual, is(equalTo(expected)));
+	}
 
-        // Arrange：正常系
-        final PersonController target = new PersonController();
+	/**
+	 * {@link PersonController#getUserId(Principal)}用テストメソッド.<br>
+	 * Personが存在せず{@link BadRequestException} がスローされた場合、principalオブジェクトのnameをIDとするPersonオブジェクトを返す.
+	 *
+	 * @param principal 引数のモック
+	 */
+	@SuppressWarnings("serial")
+	@Test
+	public void testGetUserIdWhenPersonNotFound() {
 
-        final String personId = "personId";
-        final Person expectedPerson = new Person() {
-            {
-                setPersonId(personId);
-            }
-        };
+		// Arrange：正常系
+		final PersonController target = new PersonController();
 
-        new Expectations() {
-            {
-                setField(target, personResource);
+		final String personId = "personId";
+		final Person expectedPerson = new Person() {
+			{
+				setPersonId(personId);
+			}
+		};
 
-                principal.getName();
-                result = "personId";
+		new Expectations() {
+			{
+				setField(target, personResource);
 
-                personResource.getResourceItemByPersonId(personId);
-                result = new BadRequestException();
+				principal.getName();
+				result = "personId";
 
-                principal.getName();
-                result = "personId";
-            }
-        };
+				personResource.getResourceItemByPersonId(personId);
+				result = new BadRequestException();
 
-        // Act
-        ResponseEntity<Person> actual = target.getUserId(principal);
+				principal.getName();
+				result = "personId";
+			}
+		};
 
-        // Assert：結果が正しいこと
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        ResponseEntity<Person> expected =
-                new ResponseEntity<>(expectedPerson, headers, HttpStatus.OK);
+		// Act
+		ResponseEntity<Person> actual = target.getUserId(principal);
 
-        assertThat(actual.getBody(), is(equalTo(expectedPerson)));
-        assertThat(actual.getHeaders(), is(equalTo(expected.getHeaders())));
-        assertThat(actual.getStatusCode(), is(equalTo(expected.getStatusCode())));
+		// Assert：結果が正しいこと
+		HttpHeaders headers = new HttpHeaders();
+		headers.setContentType(MediaType.APPLICATION_JSON);
+		ResponseEntity<Person> expected = new ResponseEntity<>(expectedPerson, headers, HttpStatus.OK);
 
-        // 上記3プロパティがequalでもResponseEntityはequalにならない(equalsメソッドがObject#equalsのため)
-        // assertThat(actual, is(equalTo(expected)));}
-    }
+		assertThat(actual.getBody(), is(equalTo(expectedPerson)));
+		assertThat(actual.getHeaders(), is(equalTo(expected.getHeaders())));
+		assertThat(actual.getStatusCode(), is(equalTo(expected.getStatusCode())));
+
+		// 上記3プロパティがequalでもResponseEntityはequalにならない(equalsメソッドがObject#equalsのため)
+		// assertThat(actual, is(equalTo(expected)));}
+	}
 }
