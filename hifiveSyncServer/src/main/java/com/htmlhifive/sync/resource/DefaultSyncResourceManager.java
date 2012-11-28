@@ -27,6 +27,7 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
@@ -122,6 +123,10 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 			// 更新戦略オブジェクトを特定する
 			updateStrategyMap.put(resourceName, resourceAnnotation.updateStrategy());
 		}
+
+		LoggerFactory.getLogger(this.getClass()).info(
+				new StringBuilder().append("SyncResourceConfigurations : AbstractSyncResource : ")
+						.append(resourceConfigurations).toString());
 	}
 
 	/**

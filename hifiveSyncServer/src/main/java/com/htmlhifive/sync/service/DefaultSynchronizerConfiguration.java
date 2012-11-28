@@ -16,6 +16,9 @@
  */
 package com.htmlhifive.sync.service;
 
+import javax.annotation.PostConstruct;
+
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.htmlhifive.sync.service.download.DownloadControlType;
@@ -37,12 +40,12 @@ public class DefaultSynchronizerConfiguration implements SyncConfiguration {
 	/**
 	 * 上り更新制御タイプ.
 	 */
-	private UploadControlType uploadControlType = UploadControlType.RESERVE;
+	private UploadControlType uploadControlType = UploadControlType.NONE;
 
 	/**
 	 * 下り更新制御タイプ.
 	 */
-	private DownloadControlType downloadControlType = DownloadControlType.READ_LOCK;
+	private DownloadControlType downloadControlType = DownloadControlType.NONE;
 
 	/**
 	 * キー重複競合発生時の処理継続有無.<br>
@@ -53,6 +56,23 @@ public class DefaultSynchronizerConfiguration implements SyncConfiguration {
 	 * 更新競合発生時の処理継続有無.<br>
 	 */
 	private boolean continueOnConflictOfUpdated = false;
+
+	/**
+	 * コンテナで管理されるインスタンスが構築された後、ログを出力します.
+	 */
+	@PostConstruct
+	private void logPostConstruct() {
+
+		StringBuilder log = new StringBuilder();
+		log.append("DefaultSynchronizerConfiguration : ")
+		//
+				.append("  uploadControlType : ").append(uploadControlType) //
+				.append("  downloadControlType : ").append(downloadControlType) //
+				.append("  continueOnConflictOfDuplicateId : ").append(continueOnConflictOfDuplicateId) //
+				.append("  continueOnConflictOfUpdated : ").append(continueOnConflictOfUpdated);
+
+		LoggerFactory.getLogger(this.getClass()).info(log.toString());
+	}
 
 	/**
 	 * 上り更新および下り更新に使用される同期時刻を返します.<br>

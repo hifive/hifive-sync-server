@@ -27,6 +27,9 @@ import java.util.Properties;
 
 import javax.annotation.Resource;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
 import com.htmlhifive.sync.exception.ItemUpdatedException;
@@ -46,6 +49,8 @@ import com.htmlhifive.sync.service.upload.UploadCommonData;
  * @param <I> リソースアイテムの型
  */
 public abstract class AbstractSyncResource<I> implements SyncResource<I> {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(AbstractSyncResource.class);
 
 	/**
 	 * 競合発生時の競合解決を行う更新戦略オブジェクト.
@@ -175,6 +180,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		boolean isVerified = true;
 
 		Map<String, ResourceItemCommonData> comparisonCommonMap = new HashMap<>();
+
 		for (ResourceItemWrapper<I> itemWrapper : itemWrapperList) {
 
 			ResourceItemCommonData comparisonCommon = commonDataService.currentCommonData(itemWrapper
@@ -183,12 +189,16 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 			// 再取得した共通データとの差異がある場合検証失敗
 			if (!comparisonCommon.equals(itemWrapper.getItemCommonData())) {
+				LOGGER.info(new StringBuilder().append("verifying failed : count remaining ").append(count - 1)
+						.toString());
 				isVerified = false;
 			}
 		}
 
 		// 全てのリソースアイテムで検証成功したら終了
 		if (isVerified) {
+			LOGGER.info(new StringBuilder().append("verifying successed : count remaining ").append(count - 1)
+					.toString());
 			return itemWrapperList;
 		}
 
@@ -301,6 +311,8 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		if (!itemCommon.isForUpdate()) {
 			currentCommon = commonDataService.currentCommonDataForUpdate(itemCommon.getId());
 			if (currentCommon == null) {
+				LOGGER.error("select ResourceItemCommonData for update failed when update or delete. "
+						+ itemCommon.getId().toString());
 				throw new BadRequestException("itemCommonData not found : " + itemCommon.getId().getResourceName()
 						+ "-" + itemCommon.getId().getResourceItemId());
 			}
@@ -395,6 +407,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			// for updateで取得
 			ResourceItemCommonData currentForUpdate = commonDataService.currentCommonDataForUpdate(id);
 			if (currentForUpdate == null) {
+				LOGGER.error("select ResourceItemCommonData for update failed when forUpdate action." + id.toString());
 				throw new BadRequestException("itemCommonData not found : " + id.getResourceName() + "-"
 						+ id.getResourceItemId());
 			}
