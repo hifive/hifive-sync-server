@@ -18,6 +18,7 @@ package com.htmlhifive.sync.sample.scd;
 
 import java.io.Serializable;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -37,126 +38,122 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 @Table(name = "SCHEDULE_DATE")
 public class ScheduleDate implements Serializable {
 
-    private static final long serialVersionUID = 8658446519798521096L;
+	private static final long serialVersionUID = 8658446519798521096L;
 
-    /**
-     * このエンティティのID.
-     */
-    @Id
-    @GeneratedValue
-    private long id;
+	/**
+	 * このエンティティのID.
+	 */
+	@Id
+	@GeneratedValue
+	private long id;
 
-    /**
-     * 予定日付("yyyyMMdd"の8桁整数).
-     */
-    private int date;
+	/**
+	 * 予定日付("yyyyMMdd"の8桁整数).
+	 */
+	@Column(name = "dateNum")
+	// dateはOracle等では使用できないため、カラム名を別途指定
+	private int date;
 
-    /**
-     * この日付が設定された予定エンティティ.
-     */
-    @ManyToOne
-    private Schedule schedule;
+	/**
+	 * この日付が設定された予定エンティティ.
+	 */
+	@ManyToOne
+	private Schedule schedule;
 
-    /**
-     * プライベートのデフォルトコンストラクタ. <br>
-     * 永続マネージャーが使用するため、実装する必要があります.
-     */
-    @SuppressWarnings("unused")
-    private ScheduleDate() {
-    }
+	/**
+	 * プライベートのデフォルトコンストラクタ. <br>
+	 * 永続マネージャーが使用するため、実装する必要があります.
+	 */
+	@SuppressWarnings("unused")
+	private ScheduleDate() {
+	}
 
-    /**
-     * 予定エンティティおよびその予定日付を指定して新規予定日付エンティティを生成します.
-     *
-     * @param schedule
-     *            予定エンティティ
-     * @param date
-     *            日付(8桁整数)
-     */
-    public ScheduleDate(Schedule schedule, int date) {
-        this.schedule = schedule;
-        this.date = date;
-    }
+	/**
+	 * 予定エンティティおよびその予定日付を指定して新規予定日付エンティティを生成します.
+	 *
+	 * @param schedule 予定エンティティ
+	 * @param date 日付(8桁整数)
+	 */
+	public ScheduleDate(Schedule schedule, int date) {
+		this.schedule = schedule;
+		this.date = date;
+	}
 
-    /**
-     *
-     * @see Object#equals(Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
+	/**
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
 
-        if (this == obj)
-            return true;
-        if (!(obj instanceof ScheduleDate))
-            return false;
+		if (this == obj)
+			return true;
+		if (!(obj instanceof ScheduleDate))
+			return false;
 
-        ScheduleDate dateBean = (ScheduleDate)obj;
+		ScheduleDate dateBean = (ScheduleDate) obj;
 
-        // scheduleは同一性判定に含めない
-        return new EqualsBuilder().append(this.date, dateBean.date).isEquals();
-    }
+		// scheduleは同一性判定に含めない
+		return new EqualsBuilder().append(this.date, dateBean.date).isEquals();
+	}
 
-    /**
-     * @see Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
 
-        return new HashCodeBuilder(17, 37).append(this.date).hashCode();
-    }
+		return new HashCodeBuilder(17, 37).append(this.date).hashCode();
+	}
 
-    /**
-     * @see Object#toString()
-     */
-    @Override
-    public String toString() {
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
 
-        return ToStringBuilder.reflectionToString(this);
-    }
+		return ToStringBuilder.reflectionToString(this);
+	}
 
-    /**
-     * @return id
-     */
-    public long getId() {
-        return id;
-    }
+	/**
+	 * @return id
+	 */
+	public long getId() {
+		return id;
+	}
 
-    /**
-     * @param id
-     *            セットする id
-     */
-    public void setId(long id) {
-        this.id = id;
-    }
+	/**
+	 * @param id セットする id
+	 */
+	public void setId(long id) {
+		this.id = id;
+	}
 
-    /**
-     * @return date
-     */
-    public int getDate() {
-        return date;
-    }
+	/**
+	 * @return date
+	 */
+	public int getDate() {
+		return date;
+	}
 
-    /**
-     * @param date
-     *            セットする date
-     */
-    public void setDate(int date) {
-        this.date = date;
-    }
+	/**
+	 * @param date セットする date
+	 */
+	public void setDate(int date) {
+		this.date = date;
+	}
 
-    /**
-     * @return schedule
-     */
-    public Schedule getSchedule() {
-        return schedule;
-    }
+	/**
+	 * @return schedule
+	 */
+	public Schedule getSchedule() {
+		return schedule;
+	}
 
-    /**
-     * @param schedule
-     *            セットする schedule
-     */
-    public void setSchedule(Schedule schedule) {
-        this.schedule = schedule;
-    }
+	/**
+	 * @param schedule セットする schedule
+	 */
+	public void setSchedule(Schedule schedule) {
+		this.schedule = schedule;
+	}
 
 }
