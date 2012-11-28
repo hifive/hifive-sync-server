@@ -30,6 +30,7 @@ import javax.annotation.Resource;
 import javax.persistence.LockTimeoutException;
 import javax.persistence.PessimisticLockException;
 
+import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
@@ -37,6 +38,7 @@ import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.ConflictException;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.ResourceQueryConditions;
+import com.htmlhifive.sync.resource.SyncAction;
 import com.htmlhifive.sync.resource.SyncConflictType;
 import com.htmlhifive.sync.resource.SyncResource;
 import com.htmlhifive.sync.resource.SyncResourceManager;
@@ -59,6 +61,8 @@ import com.htmlhifive.sync.service.upload.UploadResponse;
  */
 @Service
 public class DefaultSynchronizer implements Synchronizer {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(DefaultSynchronizer.class);
 
 	/**
 	 * 同期制御の設定情報.
@@ -227,10 +231,9 @@ public class DefaultSynchronizer implements Synchronizer {
 		// サーバ側で管理されている前回上り更新時刻より前の場合、二重送信等で処理済みと判断し、そのまま返す.
 		if (responseCommon.isLaterUploadThan(requestCommon)) {
 
-			LoggerFactory.getLogger(DefaultSynchronizer.class).info(
-					new StringBuilder().append("info : duplicate uploading detected. storageId : ")
-							.append(responseCommon.getStorageId()).append(", lastUpdateTime : ")
-							.append(responseCommon.getLastUploadTime()).toString());
+			LOGGER.info(new StringBuilder().append("info : duplicate uploading detected. storageId : ")
+					.append(responseCommon.getStorageId()).append(", lastUpdateTime : ")
+					.append(responseCommon.getLastUploadTime()).toString());
 
 			return new UploadResponse(responseCommon);
 		}
@@ -330,7 +333,11 @@ public class DefaultSynchronizer implements Synchronizer {
 
 			String resourceName = itemWrapper.getItemCommonData().getId().getResourceName();
 
-			mapBuilder.add(resourceName, itemWrapper.getItemCommonData());
+			// UPDATE, DELETEの場合のみ対象とする
+			if (itemWrapper.getItemCommonData().getAction() == SyncAction.UPDATE
+					|| itemWrapper.getItemCommonData().getAction() == SyncAction.DELETE) {
+				mapBuilder.add(resourceName, itemWrapper.getItemCommonData());
+			}
 		}
 
 		return getItemsForUpdate(mapBuilder.build());
@@ -439,6 +446,7 @@ public class DefaultSynchronizer implements Synchronizer {
 			} catch (PessimisticLockException | LockTimeoutException e) {
 
 				// for update操作のタイムアウト
+				LOGGER.error(e.getStackTrace().toString());
 				throw new BadRequestException("Failed to get readLock for download or reserve for upload.", e);
 			}
 		}
