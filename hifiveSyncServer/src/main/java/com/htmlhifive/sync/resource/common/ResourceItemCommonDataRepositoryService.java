@@ -19,7 +19,6 @@ package com.htmlhifive.sync.resource.common;
 import java.util.List;
 
 import javax.annotation.Resource;
-import javax.persistence.EntityExistsException;
 
 import org.springframework.stereotype.Service;
 
@@ -102,13 +101,8 @@ public class ResourceItemCommonDataRepositoryService implements ResourceItemComm
 	@Override
 	public ResourceItemCommonData saveNewCommonData(ResourceItemCommonData common) {
 
-		if (repository.exists(common.getId())) {
-
-			EntityExistsException cause = new EntityExistsException("duplicated common data : id = " + common.getId());
-			throw new BadRequestException("inconsistent data exists", cause);
-		}
-
-		return repository.save(common);
+		// flushしないとトランザクションコミット時に一意制約違反が発生してしまうためここでflushする
+		return repository.saveAndFlush(common);
 	}
 
 	/**
