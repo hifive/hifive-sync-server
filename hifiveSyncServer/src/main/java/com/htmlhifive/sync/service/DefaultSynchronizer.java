@@ -27,8 +27,6 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import javax.annotation.Resource;
-import javax.persistence.LockTimeoutException;
-import javax.persistence.PessimisticLockException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -440,15 +438,7 @@ public class DefaultSynchronizer implements Synchronizer {
 		for (String resourceName : sortedItemsMap.keySet()) {
 
 			SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-			try {
-
-				reservedCommonDataMap.put(resourceName, resource.forUpdate(sortedItemsMap.get(resourceName)));
-			} catch (PessimisticLockException | LockTimeoutException e) {
-
-				// for update操作のタイムアウト
-				LOGGER.error(e.getStackTrace().toString());
-				throw new BadRequestException("Failed to get readLock for download or reserve for upload.", e);
-			}
+			reservedCommonDataMap.put(resourceName, resource.forUpdate(sortedItemsMap.get(resourceName)));
 		}
 
 		return reservedCommonDataMap;
