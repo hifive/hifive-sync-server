@@ -29,6 +29,7 @@ import javax.annotation.Resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
@@ -226,38 +227,48 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	@Override
 	public ResourceItemWrapper<I> create(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon, I item) {
 
-		try {
+		// アクション、上り更新実行時刻を設定
+		itemCommon.modify(itemCommon.getAction(), uploadCommon.getSyncTime());
+		// 一旦共通データを生成し、保存
 
+		try {
+			// flushしないとトランザクションコミット時に一意制約違反が発生してしまうためここでflushし、例外としてキャッチする
+			commonDataService.saveNewCommonData(itemCommon);
+		} catch (DataIntegrityViolationException e) {
+
+			// 共通データのキー重複
+
+			// 共通データは現在サーバで管理されているものを設定、リソースアイテムにはリクエストのアイテムを設定
+			ResourceItemCommonData currentCommon = commonDataService.currentCommonData(itemCommon.getId());
+
+			currentCommon.setConflictType(SyncConflictType.DUPLICATE_ID);
+			return new ResourceItemWrapper<>(currentCommon, item);
+		}
+
+		try {
+			// アイテムデータの新規登録
 			// 成功すると共通データで管理する各リソースアイテムのIDが返され、登録を行ったアイテムがサーバで管理される
 			String targetItemId = doCreate(item);
 
-			// 共通データは存在しないはず
-			if (commonDataService.currentCommonData(itemCommon.getId()) != null) {
-				throw new SyncException("Inconsistent ResourceItemCommonData.: " + itemCommon.getId().getResourceName()
-						+ "-" + itemCommon.getId().getResourceItemId());
-			}
+			itemCommon.setConflictType(SyncConflictType.NONE);
 
-			// 対象リソースアイテムのIDを設定し、リソースアイテム共通データを新規生成
+			// 対象リソースアイテムのIDを設定し、リソースアイテム共通データを更新
 			itemCommon.setTargetItemId(targetItemId);
-			// アクション、上り更新実行時刻を設定
-			itemCommon.modify(itemCommon.getAction(), uploadCommon.getSyncTime());
-			// 保存
-			commonDataService.saveNewCommonData(itemCommon);
+			commonDataService.saveUpdatedCommonData(itemCommon);
 
 			// 登録されたリソースアイテム共通データ、アイテムをリターン
-			itemCommon.setConflictType(SyncConflictType.NONE);
 			return new ResourceItemWrapper<>(itemCommon, item);
 
 		} catch (DuplicateIdException e) {
+			// アイテムデータのキー重複
 
-			// キー重複の場合、共通データ、リソースアイテムには現在サーバで管理されているものを設定する
+			// 共通データ、リソースアイテムには現在サーバで管理されているものを設定する
 			ResourceItemCommonData currentCommon = commonDataService.currentCommonData(itemCommon.getId()
 					.getResourceName(), e.getDuplicatedTargetItemId());
 
-			// 起こりえない(データ不整合)
+			// 並行トランザクションの処理タイミングにより取得できなかった場合はリクエストの共通データをそのまま返す
 			if (currentCommon == null) {
-				throw new SyncException("itemCommonData not found : " + itemCommon.getId() + "-"
-						+ e.getDuplicatedTargetItemId());
+				currentCommon = itemCommon;
 			}
 
 			currentCommon.setConflictType(SyncConflictType.DUPLICATE_ID);
@@ -407,7 +418,7 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			// for updateで取得
 			ResourceItemCommonData currentForUpdate = commonDataService.currentCommonDataForUpdate(id);
 			if (currentForUpdate == null) {
-				LOGGER.error("select ResourceItemCommonData for update failed when forUpdate action." + id.toString());
+				LOGGER.error("select ResourceItemCommonData for update failed in forUpdate action." + id.toString());
 				throw new BadRequestException("itemCommonData not found : " + id.getResourceName() + "-"
 						+ id.getResourceItemId());
 			}
