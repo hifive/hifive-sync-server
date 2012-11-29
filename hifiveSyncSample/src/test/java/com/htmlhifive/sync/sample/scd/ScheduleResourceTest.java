@@ -27,6 +27,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceException;
+
 import mockit.Expectations;
 import mockit.Mocked;
 
@@ -61,6 +64,9 @@ public class ScheduleResourceTest {
 
 	@Mocked
 	private ScheduleRepository repository;
+
+	@Mocked
+	private EntityManager entityManager;
 
 	@Mocked
 	private ResourceQuerySpecifications<Schedule> querySpec;
@@ -424,11 +430,9 @@ public class ScheduleResourceTest {
 		new Expectations() {
 			{
 				setField(target, repository);
+				setField(target, entityManager);
 				setField(target, querySpec);
 				setField(target, personRepository);
-
-				repository.exists(scheduleId);
-				result = false;
 
 				SecurityContextHolder.getContext();
 				result = securityContext;
@@ -447,8 +451,8 @@ public class ScheduleResourceTest {
 				personRepository.findOne("personId");
 				result = person;
 
-				repository.save(newEntity);
-				result = newItem;
+				entityManager.persist(newEntity);
+				entityManager.flush();
 			}
 		};
 
@@ -464,7 +468,7 @@ public class ScheduleResourceTest {
 	 * キー重複が発生した場合 {@link DuplicateIdException}がスローされる.
 	 */
 	@Test(expected = DuplicateIdException.class)
-	public void testDoCreateFailBecauseOfDuplicateSchedule() throws Exception {
+	public void testDoCreateFailBecauseOfDuplicateScheduleByPersist() throws Exception {
 
 		// Arrange：例外系
 		final ScheduleResource target = new ScheduleResource();
@@ -485,6 +489,12 @@ public class ScheduleResourceTest {
 			}
 		};
 
+		final Schedule newEntity = new Schedule(scheduleId) {
+			{
+				setCreateUser(person);
+			}
+		};
+
 		final ScheduleResourceItem duplicatedItem = new ScheduleResourceItem(scheduleId) {
 			{
 				setUserIds(new ArrayList<String>());
@@ -502,11 +512,121 @@ public class ScheduleResourceTest {
 		new Expectations() {
 			{
 				setField(target, repository);
+				setField(target, entityManager);
 				setField(target, querySpec);
 				setField(target, personRepository);
 
-				repository.exists(scheduleId);
-				result = true;
+				SecurityContextHolder.getContext();
+				result = securityContext;
+
+				securityContext.getAuthentication();
+				result = authentication;
+
+				authentication.getPrincipal();
+				result = new Object() {
+					@Override
+					public String toString() {
+						return "personId";
+					}
+				};
+
+				personRepository.findOne("personId");
+				result = person;
+
+				entityManager.persist(newEntity);
+				result = new PersistenceException();
+
+				repository.findOne(scheduleId);
+				result = duplicatedEntity;
+			}
+		};
+
+		// Act
+		try {
+			target.doCreate(newItem);
+			fail();
+		} catch (DuplicateIdException e) {
+
+			assertThat(e.getDuplicatedTargetItemId(), is(equalTo(scheduleId)));
+			assertThat((ScheduleResourceItem) e.getCurrentItem(), is(equalTo(duplicatedItem)));
+
+			throw e;
+		}
+	}
+
+	/**
+	 * {@link ScheduleResource#doCreate(ScheduleResourceItem)}用テストメソッド.<br>
+	 * キー重複が(flush時に)発生した場合 {@link DuplicateIdException}がスローされる.
+	 */
+	@Test(expected = DuplicateIdException.class)
+	public void testDoCreateFailBecauseOfDuplicateScheduleByFlush() throws Exception {
+
+		// Arrange：例外系
+		final ScheduleResource target = new ScheduleResource();
+
+		final String scheduleId = "100";
+
+		final Person person = new Person() {
+			{
+				setPersonId("personId");
+			}
+		};
+
+		final ScheduleResourceItem newItem = new ScheduleResourceItem(scheduleId) {
+			{
+				setUserIds(new ArrayList<String>());
+				setDates(new ArrayList<String>());
+				setCreateUserName(null);
+			}
+		};
+
+		final Schedule newEntity = new Schedule(scheduleId) {
+			{
+				setCreateUser(person);
+			}
+		};
+
+		final ScheduleResourceItem duplicatedItem = new ScheduleResourceItem(scheduleId) {
+			{
+				setUserIds(new ArrayList<String>());
+				setDates(new ArrayList<String>());
+				setCreateUserName(null);
+			}
+		};
+
+		final Schedule duplicatedEntity = new Schedule(scheduleId) {
+			{
+				setCreateUser(person);
+			}
+		};
+
+		new Expectations() {
+			{
+				setField(target, repository);
+				setField(target, entityManager);
+				setField(target, querySpec);
+				setField(target, personRepository);
+
+				SecurityContextHolder.getContext();
+				result = securityContext;
+
+				securityContext.getAuthentication();
+				result = authentication;
+
+				authentication.getPrincipal();
+				result = new Object() {
+					@Override
+					public String toString() {
+						return "personId";
+					}
+				};
+
+				personRepository.findOne("personId");
+				result = person;
+
+				entityManager.persist(newEntity);
+				entityManager.flush();
+				result = new PersistenceException();
 
 				repository.findOne(scheduleId);
 				result = duplicatedEntity;
@@ -538,11 +658,17 @@ public class ScheduleResourceTest {
 
 		final String scheduleId = "100";
 
+		final Person person = new Person() {
+			{
+				setPersonId("personId");
+			}
+		};
+
 		final ScheduleResourceItem newItem = new ScheduleResourceItem(scheduleId) {
 			{
 				setUserIds(new ArrayList<String>() {
 					{
-						add("personId");
+						add("notExists");
 					}
 				});
 				setDates(new ArrayList<String>());
@@ -553,13 +679,28 @@ public class ScheduleResourceTest {
 		new Expectations() {
 			{
 				setField(target, repository);
+				setField(target, entityManager);
 				setField(target, querySpec);
 				setField(target, personRepository);
 
-				repository.exists(scheduleId);
-				result = false;
+				SecurityContextHolder.getContext();
+				result = securityContext;
+
+				securityContext.getAuthentication();
+				result = authentication;
+
+				authentication.getPrincipal();
+				result = new Object() {
+					@Override
+					public String toString() {
+						return "personId";
+					}
+				};
 
 				personRepository.findOne("personId");
+				result = person;
+
+				personRepository.findOne("notExists");
 				result = null;
 			}
 		};
@@ -639,14 +780,9 @@ public class ScheduleResourceTest {
 		new Expectations() {
 			{
 				setField(target, repository);
+				setField(target, entityManager);
 				setField(target, querySpec);
 				setField(target, personRepository);
-
-				repository.exists(scheduleId);
-				result = false;
-
-				personRepository.findOne("personId");
-				result = person;
 
 				SecurityContextHolder.getContext();
 				result = securityContext;
@@ -665,8 +801,11 @@ public class ScheduleResourceTest {
 				personRepository.findOne("createUser");
 				result = null;
 
-				repository.save(newEntity);
-				result = newItem;
+				personRepository.findOne("personId");
+				result = person;
+
+				entityManager.persist(newEntity);
+				entityManager.flush();
 
 				repository.findOne(scheduleId);
 				result = foundEntity;
@@ -696,6 +835,7 @@ public class ScheduleResourceTest {
 		new Expectations() {
 			{
 				setField(target, repository);
+				setField(target, entityManager);
 				setField(target, querySpec);
 				setField(target, personRepository);
 			}

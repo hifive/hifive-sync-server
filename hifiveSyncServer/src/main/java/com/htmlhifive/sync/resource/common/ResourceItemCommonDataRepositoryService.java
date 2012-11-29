@@ -19,6 +19,8 @@ package com.htmlhifive.sync.resource.common;
 import java.util.List;
 
 import javax.annotation.Resource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import org.springframework.stereotype.Service;
 
@@ -41,6 +43,14 @@ public class ResourceItemCommonDataRepositoryService implements ResourceItemComm
 	 */
 	@Resource
 	private ResourceItemCommonDataRepository repository;
+
+	/**
+	 * 新規データの永続化に使用するEntityManager.
+	 *
+	 * @see {@link this#saveNewCommonData(ResourceItemCommonData)}
+	 */
+	@PersistenceContext
+	private EntityManager entitymanager;
 
 	/**
 	 * リソースアイテム共通データのIDオブジェクトで共通データエンティティを検索し、返します.<br>
@@ -101,8 +111,12 @@ public class ResourceItemCommonDataRepositoryService implements ResourceItemComm
 	@Override
 	public ResourceItemCommonData saveNewCommonData(ResourceItemCommonData common) {
 
-		// flushしないとトランザクションコミット時に一意制約違反が発生してしまうためここでflushする
-		return repository.saveAndFlush(common);
+		// JPARepository#saveではキー重複の時EntityManager#mergeが呼ばれてしまう可能性があるため、EntityManager#persistを使用する
+		// また、flushしないとトランザクションコミット時まで一意制約違反が遅れて発生してしまうためここでflushする
+		entitymanager.persist(common);
+		entitymanager.flush();
+
+		return common;
 	}
 
 	/**

@@ -27,6 +27,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceException;
+
 import mockit.Expectations;
 import mockit.Mocked;
 
@@ -46,6 +49,9 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 
 	@Mocked
 	private ResourceItemCommonDataRepository repository;
+
+	@Mocked
+	private EntityManager entityManager;
 
 	/**
 	 * typeテストメソッド.
@@ -437,12 +443,10 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 		new Expectations() {
 			{
 				setField(target, repository);
+				setField(target, entityManager);
 
-				repository.exists(id);
-				result = false;
-
-				repository.save(common);
-				result = common;
+				entityManager.persist(common);
+				entityManager.flush();
 			}
 		};
 
@@ -455,10 +459,10 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 
 	/**
 	 * {@link ResourceItemCommonDataRepositoryService#saveNewCommonData(ResourceItemCommonData)}用テストメソッド.<br>
-	 * 既にIDが同じデータが存在する場合、{@link BadRequestException}がスローされる.
+	 * 既にIDが同じデータが存在して一意制約違反となった場合、{@link PersistenceException}がスローされる.
 	 */
-	@Test(expected = BadRequestException.class)
-	public void testSaveNewCommonDataResourceItemCommonDataFailBecauseOfDuplication() {
+	@Test(expected = PersistenceException.class)
+	public void testSaveNewCommonDataResourceItemCommonDataFailBecauseOfDuplicationDetectedByPersist() {
 
 		// Arrange：異常系
 		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
@@ -470,9 +474,10 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 		new Expectations() {
 			{
 				setField(target, repository);
+				setField(target, entityManager);
 
-				repository.exists(id);
-				result = true;
+				entityManager.persist(common);
+				result = new PersistenceException("");
 			}
 		};
 
@@ -485,7 +490,39 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 
 	/**
 	 * {@link ResourceItemCommonDataRepositoryService#saveNewCommonData(ResourceItemCommonData)}用テストメソッド.<br>
-	 * 既にIDが同じデータが存在する場合、{@link NullPointerException}がスローされる.
+	 * 既にIDが同じデータが存在して(flush時に)一意制約違反となった場合、{@link PersistenceException}がスローされる.
+	 */
+	@Test(expected = PersistenceException.class)
+	public void testSaveNewCommonDataResourceItemCommonDataFailBecauseOfDuplicationDetectedByFlush() {
+
+		// Arrange：異常系
+		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
+
+		final ResourceItemCommonDataId id = new ResourceItemCommonDataId("resourceName", "resourceItemId");
+
+		final ResourceItemCommonData common = new ResourceItemCommonData(id, "targetItemId");
+
+		new Expectations() {
+			{
+				setField(target, repository);
+				setField(target, entityManager);
+
+				entityManager.persist(common);
+				entityManager.flush();
+				result = new PersistenceException("");
+			}
+		};
+
+		// Act
+		target.saveNewCommonData(common);
+
+		// Assert：例外でなければ失敗
+		fail();
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryService#saveNewCommonData(ResourceItemCommonData)}用テストメソッド.<br>
+	 * nullが渡された場合、{@link NullPointerException}がスローされる.
 	 */
 	@Test(expected = NullPointerException.class)
 	public void testSaveNewCommonDataResourceItemCommonDataFailBecauseOfNullInput() {
@@ -496,6 +533,10 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 		new Expectations() {
 			{
 				setField(target, repository);
+				setField(target, entityManager);
+
+				entityManager.persist(null);
+				result = new NullPointerException();
 			}
 		};
 

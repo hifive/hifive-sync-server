@@ -26,10 +26,10 @@ import java.util.Map;
 import java.util.Properties;
 
 import javax.annotation.Resource;
+import javax.persistence.PersistenceException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataIntegrityViolationException;
 
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.DuplicateIdException;
@@ -231,12 +231,12 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 		itemCommon.modify(itemCommon.getAction(), uploadCommon.getSyncTime());
 		// 一旦共通データを生成し、保存
 
+		ResourceItemCommonData commonDataAfterCreate;
 		try {
-			// flushしないとトランザクションコミット時に一意制約違反が発生してしまうためここでflushし、例外としてキャッチする
-			commonDataService.saveNewCommonData(itemCommon);
-		} catch (DataIntegrityViolationException e) {
+			commonDataAfterCreate = commonDataService.saveNewCommonData(itemCommon);
+		} catch (PersistenceException e) {
 
-			// 共通データのキー重複
+			// 共通データのキー重複の場合PersistenceExceptionがスローされる
 
 			// 共通データは現在サーバで管理されているものを設定、リソースアイテムにはリクエストのアイテムを設定
 			ResourceItemCommonData currentCommon = commonDataService.currentCommonData(itemCommon.getId());
@@ -250,25 +250,25 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 			// 成功すると共通データで管理する各リソースアイテムのIDが返され、登録を行ったアイテムがサーバで管理される
 			String targetItemId = doCreate(item);
 
-			itemCommon.setConflictType(SyncConflictType.NONE);
+			commonDataAfterCreate.setConflictType(SyncConflictType.NONE);
 
 			// 対象リソースアイテムのIDを設定し、リソースアイテム共通データを更新
-			itemCommon.setTargetItemId(targetItemId);
-			commonDataService.saveUpdatedCommonData(itemCommon);
+			commonDataAfterCreate.setTargetItemId(targetItemId);
 
 			// 登録されたリソースアイテム共通データ、アイテムをリターン
-			return new ResourceItemWrapper<>(itemCommon, item);
+			return new ResourceItemWrapper<>(commonDataService.saveUpdatedCommonData(commonDataAfterCreate), item);
 
 		} catch (DuplicateIdException e) {
 			// アイテムデータのキー重複
 
-			// 共通データ、リソースアイテムには現在サーバで管理されているものを設定する
-			ResourceItemCommonData currentCommon = commonDataService.currentCommonData(itemCommon.getId()
+			// 共通データを再取得
+			ResourceItemCommonData currentCommon = commonDataService.currentCommonData(commonDataAfterCreate.getId()
 					.getResourceName(), e.getDuplicatedTargetItemId());
 
-			// 並行トランザクションの処理タイミングにより取得できなかった場合はリクエストの共通データをそのまま返す
+			// 起こりえない(データ不整合)
 			if (currentCommon == null) {
-				currentCommon = itemCommon;
+				throw new SyncException("itemCommonData not found (data integrity violated): "
+						+ commonDataAfterCreate.getId() + "-" + e.getDuplicatedTargetItemId());
 			}
 
 			currentCommon.setConflictType(SyncConflictType.DUPLICATE_ID);

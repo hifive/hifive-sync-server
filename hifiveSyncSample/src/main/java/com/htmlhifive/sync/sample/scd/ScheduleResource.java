@@ -23,6 +23,9 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceException;
 
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -45,323 +48,316 @@ import com.htmlhifive.sync.sample.person.PersonRepository;
 @SyncResourceService(resourceName = "schedule", updateStrategy = ClientResolvingStrategy.class)
 public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem> {
 
-    /**
-     * エンティティの永続化を担うリポジトリ.
-     */
-    @Resource
-    private ScheduleRepository repository;
+	/**
+	 * エンティティの永続化を担うリポジトリ.
+	 */
+	@Resource
+	private ScheduleRepository repository;
 
-    /**
-     * エンティティのクエリ仕様.
-     */
-    @Resource(type = ScheduleQuerySpecifications.class)
-    private ResourceQuerySpecifications<Schedule> querySpec;
+	/**
+	 * 新規データの永続化に使用するEntityManager.
+	 *
+	 * @see {@link this#doCreate(ScheduleResourceItem)}
+	 */
+	@PersistenceContext
+	private EntityManager entitymanager;
 
-    /**
-     * 関連するPersonエンティティを取得するためのリポジトリ.
-     */
-    @Resource
-    private PersonRepository personRepository;
+	/**
+	 * エンティティのクエリ仕様.
+	 */
+	@Resource(type = ScheduleQuerySpecifications.class)
+	private ResourceQuerySpecifications<Schedule> querySpec;
 
-    /**
-     * データ取得メソッドのリソース別独自処理を行う抽象メソッド.<br>
-     * 与えられた識別子が示すリソースアイテムを返します.
-     *
-     * @param ids
-     *            リソースアイテムの識別子(複数可)
-     * @return リソースアイテム(識別子をkeyとするMap)
-     */
-    @Override
-    protected Map<String, ScheduleResourceItem> doGet(String... ids) {
+	/**
+	 * 関連するPersonエンティティを取得するためのリポジトリ.
+	 */
+	@Resource
+	private PersonRepository personRepository;
 
-        Map<String, ScheduleResourceItem> itemMap = new HashMap<>();
-        for (String scheduleId : ids) {
+	/**
+	 * データ取得メソッドのリソース別独自処理を行う抽象メソッド.<br>
+	 * 与えられた識別子が示すリソースアイテムを返します.
+	 *
+	 * @param ids リソースアイテムの識別子(複数可)
+	 * @return リソースアイテム(識別子をkeyとするMap)
+	 */
+	@Override
+	protected Map<String, ScheduleResourceItem> doGet(String... ids) {
 
-            Schedule scheduleEntity = findSchedule(scheduleId);
-            itemMap.put(scheduleId, entityToItem(scheduleEntity));
-        }
+		Map<String, ScheduleResourceItem> itemMap = new HashMap<>();
+		for (String scheduleId : ids) {
 
-        return itemMap;
-    }
+			Schedule scheduleEntity = findSchedule(scheduleId);
+			itemMap.put(scheduleId, entityToItem(scheduleEntity));
+		}
 
-    /**
-     * クエリによってリソースアイテムを取得する抽象メソッド.<br>
-     * 与えられた識別子が示すアイテムの中で、データ項目が指定された条件に合致するものを返します.
-     *
-     * @param conditions
-     *            条件Map(データ項目名,データ項目の条件)
-     * @param ids
-     *            リソースアイテムの識別子(複数可)
-     * @return 条件に合致するリソースアイテム(アイテム識別子をKeyとするMap)
-     */
-    @Override
-    protected Map<String, ScheduleResourceItem> doGetByQuery(
-            Map<String, String[]> conditions,
-            String... ids) {
+		return itemMap;
+	}
 
-        Map<String, ScheduleResourceItem> itemMap = new HashMap<>();
+	/**
+	 * クエリによってリソースアイテムを取得する抽象メソッド.<br>
+	 * 与えられた識別子が示すアイテムの中で、データ項目が指定された条件に合致するものを返します.
+	 *
+	 * @param conditions 条件Map(データ項目名,データ項目の条件)
+	 * @param ids リソースアイテムの識別子(複数可)
+	 * @return 条件に合致するリソースアイテム(アイテム識別子をKeyとするMap)
+	 */
+	@Override
+	protected Map<String, ScheduleResourceItem> doGetByQuery(Map<String, String[]> conditions, String... ids) {
 
-        // Specificationsを用いたクエリ実行
-        List<Schedule> scheduleList =
-                repository.findAll(querySpec.parseConditions(conditions, ids));
+		Map<String, ScheduleResourceItem> itemMap = new HashMap<>();
 
-        for (Schedule schedule : scheduleList) {
-            ScheduleResourceItem item = entityToItem(schedule);
-            itemMap.put(item.getScheduleId(), item);
-        }
+		// Specificationsを用いたクエリ実行
+		List<Schedule> scheduleList = repository.findAll(querySpec.parseConditions(conditions, ids));
 
-        return itemMap;
-    }
+		for (Schedule schedule : scheduleList) {
+			ScheduleResourceItem item = entityToItem(schedule);
+			itemMap.put(item.getScheduleId(), item);
+		}
 
-    /**
-     * エンティティの持つ情報からリソースアイテムオブジェクトに値を設定します.
-     *
-     * @param bean
-     *            Scheduleエンティティ
-     */
-    private ScheduleResourceItem entityToItem(Schedule bean) {
+		return itemMap;
+	}
 
-        ScheduleDateFormatConverter formatConverter =
-                new ScheduleDateFormatConverter(
-                        ScheduleDateFormatConverter.FORMAT_INT8,
-                        ScheduleDateFormatConverter.FORMAT_SLASH_SEPARATION);
+	/**
+	 * エンティティの持つ情報からリソースアイテムオブジェクトに値を設定します.
+	 *
+	 * @param bean Scheduleエンティティ
+	 */
+	private ScheduleResourceItem entityToItem(Schedule bean) {
 
-        ScheduleResourceItem item = new ScheduleResourceItem(bean.getScheduleId());
+		ScheduleDateFormatConverter formatConverter = new ScheduleDateFormatConverter(
+				ScheduleDateFormatConverter.FORMAT_INT8, ScheduleDateFormatConverter.FORMAT_SLASH_SEPARATION);
 
-        List<String> userIds = new ArrayList<>();
-        for (Person user : bean.getUserBeans()) {
-            userIds.add(user.getPersonId());
-        }
-        item.setUserIds(userIds);
+		ScheduleResourceItem item = new ScheduleResourceItem(bean.getScheduleId());
 
-        item.setTitle(bean.getTitle());
-        item.setCategory(bean.getCategory());
+		List<String> userIds = new ArrayList<>();
+		for (Person user : bean.getUserBeans()) {
+			userIds.add(user.getPersonId());
+		}
+		item.setUserIds(userIds);
 
-        List<String> dates = new ArrayList<>();
-        for (ScheduleDate date : bean.getDateBeans()) {
-            dates.add(formatConverter.convertFormat(String.valueOf(date.getDate())));
-        }
-        item.setDates(dates);
+		item.setTitle(bean.getTitle());
+		item.setCategory(bean.getCategory());
 
-        item.setStartTime(bean.getStartTime());
-        item.setFinishTime(bean.getFinishTime());
-        item.setDetail(bean.getDetail());
-        item.setPlace(bean.getPlace());
+		List<String> dates = new ArrayList<>();
+		for (ScheduleDate date : bean.getDateBeans()) {
+			dates.add(formatConverter.convertFormat(String.valueOf(date.getDate())));
+		}
+		item.setDates(dates);
 
-        String createUserName = bean.getCreateUser() == null ? "" : bean.getCreateUser().getName();
-        item.setCreateUserName(createUserName);
+		item.setStartTime(bean.getStartTime());
+		item.setFinishTime(bean.getFinishTime());
+		item.setDetail(bean.getDetail());
+		item.setPlace(bean.getPlace());
 
-        return item;
-    }
+		String createUserName = bean.getCreateUser() == null ? "" : bean.getCreateUser().getName();
+		item.setCreateUserName(createUserName);
 
-    /**
-     * createメソッドのリソース別独自処理. <br>
-     * エンティティを新規生成、保存し、リソースアイテムのIDを返します.
-     *
-     * @param newItem
-     *            生成内容を含むリソースアイテム
-     * @return 採番されたリソースアイテムのID
-     */
-    @Override
-    protected String doCreate(ScheduleResourceItem newItem) throws DuplicateIdException {
+		return item;
+	}
 
-        if (repository.exists(newItem.getScheduleId())) {
+	/**
+	 * createメソッドのリソース別独自処理. <br>
+	 * エンティティを新規生成、保存し、リソースアイテムのIDを返します.
+	 *
+	 * @param newItem 生成内容を含むリソースアイテム
+	 * @return 採番されたリソースアイテムのID
+	 */
+	@Override
+	protected String doCreate(ScheduleResourceItem newItem) throws DuplicateIdException {
 
-            throw new DuplicateIdException(
-                    newItem.getScheduleId(), doGet(newItem.getScheduleId()).get(
-                            newItem.getScheduleId()));
-        }
+		String scheduleId = newItem.getScheduleId();
 
-        Schedule newEntity = new Schedule(newItem.getScheduleId());
+		Schedule newEntity = new Schedule(scheduleId);
 
-        itemToEntity(newEntity, newItem);
+		// 作成者にログインユーザーであるPersonをセット
+		newEntity.setCreateUser(loginUser());
 
-        // 作成者にログインユーザーであるPersonをセット
-        newEntity.setCreateUser(loginUser());
+		itemToEntity(newEntity, newItem);
 
-        repository.save(newEntity);
+		// 以下は、既に採番されたIDでcreateを行うために必要
+		// リソースが一意なIDを並行性を考慮して採番するのであれば不要
+		try {
+			// JPARepository#saveではキー重複の時EntityManager#mergeが呼ばれてしまう可能性があるため、EntityManager#persistを使用する
+			// また、flushしないとトランザクションコミット時まで一意制約違反が遅れて発生してしまうためここでflushする
+			entitymanager.persist(newEntity);
+			entitymanager.flush();
 
-        return newEntity.getScheduleId();
-    }
+		} catch (PersistenceException e) {
 
-    /**
-     * updateメソッドのリソース別独自処理.<br>
-     *
-     * @param item
-     *            更新内容を含むリソースアイテム
-     * @return リソースアイテムの識別子
-     */
-    @Override
-    protected String doUpdate(ScheduleResourceItem item) {
+			// キー重複
+			// レスポンスに既存アイテムのIDや内容を渡すために例外オブジェクトにセット
+			throw new DuplicateIdException(scheduleId, doGet(scheduleId).get(scheduleId));
+		}
 
-        Schedule updatingEntity = findSchedule(item.getScheduleId());
+		return newEntity.getScheduleId();
+	}
 
-        itemToEntity(updatingEntity, item);
+	/**
+	 * updateメソッドのリソース別独自処理.<br>
+	 *
+	 * @param item 更新内容を含むリソースアイテム
+	 * @return リソースアイテムの識別子
+	 */
+	@Override
+	protected String doUpdate(ScheduleResourceItem item) {
 
-        repository.save(updatingEntity);
+		Schedule updatingEntity = findSchedule(item.getScheduleId());
 
-        return item.getScheduleId();
-    }
+		itemToEntity(updatingEntity, item);
 
-    /**
-     * リソースアイテムの内容をScheduleエンティティに設定します.<br>
-     *
-     * @param entity
-     *            Scheduleオブジェクト(Entity)
-     * @param item
-     *            Scheduleリソースアイテムオブジェクト
-     */
-    private void itemToEntity(Schedule entity, ScheduleResourceItem item) {
+		repository.save(updatingEntity);
 
-        // userBeansの関連の更新
-        entity.setUserBeans(itemUsersToEntityUsers(entity.getUserBeans(), item.getUserIds()));
+		return item.getScheduleId();
+	}
 
-        entity.setTitle(item.getTitle());
-        entity.setCategory(item.getCategory());
+	/**
+	 * リソースアイテムの内容をScheduleエンティティに設定します.<br>
+	 *
+	 * @param entity Scheduleオブジェクト(Entity)
+	 * @param item Scheduleリソースアイテムオブジェクト
+	 */
+	private void itemToEntity(Schedule entity, ScheduleResourceItem item) {
 
-        // DateBeansの関連の更新
-        entity.setDateBeans(itemDatesToEntityDates(entity, item.getDates()));
+		// userBeansの関連の更新
+		entity.setUserBeans(itemUsersToEntityUsers(entity.getUserBeans(), item.getUserIds()));
 
-        entity.setStartTime(item.getStartTime());
-        entity.setFinishTime(item.getFinishTime());
-        entity.setDetail(item.getDetail());
-        entity.setPlace(item.getPlace());
-    }
+		entity.setTitle(item.getTitle());
+		entity.setCategory(item.getCategory());
 
-    /**
-     * リソースアイテムのユーザーリストの内容をエンティティのユーザーリストに反映します.<br>
-     * エンティティのユーザーリストに既に含むものはそのままとし、足りないユーザーのPersonエンティティを取得して加えます.
-     *
-     * @param entityUserBeans
-     *            エンティティのユーザーリスト(Personエンティティのリスト)
-     * @param itemUserIds
-     *            リソースアイテムのユーザーリスト(IDのリスト)
-     * @return 反映後のユーザーリスト(Personエンティティのリスト)
-     */
-    private List<Person> itemUsersToEntityUsers(
-            List<Person> entityUserBeans,
-            List<String> itemUserIds) {
+		// DateBeansの関連の更新
+		entity.setDateBeans(itemDatesToEntityDates(entity, item.getDates()));
 
-        List<Person> resultUserList = new ArrayList<>();
+		entity.setStartTime(item.getStartTime());
+		entity.setFinishTime(item.getFinishTime());
+		entity.setDetail(item.getDetail());
+		entity.setPlace(item.getPlace());
+	}
 
-        // 足りないユーザーを抽出するためリストのコピーを作成
-        List<String> userListInItem = new ArrayList<>(itemUserIds);
+	/**
+	 * リソースアイテムのユーザーリストの内容をエンティティのユーザーリストに反映します.<br>
+	 * エンティティのユーザーリストに既に含むものはそのままとし、足りないユーザーのPersonエンティティを取得して加えます.
+	 *
+	 * @param entityUserBeans エンティティのユーザーリスト(Personエンティティのリスト)
+	 * @param itemUserIds リソースアイテムのユーザーリスト(IDのリスト)
+	 * @return 反映後のユーザーリスト(Personエンティティのリスト)
+	 */
+	private List<Person> itemUsersToEntityUsers(List<Person> entityUserBeans, List<String> itemUserIds) {
 
-        // 既存のエンティティリストに含まれるものはそのまま新しいリストに含め、コピーから削除
-        for (Person existingPerson : entityUserBeans) {
-            if (itemUserIds.contains(existingPerson.getPersonId())) {
-                resultUserList.add(existingPerson);
-                userListInItem.remove(existingPerson.getPersonId());
-            }
-        }
+		List<Person> resultUserList = new ArrayList<>();
 
-        // コピーに残ったIDは既存のエンティティリストに含まないため、リポジトリから取得して新しいリストに含める
-        for (String newPersonId : userListInItem) {
-            resultUserList.add(findRelatedPerson(newPersonId));
-        }
+		// 足りないユーザーを抽出するためリストのコピーを作成
+		List<String> userListInItem = new ArrayList<>(itemUserIds);
 
-        return resultUserList;
-    }
+		// 既存のエンティティリストに含まれるものはそのまま新しいリストに含め、コピーから削除
+		for (Person existingPerson : entityUserBeans) {
+			if (itemUserIds.contains(existingPerson.getPersonId())) {
+				resultUserList.add(existingPerson);
+				userListInItem.remove(existingPerson.getPersonId());
+			}
+		}
 
-    /**
-     * リソースアイテムの予定日付リストの内容をエンティティの予定日付リストに反映します.<br>
-     * エンティティのユーザーリストに既に含むものはそのままとし、足りない日付のScheduleDateエンティティを取得して加えます.
-     *
-     * @param entity
-     *            Scheduleエンティティ
-     * @param itemDates
-     * @return
-     */
-    private List<ScheduleDate> itemDatesToEntityDates(Schedule entity, List<String> itemDates) {
+		// コピーに残ったIDは既存のエンティティリストに含まないため、リポジトリから取得して新しいリストに含める
+		for (String newPersonId : userListInItem) {
+			resultUserList.add(findRelatedPerson(newPersonId));
+		}
 
-        ScheduleDateFormatConverter formatConverter =
-                new ScheduleDateFormatConverter(
-                        ScheduleDateFormatConverter.FORMAT_SLASH_SEPARATION,
-                        ScheduleDateFormatConverter.FORMAT_INT8);
+		return resultUserList;
+	}
 
-        List<ScheduleDate> resultDatesList = new ArrayList<>();
+	/**
+	 * リソースアイテムの予定日付リストの内容をエンティティの予定日付リストに反映します.<br>
+	 * エンティティのユーザーリストに既に含むものはそのままとし、足りない日付のScheduleDateエンティティを取得して加えます.
+	 *
+	 * @param entity Scheduleエンティティ
+	 * @param itemDates
+	 * @return
+	 */
+	private List<ScheduleDate> itemDatesToEntityDates(Schedule entity, List<String> itemDates) {
 
-        Iterator<String> dateItr = itemDates.iterator();
-        for (ScheduleDate dateBean : entity.getDateBeans()) {
+		ScheduleDateFormatConverter formatConverter = new ScheduleDateFormatConverter(
+				ScheduleDateFormatConverter.FORMAT_SLASH_SEPARATION, ScheduleDateFormatConverter.FORMAT_INT8);
 
-            // 日付のマッチングは行わず、取得順に再設定する
-            if (dateItr.hasNext()) {
-                ScheduleDate oldDateBean = dateBean;
-                oldDateBean.setDate(Integer.parseInt(formatConverter.convertFormat(dateItr.next())));
-                resultDatesList.add(oldDateBean);
-            }
-        }
+		List<ScheduleDate> resultDatesList = new ArrayList<>();
 
-        // 元より多い分は新規
-        while (dateItr.hasNext()) {
-            resultDatesList.add(new ScheduleDate(
-                    entity, Integer.parseInt(formatConverter.convertFormat(dateItr.next()))));
-        }
-        return resultDatesList;
-    }
+		Iterator<String> dateItr = itemDates.iterator();
+		for (ScheduleDate dateBean : entity.getDateBeans()) {
 
-    /**
-     * 認証情報からログインユーザーIDを取得します.
-     *
-     * @return ログインユーザーID.
-     */
-    private Person loginUser() {
+			// 日付のマッチングは行わず、取得順に再設定する
+			if (dateItr.hasNext()) {
+				ScheduleDate oldDateBean = dateBean;
+				oldDateBean.setDate(Integer.parseInt(formatConverter.convertFormat(dateItr.next())));
+				resultDatesList.add(oldDateBean);
+			}
+		}
 
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+		// 元より多い分は新規
+		while (dateItr.hasNext()) {
+			resultDatesList.add(new ScheduleDate(entity,
+					Integer.parseInt(formatConverter.convertFormat(dateItr.next()))));
+		}
+		return resultDatesList;
+	}
 
-        String username;
-        if (principal instanceof UserDetails) {
-            username = ((UserDetails)principal).getUsername();
-        } else {
-            username = principal.toString();
-        }
+	/**
+	 * 認証情報からログインユーザーIDを取得します.
+	 *
+	 * @return ログインユーザーID.
+	 */
+	private Person loginUser() {
 
-        return personRepository.findOne(username);
-    }
+		Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 
-    /**
-     * deleteメソッドのリソース別独自処理. <br>
-     * 論理削除のため、エンティティは変更せずにIDのみ設定された空のリソースアイテムを返します.
-     *
-     * @param targetItemId
-     *            リソースアイテムのID
-     * @return 削除されたアイテムを表すリソースアイテムオブジェクト
-     */
-    @Override
-    protected ScheduleResourceItem doDelete(String targetItemId) {
+		String username;
+		if (principal instanceof UserDetails) {
+			username = ((UserDetails) principal).getUsername();
+		} else {
+			username = principal.toString();
+		}
 
-        findSchedule(targetItemId);
-        return new ScheduleResourceItem(targetItemId);
-    }
+		return personRepository.findOne(username);
+	}
 
-    /**
-     * このリソースのリソースアイテムのIDから1件のエンティティをリポジトリを検索して取得します. <br>
-     *
-     * @param scheduleId
-     *            リソースアイテムのID
-     * @return Scheduleエンティティ
-     */
-    private Schedule findSchedule(String scheduleId) {
+	/**
+	 * deleteメソッドのリソース別独自処理. <br>
+	 * 論理削除のため、エンティティは変更せずにIDのみ設定された空のリソースアイテムを返します.
+	 *
+	 * @param targetItemId リソースアイテムのID
+	 * @return 削除されたアイテムを表すリソースアイテムオブジェクト
+	 */
+	@Override
+	protected ScheduleResourceItem doDelete(String targetItemId) {
 
-        Schedule found = repository.findOne(scheduleId);
-        if (found == null) {
-            throw new BadRequestException("entity not found :" + scheduleId);
-        }
-        return found;
-    }
+		findSchedule(targetItemId);
+		return new ScheduleResourceItem(targetItemId);
+	}
 
-    /**
-     * このリソースのリソースアイテムと関連するPersonのIDから1件のエンティティをリポジトリを検索して取得します. <br>
-     *
-     * @param personId
-     *            PersonのID
-     * @return Personエンティティ
-     */
-    private Person findRelatedPerson(String personId) {
-        Person found = personRepository.findOne(personId);
-        if (found == null) {
-            throw new BadRequestException("entity not found :" + personId);
-        }
-        return found;
-    }
+	/**
+	 * このリソースのリソースアイテムのIDから1件のエンティティをリポジトリを検索して取得します. <br>
+	 *
+	 * @param scheduleId リソースアイテムのID
+	 * @return Scheduleエンティティ
+	 */
+	private Schedule findSchedule(String scheduleId) {
+
+		Schedule found = repository.findOne(scheduleId);
+		if (found == null) {
+			throw new BadRequestException("entity not found :" + scheduleId);
+		}
+		return found;
+	}
+
+	/**
+	 * このリソースのリソースアイテムと関連するPersonのIDから1件のエンティティをリポジトリを検索して取得します. <br>
+	 *
+	 * @param personId PersonのID
+	 * @return Personエンティティ
+	 */
+	private Person findRelatedPerson(String personId) {
+		Person found = personRepository.findOne(personId);
+		if (found == null) {
+			throw new BadRequestException("entity not found :" + personId);
+		}
+		return found;
+	}
 }

@@ -29,6 +29,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.persistence.PersistenceException;
+
 import mockit.Delegate;
 import mockit.Expectations;
 import mockit.FullVerificationsInOrder;
@@ -496,10 +498,18 @@ public class AbstractSyncResourceTest {
 		};
 		final Object newItem = new Object();
 
+		final ResourceItemCommonData itemCommonBeforeCreate = new ResourceItemCommonData(id, null) {
+			{
+				setAction(SyncAction.CREATE);
+				setLastModified(syncTime);
+			}
+		};
+
 		final ResourceItemCommonData itemCommonAfterCreate = new ResourceItemCommonData(id, targetItemId) {
 			{
 				setAction(SyncAction.CREATE);
 				setLastModified(syncTime);
+				setTargetItemId(targetItemId);
 			}
 		};
 
@@ -510,13 +520,13 @@ public class AbstractSyncResourceTest {
 				setField(target, defaultItemConverter);
 				setField(target, commonDataService);
 
+				commonDataService.saveNewCommonData(itemCommonBeforeCreate);
+				result = itemCommonAfterCreate;
+
 				mockObj.doCreate(newItem);
 				result = targetItemId;
 
-				commonDataService.currentCommonData(id);
-				result = null;
-
-				commonDataService.saveNewCommonData(itemCommonAfterCreate);
+				commonDataService.saveUpdatedCommonData(itemCommonAfterCreate);
 				result = itemCommonAfterCreate;
 			}
 		};
@@ -532,10 +542,10 @@ public class AbstractSyncResourceTest {
 
 	/**
 	 * {@link AbstractSyncResource#create(UploadCommonData, ResourceItemCommonData, Object)}用テストメソッド.<br>
-	 * キー重複が発生した場合、例外オブジェクトから情報を取得して結果を返す.
+	 * 共通データのキー重複が発生した場合、例外オブジェクトから情報を取得して結果を返す.
 	 */
 	@Test
-	public void testCreateIfThrowsDuplicateIdException() throws Exception {
+	public void testCreateIfThrowsDuplicateIdExceptionByCommonDataDuplication() throws Exception {
 
 		// Arrange：正常系
 		final AbstractSyncResource<Object> target = new TestTargetImpl();
@@ -546,13 +556,81 @@ public class AbstractSyncResourceTest {
 		final String targetItemId = "duplicated";
 
 		final ResourceItemCommonDataId id = new ResourceItemCommonDataId(resourceName, "new");
-		final ResourceItemCommonData itemCommon = new ResourceItemCommonData(id, targetItemId) {
+		final ResourceItemCommonData itemCommon = new ResourceItemCommonData(id, null) {
 			{
 				setAction(SyncAction.CREATE);
 				setLastModified(0);
 			}
 		};
 		final Object newItem = new Object();
+
+		final ResourceItemCommonData itemCommonBeforeCreate = new ResourceItemCommonData(id, null) {
+			{
+				setAction(SyncAction.CREATE);
+				setLastModified(syncTime);
+			}
+		};
+
+		final ResourceItemCommonData duplicatedItemCommon = new ResourceItemCommonData(id, targetItemId) {
+			{
+				setAction(SyncAction.CREATE);
+				setLastModified(5);
+			}
+		};
+
+		new Expectations() {
+			{
+				setField(target, "mock", mockObj);
+				setField(target, updateStrategy);
+				setField(target, defaultItemConverter);
+				setField(target, commonDataService);
+
+				commonDataService.saveNewCommonData(itemCommonBeforeCreate);
+				result = new PersistenceException();
+
+				commonDataService.currentCommonData(id);
+				result = duplicatedItemCommon;
+			}
+		};
+
+		// Act
+		ResourceItemWrapper<Object> actual = target.create(uploadCommon, itemCommon, newItem);
+
+		// Assert：結果が正しいこと
+		ResourceItemWrapper<Object> expected = new ResourceItemWrapper<>(duplicatedItemCommon, newItem);
+		assertThat(actual, is(equalTo(expected)));
+	}
+
+	/**
+	 * {@link AbstractSyncResource#create(UploadCommonData, ResourceItemCommonData, Object)}用テストメソッド.<br>
+	 * アイテムデータのキー重複が発生した場合、例外オブジェクトから情報を取得して結果を返す.
+	 */
+	@Test
+	public void testCreateIfThrowsDuplicateIdExceptionByItemDuplication() throws Exception {
+
+		// Arrange：正常系
+		final AbstractSyncResource<Object> target = new TestTargetImpl();
+
+		final long syncTime = 10;
+		final UploadCommonData uploadCommon = createUploadCommon(syncTime);
+
+		final String targetItemId = "duplicated";
+
+		final ResourceItemCommonDataId id = new ResourceItemCommonDataId(resourceName, "new");
+		final ResourceItemCommonData itemCommon = new ResourceItemCommonData(id, null) {
+			{
+				setAction(SyncAction.CREATE);
+				setLastModified(0);
+			}
+		};
+		final Object newItem = new Object();
+
+		final ResourceItemCommonData itemCommonBeforeCreate = new ResourceItemCommonData(id, null) {
+			{
+				setAction(SyncAction.CREATE);
+				setLastModified(syncTime);
+			}
+		};
 
 		final ResourceItemCommonData duplicatedItemCommon = new ResourceItemCommonData(id, targetItemId) {
 			{
@@ -568,6 +646,9 @@ public class AbstractSyncResourceTest {
 				setField(target, updateStrategy);
 				setField(target, defaultItemConverter);
 				setField(target, commonDataService);
+
+				commonDataService.saveNewCommonData(itemCommonBeforeCreate);
+				result = itemCommonBeforeCreate;
 
 				mockObj.doCreate(newItem);
 				result = new DuplicateIdException(targetItemId, duplicatedItem);
@@ -589,7 +670,7 @@ public class AbstractSyncResourceTest {
 	 * {@link AbstractSyncResource#create(UploadCommonData, ResourceItemCommonData, Object)}用テストメソッド.<br>
 	 * 新規アイテムに対する共通データが既に存在する時は{@link SyncException}がスローされる.
 	 */
-	@Test(expected = SyncException.class)
+	@Test
 	public void testCreateFailBecauseOfInconsistentCommonData() throws Exception {
 
 		// Arrange：異常系
@@ -622,8 +703,8 @@ public class AbstractSyncResourceTest {
 				setField(target, defaultItemConverter);
 				setField(target, commonDataService);
 
-				mockObj.doCreate(newItem);
-				result = targetItemId;
+				commonDataService.saveNewCommonData(itemCommon);
+				result = new PersistenceException();
 
 				commonDataService.currentCommonData(id);
 				result = itemCommonExisted;
@@ -631,9 +712,12 @@ public class AbstractSyncResourceTest {
 		};
 
 		// Act
-		target.create(uploadCommon, itemCommon, newItem);
+		ResourceItemWrapper<Object> actual = target.create(uploadCommon, itemCommon, newItem);
 
-		fail();
+		// Assert：結果が正しいこと
+		ResourceItemWrapper<Object> expected = new ResourceItemWrapper<>(itemCommonExisted, newItem);
+
+		assertThat(actual, is(equalTo(expected)));
 	}
 
 	/**
