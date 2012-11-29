@@ -16,7 +16,7 @@
 			value="com.htmlhifive.sync.resource.AbstractSyncResource" />
 		<property name="resourceConfigurations">
 			<props>
-				<prop key="AbstractSyncResource.countOfVerification">2</prop>
+				<prop key="AbstractSyncResource.countOfVerification">0</prop>
 			</props>
 		</property>
 	</bean>
@@ -27,8 +27,8 @@
 		<property name="bufferTimeForDownload">
 			<util:property-path path="txManager.defaultTimeout" />
 		</property>
-		<property name="uploadControlType" value="NONE" />
-		<property name="downloadControlType" value="NONE" />
+		<property name="uploadControlType" ref="UPLOAD_CTRL_NONE" />
+		<property name="downloadControlType" ref="DOWNLOAD_CTRL_NONE" />
 		<property name="continueOnConflictOfDuplicateId" value="false" />
 		<property name="continueOnConflictOfUpdated" value="false" />
 	</bean>
