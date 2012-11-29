@@ -20,6 +20,10 @@ import java.util.UUID;
 
 import javax.annotation.Resource;
 
+import org.hibernate.exception.LockAcquisitionException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.CannotAcquireLockException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -50,6 +54,8 @@ import com.htmlhifive.sync.service.upload.UploadResponse;
  */
 @Controller
 public class JsonSyncController {
+
+	private static final Logger LOGGER = LoggerFactory.getLogger(JsonSyncController.class);
 
 	/**
 	 * 同期処理を実行するシンクロナイザー.
@@ -88,15 +94,27 @@ public class JsonSyncController {
 		}
 
 		// 下り更新サービスを呼び出し
-		DownloadResponse response = synchronizer.download(request);
+		try {
+			DownloadResponse response = synchronizer.download(request);
 
-		// 初回アクセス以外はストレージIDをレスポンスデータから除外するためnullをセット
-		if (!isInitialDownload) {
-			response.getDownloadCommonData().setStorageId(null);
+			// 初回アクセス以外はストレージIDをレスポンスデータから除外するためnullをセット
+			if (!isInitialDownload) {
+				response.getDownloadCommonData().setStorageId(null);
+			}
+
+			// HTTPレスポンスをリターン
+			return createHttpResponseEntity(response, HttpStatus.OK);
+
+		} catch (org.springframework.orm.hibernate3.HibernateJdbcException // H2
+				| org.springframework.orm.hibernate4.HibernateJdbcException // H2
+				| LockAcquisitionException // Oracle
+				| CannotAcquireLockException //	Oracle
+		e) {
+
+			// ロック解除待ちタイムアウト
+			LOGGER.warn(e.getMessage());
+			return createHttpResponseEntity(null, HttpStatus.LOCKED);
 		}
-
-		// HTTPレスポンスをリターン
-		return createHttpResponseEntity(response, HttpStatus.OK);
 	}
 
 	/**
@@ -132,8 +150,19 @@ public class JsonSyncController {
 			return createHttpResponseEntity(response, HttpStatus.OK);
 
 		} catch (ConflictException e) {
+
 			// 競合発生時は409レスポンスをリターンする
 			return createHttpResponseEntity(e.getResponse(), HttpStatus.CONFLICT);
+
+		} catch (org.springframework.orm.hibernate3.HibernateJdbcException // H2
+				| org.springframework.orm.hibernate4.HibernateJdbcException // H2
+				| LockAcquisitionException // Oracle
+				| CannotAcquireLockException //	Oracle
+		e) {
+
+			// ロック解除待ちタイムアウト
+			LOGGER.warn(e.getMessage());
+			return createHttpResponseEntity(null, HttpStatus.LOCKED);
 		}
 	}
 
