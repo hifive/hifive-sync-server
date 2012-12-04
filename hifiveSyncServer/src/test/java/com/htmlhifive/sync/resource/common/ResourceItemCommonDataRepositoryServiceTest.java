@@ -157,6 +157,247 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 	}
 
 	/**
+	 * {@link ResourceItemCommonDataRepositoryService#currentCommonData(String, String)}用テストメソッド.
+	 */
+	@Test
+	public void testCurrentCommonData_String() {
+
+		// Arrange：正常系
+		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
+		final String resourceName = "resourceName";
+		final String targetItemId = "targetItemId";
+
+		final ResourceItemCommonData expected = new ResourceItemCommonData(new ResourceItemCommonDataId(resourceName,
+				"resourceItemId"), targetItemId);
+
+		new Expectations() {
+			{
+				setField(target, repository);
+
+				repository.findByTargetItemId(resourceName, targetItemId);
+				result = expected;
+			}
+		};
+
+		// Act
+		ResourceItemCommonData actual = target.currentCommonData(resourceName, targetItemId);
+
+		// Assert：結果が正しいこと
+		assertThat(actual, is(equalTo(expected)));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryService#currentCommonData(String, String)}用テストメソッド.<br>
+	 * 存在しない場合nullが返される.
+	 */
+	@Test
+	public void testCurrentCommonData_String_NotFound() {
+
+		// Arrange：例外系
+		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
+		final String resourceName = "resourceName";
+		final String targetItemId = "targetItemId";
+
+		new Expectations() {
+			{
+				setField(target, repository);
+
+				repository.findByTargetItemId(resourceName, targetItemId);
+				result = null;
+			}
+		};
+
+		// Act
+		ResourceItemCommonData actual = target.currentCommonData(resourceName, targetItemId);
+
+		// Assert：結果が正しいこと
+		assertThat(actual, is(nullValue()));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryService#currentCommonData(String, String)}用テストメソッド.<br>
+	 * どちらかの引数にnullが渡された場合nullが返される.
+	 */
+	@Test
+	public void testCurrentCommonData_String_NullInput() {
+
+		// Arrange：異常系
+		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
+		final String resourceName = "resourceName";
+		final String targetItemId = "targetItemId";
+
+		new Expectations() {
+			{
+				setField(target, repository);
+
+				repository.findByTargetItemId(null, targetItemId);
+				result = null;
+
+				repository.findByTargetItemId(resourceName, null);
+				result = null;
+			}
+		};
+
+		// Act
+		ResourceItemCommonData actual1 = target.currentCommonData(null, targetItemId);
+		// Assert：結果が正しいこと
+		assertThat(actual1, is(nullValue()));
+
+		// Act
+		ResourceItemCommonData actual2 = target.currentCommonData(resourceName, (String) null);
+		// Assert：結果が正しいこと
+		assertThat(actual2, is(nullValue()));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryService#currentCommonData(String, List)}用テストメソッド.
+	 */
+	@SuppressWarnings("serial")
+	@Test
+	public void testCurrentCommonData_StringList() {
+
+		// Arrange：正常系
+		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
+		final String resourceName = "resourceName";
+		final String targetItemId1 = "targetItemId1";
+		final String targetItemId2 = "targetItemId2";
+
+		final List<String> targetItemIds = new ArrayList<String>() {
+			{
+				add(targetItemId1);
+				add(targetItemId2);
+			}
+		};
+
+		final ResourceItemCommonData expected1 = new ResourceItemCommonData(new ResourceItemCommonDataId(resourceName,
+				"resourceItemId1"), targetItemId1);
+		final ResourceItemCommonData expected2 = new ResourceItemCommonData(new ResourceItemCommonDataId(resourceName,
+				"resourceItemId2"), targetItemId2);
+
+		final List<ResourceItemCommonData> expected = new ArrayList<ResourceItemCommonData>() {
+			{
+				add(expected1);
+				add(expected2);
+			}
+		};
+
+		new Expectations() {
+			{
+				setField(target, repository);
+
+				repository.findByTargetItemIds(resourceName, targetItemIds);
+				result = expected;
+			}
+		};
+
+		// Act
+		List<ResourceItemCommonData> actual = target.currentCommonData(resourceName, targetItemIds);
+
+		// Assert：結果が正しいこと
+		assertThat(actual, is(equalTo(expected)));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryService#currentCommonData(String, List)}用テストメソッド.<br>
+	 * 存在しない場合空のリストが返される.
+	 */
+	@SuppressWarnings("serial")
+	@Test
+	public void testCurrentCommonData_StringList_NotFound() {
+
+		// Arrange：例外系
+		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
+		final String resourceName = "resourceName";
+		final String targetItemId = "targetItemId";
+
+		ArrayList<String> targetItemIds = new ArrayList<String>() {
+			{
+				add(targetItemId);
+			}
+		};
+
+		new Expectations() {
+			{
+				setField(target, repository);
+
+				ArrayList<String> targetItemIds = new ArrayList<String>() {
+					{
+						add(targetItemId);
+					}
+				};
+				repository.findByTargetItemIds(resourceName, targetItemIds);
+				result = new ArrayList<>();
+			}
+		};
+
+		// Act
+		List<ResourceItemCommonData> actual = target.currentCommonData(resourceName, targetItemIds);
+
+		// Assert：結果が正しいこと
+		assertThat(actual.isEmpty(), is(true));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryService#currentCommonData(String, List)}用テストメソッド.<br>
+	 * 空のリストを渡すと空のリストが返される.
+	 */
+	@Test
+	public void testCurrentCommonData_EmptyStringList() {
+
+		// Arrange：例外系
+		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
+		final String resourceName = "resourceName";
+
+		new Expectations() {
+			{
+				setField(target, repository);
+
+			}
+		};
+
+		// Act
+		List<ResourceItemCommonData> actual = target.currentCommonData(resourceName, Collections.<String> emptyList());
+
+		// Assert：結果が正しいこと
+		assertThat(actual.isEmpty(), is(true));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryService#currentCommonData(String, List)}用テストメソッド.<br>
+	 * どちらかの引数にnullが渡された場合nullが返される.
+	 */
+	@Test
+	public void testCurrentCommonData_StringList_NullInput() {
+
+		// Arrange：異常系
+		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
+		final String resourceName = "resourceName";
+		final String targetItemId = "targetItemId";
+
+		new Expectations() {
+			{
+				setField(target, repository);
+
+				repository.findByTargetItemId(null, targetItemId);
+				result = null;
+
+				repository.findByTargetItemId(resourceName, null);
+				result = null;
+			}
+		};
+
+		// Act
+		ResourceItemCommonData actual1 = target.currentCommonData(null, targetItemId);
+		// Assert：結果が正しいこと
+		assertThat(actual1, is(nullValue()));
+
+		// Act
+		ResourceItemCommonData actual2 = target.currentCommonData(resourceName, (String) null);
+		// Assert：結果が正しいこと
+		assertThat(actual2, is(nullValue()));
+	}
+
+	/**
 	 * {@link ResourceItemCommonDataRepositoryService#currentCommonDataForUpdate(ResourceItemCommonDataId)}用テストメソッド.
 	 */
 	@Test
@@ -335,96 +576,144 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 	}
 
 	/**
-	 * {@link ResourceItemCommonDataRepositoryService#currentCommonData(String, String)}用テストメソッド.
+	 * {@link ResourceItemCommonDataRepositoryService#modifiedCommonData(String, long, List)}用テストメソッド.
 	 */
+	@SuppressWarnings("serial")
 	@Test
-	public void testCurrentCommonData_String() {
+	public void testModifiedCommonDataWithTargetItemIds() {
 
 		// Arrange：正常系
 		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
-		final String resourceName = "resourceName";
-		final String targetItemId = "targetItemId";
 
-		final ResourceItemCommonData expected = new ResourceItemCommonData(new ResourceItemCommonDataId(resourceName,
-				"resourceItemId"), targetItemId);
+		final String resourceName = "resourceName";
+		final long lastDownloadTime = 0L;
+
+		final List<String> targetItemIds = new ArrayList<String>() {
+			{
+				add("resource1");
+			}
+		};
+
+		final List<ResourceItemCommonData> expected = new ArrayList<ResourceItemCommonData>() {
+			{
+				add(new ResourceItemCommonData(new ResourceItemCommonDataId(resourceName, "1"), "resource1"));
+			}
+		};
 
 		new Expectations() {
 			{
 				setField(target, repository);
 
-				repository.findByTargetItemId(resourceName, targetItemId);
+				repository.findModified(resourceName, lastDownloadTime, targetItemIds);
 				result = expected;
 			}
 		};
 
 		// Act
-		ResourceItemCommonData actual = target.currentCommonData(resourceName, targetItemId);
+		List<ResourceItemCommonData> actual = target.modifiedCommonData(resourceName, lastDownloadTime, targetItemIds);
 
 		// Assert：結果が正しいこと
 		assertThat(actual, is(equalTo(expected)));
 	}
 
 	/**
-	 * {@link ResourceItemCommonDataRepositoryService#currentCommonData(String, String)}用テストメソッド.<br>
-	 * 存在しない場合nullが返される.
+	 * {@link ResourceItemCommonDataRepositoryService#modifiedCommonData(String, long, List)}用テストメソッド.<br>
+	 * 検索結果が0件の場合空のリストが返される.
 	 */
+	@SuppressWarnings("serial")
 	@Test
-	public void testCurrentCommonData_String_NotFound() {
+	public void testModifiedCommonDataWithTargetItemIdsReturnsEmptyList() {
 
 		// Arrange：例外系
 		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
+
 		final String resourceName = "resourceName";
-		final String targetItemId = "targetItemId";
+		final long lastDownloadTime = 0L;
+
+		final List<String> targetItemIds = new ArrayList<String>() {
+			{
+				add("resource1");
+			}
+		};
+
+		final List<ResourceItemCommonData> expected = Collections.emptyList();
 
 		new Expectations() {
 			{
 				setField(target, repository);
 
-				repository.findByTargetItemId(resourceName, targetItemId);
-				result = null;
+				repository.findModified(resourceName, lastDownloadTime, targetItemIds);
+				result = expected;
 			}
 		};
 
 		// Act
-		ResourceItemCommonData actual = target.currentCommonData(resourceName, targetItemId);
+		List<ResourceItemCommonData> actual = target.modifiedCommonData(resourceName, lastDownloadTime, targetItemIds);
 
 		// Assert：結果が正しいこと
-		assertThat(actual, is(nullValue()));
+		assertThat(actual.isEmpty(), is(true));
 	}
 
 	/**
-	 * {@link ResourceItemCommonDataRepositoryService#currentCommonData(String, String)}用テストメソッド.<br>
-	 * どちらかの引数にnullが渡された場合nullが返される.
+	 * {@link ResourceItemCommonDataRepositoryService#modifiedCommonData(String, long, List)}用テストメソッド.<br>
+	 * 空のリストを渡した場合DBは検索されず、空のリストが返される.
 	 */
 	@Test
-	public void testCurrentCommonData_String_NullInput() {
+	public void testModifiedCommonDataWithEmptyTargetItemIds() {
 
-		// Arrange：異常系
+		// Arrange：例外系
 		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
+
 		final String resourceName = "resourceName";
-		final String targetItemId = "targetItemId";
+		final long lastDownloadTime = 0L;
+
+		final List<String> targetItemIds = Collections.emptyList();
+
+		final List<ResourceItemCommonData> expected = Collections.emptyList();
 
 		new Expectations() {
 			{
 				setField(target, repository);
 
-				repository.findByTargetItemId(null, targetItemId);
-				result = null;
+				repository.findModified(resourceName, lastDownloadTime, targetItemIds);
+				result = expected;
+			}
+		};
 
-				repository.findByTargetItemId(resourceName, null);
+		// Act
+		List<ResourceItemCommonData> actual = target.modifiedCommonData(resourceName, lastDownloadTime, targetItemIds);
+
+		// Assert：結果が正しいこと
+		assertThat(actual.isEmpty(), is(true));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryService#modifiedCommonData(String, long, List)}用テストメソッド. <br>
+	 * nullを渡すと、nullが返される(空のリストではない).
+	 */
+	@Test
+	public void testModifiedCommonDataWithTargetItemIds_NullInput() {
+
+		// Arrange：正常系
+		final ResourceItemCommonDataRepositoryService target = new ResourceItemCommonDataRepositoryService();
+
+		final String resourceName = "resourceName";
+		final long lastDownloadTime = 0L;
+
+		new Expectations() {
+			{
+				setField(target, repository);
+
+				repository.findModified(resourceName, lastDownloadTime, null);
 				result = null;
 			}
 		};
 
 		// Act
-		ResourceItemCommonData actual1 = target.currentCommonData(null, targetItemId);
-		// Assert：結果が正しいこと
-		assertThat(actual1, is(nullValue()));
+		List<ResourceItemCommonData> actual = target.modifiedCommonData(resourceName, lastDownloadTime, null);
 
-		// Act
-		ResourceItemCommonData actual2 = target.currentCommonData(resourceName, null);
 		// Assert：結果が正しいこと
-		assertThat(actual2, is(nullValue()));
+		assertThat(actual, is(nullValue()));
 	}
 
 	/**

@@ -51,13 +51,38 @@ public interface ResourceItemCommonDataRepositoryCustom {
 	List<ResourceItemCommonData> findModified(@Param("resourceName") String resourceName, @Param("since") long since);
 
 	/**
-	 * リソース名が合致し、対象リソースアイテムIDが合致する共通データを返します.<br>
+	 * リソース名が合致し、ある時刻以降に更新されたリソースアイテムの共通データを返します.<br>
+	 * また、リソースごとのアイテムの識別子に合致するものに限定されます.
 	 *
 	 * @param resourceName リソース名
-	 * @param targetItemId 共通データの対象リソースアイテムにおけるID
+	 * @param since データを検索する時刻(指定時刻以降の更新データを検索)
+	 * @param targetItemIds リソースごとのアイテムの識別子
+	 * @return 検索した共通データエンティティのList
+	 */
+	@Query("SELECT d FROM ResourceItemCommonData d WHERE d.id.resourceName = :resourceName AND d.targetItemId in :targetItemIds AND d.lastModified > :since")
+	List<ResourceItemCommonData> findModified(@Param("resourceName") String resourceName, @Param("since") long since,
+			@Param("targetItemIds") List<String> targetItemIds);
+
+	/**
+	 * リソース名が合致し、対象リソースアイテム識別子が合致する共通データを返します.<br>
+	 *
+	 * @param resourceName リソース名
+	 * @param targetItemIds リソースごとのアイテムの識別子
 	 * @return 検索した共通データエンティティ
 	 */
-	@Query("SELECT d FROM ResourceItemCommonData d WHERE d.id.resourceName = :resourceName AND d.targetItemId= :targetItemId")
+	@Query("SELECT d FROM ResourceItemCommonData d WHERE d.id.resourceName = :resourceName AND d.targetItemId = :targetItemId")
 	ResourceItemCommonData findByTargetItemId(@Param("resourceName") String resourceName,
 			@Param("targetItemId") String targetItemId);
+
+	/**
+	 * リソース名が合致し、対象リソースアイテム識別子が合致する共通データを返します.<br>
+	 *
+	 * @param resourceName リソース名
+	 * @param targetItemIds リソースごとのアイテムの識別子
+	 * @return 検索した共通データエンティティ
+	 */
+	@Query("SELECT d FROM ResourceItemCommonData d WHERE d.id.resourceName = :resourceName AND d.targetItemId in :targetItemIds")
+	List<ResourceItemCommonData> findByTargetItemIds(@Param("resourceName") String resourceName,
+			@Param("targetItemIds") List<String> targetItemIds);
+
 }

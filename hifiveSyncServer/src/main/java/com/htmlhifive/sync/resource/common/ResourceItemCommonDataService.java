@@ -34,6 +34,24 @@ public interface ResourceItemCommonDataService {
 	ResourceItemCommonData currentCommonData(ResourceItemCommonDataId id);
 
 	/**
+	 * リソース名、そのリソースにおけるアイテムのIDで共通データエンティティを検索し、返します.
+	 *
+	 * @param resourceName リソース名
+	 * @param targetItemId リソースアイテムごとのID
+	 * @return 共通データエンティティ
+	 */
+	ResourceItemCommonData currentCommonData(String resourceName, String targetItemId);
+
+	/**
+	 * リソース名、そのリソースにおけるアイテムのIDで共通データエンティティを検索し、返します.
+	 *
+	 * @param resourceName リソース名
+	 * @param targetItemIds リソースアイテムごとのID(複数可能)
+	 * @return 共通データエンティティ
+	 */
+	List<ResourceItemCommonData> currentCommonData(String resourceName, List<String> targetItemIds);
+
+	/**
 	 * リソースアイテム共通データのIDオブジェクトで共通データエンティティを"for update"で検索し、返します.<br>
 	 *
 	 * @param id リソースアイテム共通データID
@@ -51,13 +69,16 @@ public interface ResourceItemCommonDataService {
 	List<ResourceItemCommonData> modifiedCommonData(String resourceName, long lastDownloadTime);
 
 	/**
-	 * リソース名、そのリソースごとのアイテムにおけるIDで共通データエンティティを検索し、返します.
+	 * 指定されたリソースで、指定された時刻以降に更新されたリソースアイテムの共通データを検索し、返します.<br>
+	 * 検索結果は、指定された対象リソースアイテムIDに該当するものに限定されます.
 	 *
 	 * @param resourceName リソース名
-	 * @param targetItemId 対象リソースアイテムのID
-	 * @return 共通データエンティティ
+	 * @param lastDownloadTime 前回下り更新時刻
+	 * @param targetItemIds リソースアイテムごとのID(複数可能)
+	 * @return 共通データエンティティのリスト
 	 */
-	ResourceItemCommonData currentCommonData(String resourceName, String targetItemId);
+	List<ResourceItemCommonData> modifiedCommonData(String resourceName, long lastDownloadTime,
+			List<String> targetItemIds);
 
 	/**
 	 * 新規リソースに対応する共通データを保存します.

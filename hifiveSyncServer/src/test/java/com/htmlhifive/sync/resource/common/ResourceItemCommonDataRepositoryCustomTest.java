@@ -22,6 +22,8 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -41,6 +43,7 @@ import com.htmlhifive.sync.resource.SyncAction;
  *
  * @author kishigam
  */
+@SuppressWarnings("serial")
 @ContextConfiguration(locations = "classpath:test-context.xml")
 @TransactionConfiguration(transactionManager = "txManager")
 public class ResourceItemCommonDataRepositoryCustomTest extends AbstractTransactionalJUnit4SpringContextTests {
@@ -132,6 +135,43 @@ public class ResourceItemCommonDataRepositoryCustomTest extends AbstractTransact
 	}
 
 	/**
+	 * {@link ResourceItemCommonDataRepositoryCustom#findModified(String, long, List)}用テストメソッド.
+	 */
+	@Test
+	public void testFindModifiedWithTargetItemIds() {
+
+		List<ResourceItemCommonData> actual = target.findModified("r1", 5);
+		assertThat(actual.size(), is(equalTo(2)));
+		assertThat(actual.contains(data1), is(equalTo(true)));
+		assertThat(actual.contains(data2), is(equalTo(false)));
+		assertThat(actual.contains(data3), is(equalTo(true)));
+
+		List<String> targetItemIds = new ArrayList<>();
+		targetItemIds.add("r1-1");
+		List<ResourceItemCommonData> actual2 = target.findModified("r1", 5, targetItemIds);
+		assertThat(actual2.size(), is(equalTo(1)));
+		assertThat(actual2.contains(data1), is(equalTo(true)));
+		assertThat(actual2.contains(data2), is(equalTo(false)));
+		assertThat(actual2.contains(data3), is(equalTo(false)));
+
+		List<ResourceItemCommonData> actual3 = target.findModified("r1", 15, targetItemIds);
+		assertThat(actual3.isEmpty(), is(equalTo(true)));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryCustom#findModified(String, long, List)}用テストメソッド.<br>
+	 * 空のリストが渡されると、例外がスローされる.<br>
+	 * 呼び出す前にnullを1件セットしておく等すると、条件にヒットせず空のリストが返る.
+	 */
+	@Test(expected = InvalidDataAccessApiUsageException.class)
+	public void testFindModifiedWithTargetItemIdsReturnsEmptyList() {
+
+		target.findModified("r1", 5, Collections.<String> emptyList());
+
+		fail();
+	}
+
+	/**
 	 * {@link ResourceItemCommonDataRepositoryCustom#findByTargetItemId(String, String)}用テストメソッド.
 	 */
 	@Test
@@ -163,8 +203,80 @@ public class ResourceItemCommonDataRepositoryCustomTest extends AbstractTransact
 	@Test
 	public void testFindByTargetItemIdReturnNullBecauseOfNullTargetItemId() {
 
-		ResourceItemCommonData actual = target.findByTargetItemId("r2", null);
+		ResourceItemCommonData actual = target.findByTargetItemId("r2", (String) null);
 
 		assertThat(actual, is(nullValue()));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryCustom#findByTargetItemIds(String, List)}用テストメソッド.
+	 */
+	@Test
+	public void testFindByTargetItemIds() {
+
+		List<ResourceItemCommonData> actualList = target.findByTargetItemIds("r1", new ArrayList<String>() {
+			{
+				add("r1-1");
+				add("r1-2");
+			}
+		});
+		assertThat(actualList.size(), is(equalTo(2)));
+		assertThat(actualList.contains(data1), is(true));
+		assertThat(actualList.contains(data2), is(false));
+		assertThat(actualList.contains(data3), is(true));
+
+		List<ResourceItemCommonData> actualList2 = target.findByTargetItemIds("r2", new ArrayList<String>() {
+			{
+				add("r555");
+			}
+		});
+		assertThat(actualList2.isEmpty(), is(true));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryCustom#findByTargetItemIds(String, List)}用テストメソッド.<br>
+	 * 空のリストが渡されると、例外がスローされる.<br>
+	 * 呼び出す前にnullを1件セットしておく等すると、条件にヒットせず空のリストが返る.
+	 */
+	@Test(expected = InvalidDataAccessApiUsageException.class)
+	public void testFindByTargetItemIdsReturnEmpty() {
+
+		target.findByTargetItemIds("r2", Collections.<String> emptyList());
+
+		fail();
+
+		List<String> list = new ArrayList<>();
+		list.add(null);
+		List<ResourceItemCommonData> actual = target.findByTargetItemIds("r2", list);
+
+		assertThat(actual.isEmpty(), is(true));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryCustom#findByTargetItemIds(String, List)}用テストメソッド.<br>
+	 * nullが渡されると、空のリストを返す.
+	 */
+	@Test
+	public void testFindByTargetItemIdsReturnNullBecauseOfNullResourceName() {
+
+		List<ResourceItemCommonData> actual = target.findByTargetItemIds(null, new ArrayList<String>() {
+			{
+				add("r2-1");
+			}
+		});
+
+		assertThat(actual.isEmpty(), is(true));
+	}
+
+	/**
+	 * {@link ResourceItemCommonDataRepositoryCustom#findByTargetItemIds(String, List)}用テストメソッド.<br>
+	 * nullが渡されると、nullを返す.
+	 */
+	@Test
+	public void testFindByTargetItemIdsReturnNullBecauseOfNullTargetItemId() {
+
+		List<ResourceItemCommonData> actual = target.findByTargetItemIds("r2", (List<String>) null);
+
+		assertThat(actual.isEmpty(), is(true));
 	}
 }

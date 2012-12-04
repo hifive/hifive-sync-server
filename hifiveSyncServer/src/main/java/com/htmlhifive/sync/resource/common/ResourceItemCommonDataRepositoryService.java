@@ -16,6 +16,7 @@
  */
 package com.htmlhifive.sync.resource.common;
 
+import java.util.Collections;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -65,6 +66,38 @@ public class ResourceItemCommonDataRepositoryService implements ResourceItemComm
 	}
 
 	/**
+	 * リソース名、そのリソースごとのアイテムにおけるIDで共通データエンティティを検索し、返します.
+	 *
+	 * @param resourceName リソース名
+	 * @param targetItemId 対象リソースアイテムのID
+	 * @return 共通データエンティティ
+	 */
+	@Override
+	public ResourceItemCommonData currentCommonData(String resourceName, String targetItemId) {
+
+		return repository.findByTargetItemId(resourceName, targetItemId);
+	}
+
+	/**
+	 * リソース名、そのリソースごとのアイテムにおける識別子で共通データエンティティを検索し、返します.
+	 *
+	 * @param resourceName リソース名
+	 * @param targetItemId 対象リソースアイテムの識別子
+	 * @return 共通データエンティティ
+	 */
+	@Override
+	public List<ResourceItemCommonData> currentCommonData(String resourceName, List<String> targetItemIds) {
+
+		// 空のリストを渡すとHibernateが例外をスローする.
+		// nullを1件含むリストに置き換えて実行してもよいが、検索結果なしを表す空リストを生成して返す
+		if (targetItemIds.isEmpty()) {
+			return Collections.emptyList();
+		}
+
+		return repository.findByTargetItemIds(resourceName, targetItemIds);
+	}
+
+	/**
 	 * リソースアイテム共通データのIDオブジェクトで共通データエンティティを"for update"で検索し、返します.<br>
 	 *
 	 * @param id リソースアイテム共通データID
@@ -90,16 +123,19 @@ public class ResourceItemCommonDataRepositoryService implements ResourceItemComm
 	}
 
 	/**
-	 * リソース名、そのリソースごとのアイテムにおけるIDで共通データエンティティを検索し、返します.
+	 * 指定されたリソースで、指定された時刻以降に更新されたリソースアイテムの共通データを検索し、返します.<br>
+	 * 検索結果は、指定された対象リソースアイテム識別子に該当するものに限定されます.
 	 *
 	 * @param resourceName リソース名
-	 * @param targetItemId 対象リソースアイテムのID
-	 * @return 共通データエンティティ
+	 * @param lastDownloadTime 前回下り更新時刻
+	 * @param targetItemIds リソースアイテムごとの識別子(複数可能)
+	 * @return 共通データエンティティのリスト
 	 */
 	@Override
-	public ResourceItemCommonData currentCommonData(String resourceName, String targetItemId) {
+	public List<ResourceItemCommonData> modifiedCommonData(String resourceName, long lastDownloadTime,
+			List<String> targetItemIds) {
 
-		return repository.findByTargetItemId(resourceName, targetItemId);
+		return repository.findModified(resourceName, lastDownloadTime, targetItemIds);
 	}
 
 	/**
