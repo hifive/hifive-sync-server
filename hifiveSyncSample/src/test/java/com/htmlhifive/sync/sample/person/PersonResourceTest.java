@@ -231,12 +231,9 @@ public class PersonResourceTest {
 		final PersonResource target = new PersonResource();
 
 		final String personId1 = "person1";
-		final String personId2 = "person2";
 
 		final Person person1 = new Person();
 		person1.setPersonId(personId1);
-
-		final String[] ids = new String[] { personId1, personId2 };
 
 		final Map<String, String[]> conditions = new HashMap<String, String[]>() {
 			{
@@ -263,7 +260,7 @@ public class PersonResourceTest {
 
 				Specifications<Person> specs = (Specifications<Person>) any;
 
-				querySpec.parseConditions(conditions, ids);
+				querySpec.parseConditions(conditions);
 				result = specs;
 
 				repository.findAll(specs);
@@ -272,45 +269,15 @@ public class PersonResourceTest {
 		};
 
 		// Act
-		Map<String, Person> actual = target.doGetByQuery(conditions, ids);
+		Map<String, Person> actual = target.doGetByQuery(conditions);
 
 		// Assert：結果が正しいこと
 		assertThat(actual, is(expectedPersonMap));
 	}
 
 	/**
-	 * {@link PersonResource#doGetByQuery(Map, String...)}用テストメソッド. 識別子リストがnullの時は例外をそのままスロー.
-	 */
-	@Test(expected = Exception.class)
-	public void testDoGetByQueryFailBecauseOfNullIds() {
-
-		// Arrange：異常系
-		final PersonResource target = new PersonResource();
-
-		final String[] ids = null;
-
-		// any
-		final Map<String, String[]> conditions = new HashMap<>();
-
-		new Expectations() {
-			{
-				setField(target, repository);
-				setField(target, querySpec);
-
-				querySpec.parseConditions(conditions, ids);
-				result = new NullPointerException();
-			}
-		};
-
-		// Act
-		target.doGetByQuery(conditions, ids);
-
-		// Assert：例外でなければ失敗
-		fail();
-	}
-
-	/**
-	 * {@link PersonResource#doGetByQuery(Map, String...)}用テストメソッド. クエリ条件Mapがnullの時は条件なし(空のMap)と同様の結果となる.
+	 * {@link PersonResource#doGetByQuery(Map, String...)}用テストメソッド.<br>
+	 * クエリ条件Mapがnullの時は条件なし(空のMap)と同様の結果となる.
 	 */
 	@Test
 	public void testDoGetByQueryFailBecauseOfNullCondMap() {
@@ -347,7 +314,7 @@ public class PersonResourceTest {
 
 				Specifications<Person> specs = (Specifications<Person>) any;
 
-				querySpec.parseConditions(null, new String[] { personId1, personId2 });
+				querySpec.parseConditions(null);
 				result = specs;
 
 				repository.findAll(specs);
@@ -356,7 +323,7 @@ public class PersonResourceTest {
 		};
 
 		// Act
-		Map<String, Person> actual = target.doGetByQuery(null, new String[] { personId1, personId2 });
+		Map<String, Person> actual = target.doGetByQuery(null);
 
 		// Assert：結果が正しいこと
 		assertThat(actual, is(expectedPersonMap));

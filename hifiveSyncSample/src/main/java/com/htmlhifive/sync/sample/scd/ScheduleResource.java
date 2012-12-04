@@ -99,16 +99,15 @@ public class ScheduleResource extends AbstractSyncResource<ScheduleResourceItem>
 	 * 与えられた識別子が示すアイテムの中で、データ項目が指定された条件に合致するものを返します.
 	 *
 	 * @param conditions 条件Map(データ項目名,データ項目の条件)
-	 * @param ids リソースアイテムの識別子(複数可)
 	 * @return 条件に合致するリソースアイテム(アイテム識別子をKeyとするMap)
 	 */
 	@Override
-	protected Map<String, ScheduleResourceItem> doGetByQuery(Map<String, String[]> conditions, String... ids) {
+	protected Map<String, ScheduleResourceItem> doGetByQuery(Map<String, String[]> conditions) {
 
 		Map<String, ScheduleResourceItem> itemMap = new HashMap<>();
 
 		// Specificationsを用いたクエリ実行
-		List<Schedule> scheduleList = repository.findAll(querySpec.parseConditions(conditions, ids));
+		List<Schedule> scheduleList = repository.findAll(querySpec.parseConditions(conditions));
 
 		for (Schedule schedule : scheduleList) {
 			ScheduleResourceItem item = entityToItem(schedule);

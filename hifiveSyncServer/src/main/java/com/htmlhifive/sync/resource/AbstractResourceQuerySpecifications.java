@@ -41,22 +41,22 @@ import org.springframework.data.jpa.domain.Specifications;
 public abstract class AbstractResourceQuerySpecifications<E> implements ResourceQuerySpecifications<E> {
 
 	/**
-	 * 「指定された識別子を持ち、かつデータ項目が指定された条件に合致する」 というクエリ仕様を表現するSpecificationsオブジェクトを返します.
+	 * 「データ項目が指定された条件に合致する」 というクエリ仕様を表現するSpecificationsオブジェクトを返します.
 	 *
 	 * @param conditions クエリ条件
-	 * @param ids リソースアイテムの識別子(複数可)
 	 * @return Specificationsオブジェクト
 	 */
 	@Override
-	public Specifications<E> parseConditions(Map<String, String[]> conditions, String... ids) {
+	public Specifications<E> parseConditions(Map<String, String[]> conditions) {
 
 		List<Specification<E>> specList = new ArrayList<>();
 
-		// 対象ID(識別子)の条件をSpecに追加
-		specList.add(createItemIdentifierSpec(ids));
-
 		// サブクラスで対象エンティティ固有の検索条件を追加
 		specList.addAll(doParseConditions(conditions));
+
+		if (specList.isEmpty()) {
+			return null;
+		}
 
 		Specifications<E> specs = Specifications.where(specList.get(0));
 		for (Specification<E> spec : specList.subList(1, specList.size())) {

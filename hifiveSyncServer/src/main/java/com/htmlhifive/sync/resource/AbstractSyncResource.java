@@ -132,15 +132,13 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 	@Override
 	public List<ResourceItemWrapper<I>> getByQuery(SyncCommonData syncCommon, ResourceQueryConditions query) {
 
+		// リソースアイテムに対するクエリの実行(targetItemIdは指定しない)
+		Map<String, I> items = doGetByQuery(query.getConditions());
+
+		// クエリにヒットしたアイテムの中で、前回ダウンロード時刻から更新されている共通データの取得
 		List<ResourceItemCommonData> commonDataList = commonDataService.modifiedCommonData(name(),
-				query.getLastDownloadTime());
+				query.getLastDownloadTime(), new ArrayList<>(items.keySet()));
 
-		List<String> idList = new ArrayList<>();
-		for (ResourceItemCommonData common : commonDataList) {
-			idList.add(common.getTargetItemId());
-		}
-
-		Map<String, I> items = doGetByQuery(query.getConditions(), idList.toArray(new String[] {}));
 		List<ResourceItemWrapper<I>> resultList = wrapResourceItem(commonDataList, items);
 
 		return countOfVerification == 0 ? resultList : verify(resultList, countOfVerification);
@@ -441,13 +439,12 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 	/**
 	 * クエリによってリソースアイテムを取得する抽象メソッド.<br>
-	 * 与えられた識別子が示すアイテムの中で、データ項目が指定された条件に合致するものを返します.
+	 * 与えられた識別子が示すアイテムの中で、データ項目が指定された条件に合致するものを返します.<br>
 	 *
 	 * @param conditions 条件Map(データ項目名,データ項目の条件)
-	 * @param ids リソースアイテムの識別子(複数可)
 	 * @return 条件に合致するリソースアイテム(共通データをkeyとするMap)
 	 */
-	protected abstract Map<String, I> doGetByQuery(Map<String, String[]> conditions, String... ids);
+	protected abstract Map<String, I> doGetByQuery(Map<String, String[]> conditions);
 
 	/**
 	 * createメソッドのリソース別独自処理. <br>

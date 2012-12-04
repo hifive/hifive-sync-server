@@ -135,6 +135,12 @@ public class ResourceItemCommonDataRepositoryService implements ResourceItemComm
 	public List<ResourceItemCommonData> modifiedCommonData(String resourceName, long lastDownloadTime,
 			List<String> targetItemIds) {
 
+		// 空のリストを渡すとHibernateが例外をスローする.
+		// nullを1件含むリストに置き換えて実行してもよいが、検索結果なしを表す空リストを生成して返す
+		if (targetItemIds.isEmpty()) {
+			return Collections.emptyList();
+		}
+
 		return repository.findModified(resourceName, lastDownloadTime, targetItemIds);
 	}
 

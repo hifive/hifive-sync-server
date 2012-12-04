@@ -34,9 +34,8 @@ import org.springframework.test.context.junit4.AbstractTransactionalJUnit4Spring
 import org.springframework.test.context.transaction.TransactionConfiguration;
 
 /**
- * <H3>
- * PersonRepositoryのテストクラス.</H3>
- * 
+ * <H3>PersonRepositoryのテストクラス.</H3>
+ *
  * @author kishigam
  */
 @ContextConfiguration(locations = "classpath:test-context.xml")
@@ -44,120 +43,87 @@ import org.springframework.test.context.transaction.TransactionConfiguration;
 @SuppressWarnings("serial")
 public class PersonRepositoryTest extends AbstractTransactionalJUnit4SpringContextTests {
 
-    private static final String TABLE_NAME = Person.class.getAnnotation(Table.class).name();
+	private static final String TABLE_NAME = Person.class.getAnnotation(Table.class).name();
 
-    @Resource
-    private PersonRepository target;
+	@Resource
+	private PersonRepository target;
 
-    @Resource
-    private PersonQuerySpecifications querySpecs;
+	@Resource
+	private PersonQuerySpecifications querySpecs;
 
-    private Person personA;
-    private Person personB;
-    private Person personC;
+	private Person personA;
+	private Person personB;
+	private Person personC;
 
-    private String personIdA = "A";
-    private String personIdB = "B";
-    private String personIdC = "C";
+	private String personIdA = "A";
+	private String personIdB = "B";
+	private String personIdC = "C";
 
-    @Before
-    public void setUp() {
+	@Before
+	public void setUp() {
 
-        deleteFromTables(TABLE_NAME);
+		deleteFromTables(TABLE_NAME);
 
-        personA = new Person();
-        personB = new Person();
-        personC = new Person();
+		personA = new Person();
+		personB = new Person();
+		personC = new Person();
 
-        personA.setPersonId(personIdA);
-        personA.setName("nameA");
-        personA.setOrganization("org1");
+		personA.setPersonId(personIdA);
+		personA.setName("nameA");
+		personA.setOrganization("org1");
 
-        personB.setPersonId(personIdB);
-        personB.setName("nameB");
-        personB.setOrganization("org2");
+		personB.setPersonId(personIdB);
+		personB.setName("nameB");
+		personB.setOrganization("org2");
 
-        personC.setPersonId(personIdC);
-        personC.setName("nameC");
-        personC.setOrganization(personA.getOrganization());
+		personC.setPersonId(personIdC);
+		personC.setName("nameC");
+		personC.setOrganization(personA.getOrganization());
 
-        target.save(personA);
-        target.save(personB);
-        target.save(personC);
-    }
+		target.save(personA);
+		target.save(personB);
+		target.save(personC);
+	}
 
-    /**
-     * {@link PersonRepository#findAll(org.springframework.data.jpa.domain.Specification)}
-     * 用テストメソッド.
-     */
-    @Test
-    public void testFindAllBySpecOfPersonId() {
+	/**
+	 * {@link PersonRepository#findAll(org.springframework.data.jpa.domain.Specification)} 用テストメソッド.
+	 */
+	@Test
+	public void testFindAllBySpecOfPersonId() {
 
-        String[] idsCond = new String[] { personIdA, personIdB, personIdC };
+		Map<String, String[]> personCond = new HashMap<String, String[]>() {
+			{
+				put("personId", new String[] { personA.getPersonId(), personB.getPersonId(), personC.getPersonId() });
+				put("organization", new String[] { personA.getOrganization() });
+			}
+		};
 
-        Map<String, String[]> personCond = new HashMap<String, String[]>() {
-            {
-                put("personId", new String[] {
-                        personA.getPersonId(), personB.getPersonId(), personC.getPersonId() });
-                put("organization", new String[] { personA.getOrganization() });
-            }
-        };
+		List<Person> actual = target.findAll(querySpecs.parseConditions(personCond));
 
-        List<Person> actual = target.findAll(querySpecs.parseConditions(personCond, idsCond));
+		assertThat(actual.size(), is(equalTo(2)));
+		assertThat(actual.contains(personA), is(true));
+		assertThat(actual.contains(personB), is(false));
+		assertThat(actual.contains(personC), is(true));
+	}
 
-        assertThat(actual.size(), is(equalTo(2)));
-        assertThat(actual.contains(personA), is(true));
-        assertThat(actual.contains(personB), is(false));
-        assertThat(actual.contains(personC), is(true));
-    }
+	/**
+	 * {@link PersonRepository#findAll(org.springframework.data.jpa.domain.Specification)} クエリ条件が空の場合は全件検索となる.
+	 */
+	@Test
+	public void testFindAllBySpecOfCommonDataCondOnly() {
 
-    /**
-     * {@link PersonRepository#findAll(org.springframework.data.jpa.domain.Specification)}
-     * 用テストメソッド. <br>
-     * アイテムの識別子の条件に合致しない場合は結果に含まれない.
-     */
-    @Test
-    public void testNotFoundBecaouseOfCommonDataCond() {
+		Map<String, String[]> personCond = new HashMap<String, String[]>() {
+			{
+				// empty
+			}
+		};
 
-        // length==0
-        String[] idsCond = new String[] {};
+		List<Person> actual = target.findAll(querySpecs.parseConditions(personCond));
 
-        Map<String, String[]> personCond = new HashMap<String, String[]>() {
-            {
-                put("personId", new String[] { personA.getPersonId() });
-                put(
-                        "organization",
-                        new String[] { personA.getOrganization(), personB.getOrganization() });
-            }
-        };
+		assertThat(actual.size(), is(equalTo(3)));
+		assertThat(actual.contains(personA), is(true));
+		assertThat(actual.contains(personB), is(true));
+		assertThat(actual.contains(personC), is(true));
+	}
 
-        List<Person> actual = target.findAll(querySpecs.parseConditions(personCond, idsCond));
-
-        assertThat(actual.isEmpty(), is(true));
-    }
-
-    /**
-     * {@link PersonRepository#findAll(org.springframework.data.jpa.domain.Specification)}
-     * クエリ条件が空の場合はアイテムの識別子の条件のみで検索する.
-     */
-    @Test
-    public void testFindAllBySpecOfCommonDataCondOnly() {
-
-        String[] idsCond = new String[] { personIdA, personIdB, personIdC };
-
-        Map<String, String[]> personCond = new HashMap<String, String[]>() {
-            {
-                // empty
-            }
-        };
-
-        List<Person> actual = target.findAll(querySpecs.parseConditions(personCond, idsCond));
-
-        assertThat(actual.size(), is(equalTo(3)));
-        assertThat(actual.contains(personA), is(true));
-        assertThat(actual.contains(personB), is(true));
-        assertThat(actual.contains(personC), is(true));
-    }
-    
-    
 }

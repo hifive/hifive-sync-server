@@ -215,7 +215,6 @@ public class ScheduleResourceTest {
 		};
 
 		final String scheduleId1 = "scheduleId1";
-		final String scheduleId2 = "scheduleId2";
 
 		final Schedule scheduleEntity1 = new Schedule(scheduleId1) {
 			{
@@ -230,8 +229,6 @@ public class ScheduleResourceTest {
 				setCreateUserName("personName");
 			}
 		};
-
-		final String[] ids = new String[] { scheduleId1, scheduleId2 };
 
 		final Map<String, String[]> conditions = new HashMap<String, String[]>() {
 			{
@@ -260,7 +257,7 @@ public class ScheduleResourceTest {
 
 				Specifications<Schedule> specs = (Specifications<Schedule>) any;
 
-				querySpec.parseConditions(conditions, ids);
+				querySpec.parseConditions(conditions);
 				result = specs;
 
 				repository.findAll(specs);
@@ -269,40 +266,10 @@ public class ScheduleResourceTest {
 		};
 
 		// Act
-		Map<String, ScheduleResourceItem> actual = target.doGetByQuery(conditions, ids);
+		Map<String, ScheduleResourceItem> actual = target.doGetByQuery(conditions);
 
 		// Assert：結果が正しいこと
 		assertThat(actual, is(expectedScheduleMap));
-	}
-
-	/**
-	 * {@link ScheduleResource#doGetByQuery(Map, String...)}用テストメソッド. 識別子リストがnullの時は例外をそのままスロー.
-	 */
-	@Test(expected = Exception.class)
-	public void testDoGetByQueryFailBecauseOfNullIds() {
-
-		// Arrange：異常系
-		final ScheduleResource target = new ScheduleResource();
-
-		final String[] ids = null;
-
-		final Map<String, String[]> conditions = new HashMap<>();
-
-		new Expectations() {
-			{
-				setField(target, repository);
-				setField(target, querySpec);
-				setField(target, personRepository);
-
-				querySpec.parseConditions(conditions, ids);
-				result = new NullPointerException();
-			}
-		};
-
-		// Act
-		target.doGetByQuery(conditions, ids);
-
-		fail();
 	}
 
 	/**
@@ -355,8 +322,6 @@ public class ScheduleResourceTest {
 			}
 		};
 
-		final String[] ids = new String[] { scheduleId1, scheduleId2 };
-
 		final Map<String, String[]> conditions = null;
 
 		final List<Schedule> expectedScheduleList = new ArrayList<Schedule>() {
@@ -381,7 +346,7 @@ public class ScheduleResourceTest {
 
 				Specifications<Schedule> specs = (Specifications<Schedule>) any;
 
-				querySpec.parseConditions(conditions, ids);
+				querySpec.parseConditions(conditions);
 				result = specs;
 
 				repository.findAll(specs);
@@ -390,7 +355,7 @@ public class ScheduleResourceTest {
 		};
 
 		// Act
-		Map<String, ScheduleResourceItem> actual = target.doGetByQuery(conditions, ids);
+		Map<String, ScheduleResourceItem> actual = target.doGetByQuery(conditions);
 
 		// Assert：結果が正しいこと
 		assertThat(actual, is(expectedScheduleMap));

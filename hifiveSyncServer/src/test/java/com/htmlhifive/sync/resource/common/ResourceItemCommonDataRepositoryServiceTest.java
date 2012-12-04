@@ -364,9 +364,10 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 
 	/**
 	 * {@link ResourceItemCommonDataRepositoryService#currentCommonData(String, List)}用テストメソッド.<br>
-	 * どちらかの引数にnullが渡された場合nullが返される.
+	 * リソース名がnullの場合nullが返され、アイテムの識別子がnullの場合{@link NullPointerException}がスローされる.
 	 */
-	@Test
+	@SuppressWarnings("serial")
+	@Test(expected = NullPointerException.class)
 	public void testCurrentCommonData_StringList_NullInput() {
 
 		// Arrange：異常系
@@ -374,27 +375,33 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 		final String resourceName = "resourceName";
 		final String targetItemId = "targetItemId";
 
+		final List<String> targetItemIds = new ArrayList<String>() {
+			{
+				add(targetItemId);
+			}
+		};
+
 		new Expectations() {
 			{
 				setField(target, repository);
 
-				repository.findByTargetItemId(null, targetItemId);
+				repository.findByTargetItemIds(null, targetItemIds);
 				result = null;
 
-				repository.findByTargetItemId(resourceName, null);
+				repository.findByTargetItemIds(resourceName, null);
 				result = null;
 			}
 		};
 
 		// Act
-		ResourceItemCommonData actual1 = target.currentCommonData(null, targetItemId);
+		List<ResourceItemCommonData> actual1 = target.currentCommonData(null, targetItemIds);
 		// Assert：結果が正しいこと
 		assertThat(actual1, is(nullValue()));
 
 		// Act
-		ResourceItemCommonData actual2 = target.currentCommonData(resourceName, (String) null);
-		// Assert：結果が正しいこと
-		assertThat(actual2, is(nullValue()));
+		target.currentCommonData(resourceName, (List<String>) null);
+
+		fail();
 	}
 
 	/**
@@ -669,17 +676,6 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 
 		final List<String> targetItemIds = Collections.emptyList();
 
-		final List<ResourceItemCommonData> expected = Collections.emptyList();
-
-		new Expectations() {
-			{
-				setField(target, repository);
-
-				repository.findModified(resourceName, lastDownloadTime, targetItemIds);
-				result = expected;
-			}
-		};
-
 		// Act
 		List<ResourceItemCommonData> actual = target.modifiedCommonData(resourceName, lastDownloadTime, targetItemIds);
 
@@ -689,9 +685,9 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 
 	/**
 	 * {@link ResourceItemCommonDataRepositoryService#modifiedCommonData(String, long, List)}用テストメソッド. <br>
-	 * nullを渡すと、nullが返される(空のリストではない).
+	 * nullを渡すと、{@link NullPointerException}がスローされる.
 	 */
-	@Test
+	@Test(expected = NullPointerException.class)
 	public void testModifiedCommonDataWithTargetItemIds_NullInput() {
 
 		// Arrange：正常系
@@ -710,10 +706,9 @@ public class ResourceItemCommonDataRepositoryServiceTest {
 		};
 
 		// Act
-		List<ResourceItemCommonData> actual = target.modifiedCommonData(resourceName, lastDownloadTime, null);
+		target.modifiedCommonData(resourceName, lastDownloadTime, null);
 
-		// Assert：結果が正しいこと
-		assertThat(actual, is(nullValue()));
+		fail();
 	}
 
 	/**

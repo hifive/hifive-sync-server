@@ -346,6 +346,7 @@ public class AbstractSyncResourceTest {
 	/**
 	 * {@link AbstractSyncResource#getByQuery(SyncCommonData, ResourceQueryConditions)}用テストメソッド.
 	 */
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testGetByQuery() {
 
@@ -386,8 +387,6 @@ public class AbstractSyncResourceTest {
 			}
 		};
 
-		final String[] targetIds = { targetItemIdA, targetItemIdB };
-
 		final Object objA = new Object();
 		final Object objB = new Object();
 
@@ -400,7 +399,7 @@ public class AbstractSyncResourceTest {
 			}
 		};
 
-		new Expectations() {
+		new NonStrictExpectations() {
 			{
 				setField(target, "mock", mockObj);
 				setField(target, updateStrategy);
@@ -409,7 +408,16 @@ public class AbstractSyncResourceTest {
 
 				// ResourceItemCommonData#isForUpdateによる取得判断は行わない
 
-				commonDataService.modifiedCommonData(resourceName, lastDownloadTime);
+				mockObj.doGetByQuery(conditions);
+				result = itemMap;
+
+				// 以下のいずれか(引数のリスト格納順不問)
+				commonDataService.modifiedCommonData(resourceName, lastDownloadTime, new ArrayList<String>() {
+					{
+						add(targetItemIdA);
+						add(targetItemIdB);
+					}
+				});
 				result = new ArrayList<ResourceItemCommonData>() {
 					{
 						add(commonA);
@@ -417,8 +425,18 @@ public class AbstractSyncResourceTest {
 					}
 				};
 
-				mockObj.doGetByQuery(conditions, targetIds);
-				result = itemMap;
+				commonDataService.modifiedCommonData(resourceName, lastDownloadTime, new ArrayList<String>() {
+					{
+						add(targetItemIdB);
+						add(targetItemIdA);
+					}
+				});
+				result = new ArrayList<ResourceItemCommonData>() {
+					{
+						add(commonA);
+						add(commonB);
+					}
+				};
 
 				commonDataService.currentCommonData(idA);
 				result = commonA;
@@ -430,6 +448,15 @@ public class AbstractSyncResourceTest {
 
 		// Act
 		List<? extends ResourceItemWrapper<?>> actual = target.getByQuery(syncCommon, query);
+
+		new FullVerificationsInOrder() {
+			{
+				mockObj.doGetByQuery(conditions);
+				commonDataService.modifiedCommonData(resourceName, lastDownloadTime, (List<String>) any);
+				commonDataService.currentCommonData(idA);
+				commonDataService.currentCommonData(idB);
+			}
+		};
 
 		// Assert：結果が正しいこと
 		List<? extends ResourceItemWrapper<?>> expected = new ArrayList<ResourceItemWrapper<?>>() {
@@ -1598,7 +1625,7 @@ public class AbstractSyncResourceTest {
 		AbstractSyncResource<String> target2 = new AbstractSyncResource<String>() {
 			// @formatter:off
 			@Override protected String doUpdate(String item) { return null; }
-			@Override protected Map<String, String> doGetByQuery(Map<String, String[]> conditions, String... ids) { return null; }
+			@Override protected Map<String, String> doGetByQuery(Map<String, String[]> conditions) { return null; }
 			@Override protected Map<String, String> doGet(String... ids) { return null; }
 			@Override protected String doDelete(String id) { return null; }
 			@Override protected String doCreate(String newItem) throws DuplicateIdException { return null; }
@@ -1696,9 +1723,9 @@ public class AbstractSyncResourceTest {
 		}
 
 		@Override
-		protected Map<String, Object> doGetByQuery(Map<String, String[]> conditions, String... ids) {
+		protected Map<String, Object> doGetByQuery(Map<String, String[]> conditions) {
 
-			return mock.doGetByQuery(conditions, ids);
+			return mock.doGetByQuery(conditions);
 		}
 
 		@Override
