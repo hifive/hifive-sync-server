@@ -29,12 +29,9 @@ hifive syncフレームワークのサーバサイド実装の開発用です。
   hifiveSyncServer/target/
     hifive-sync-server-1.2.0.jar
      が生成されます。
-
 ------------------------------------------------------------
 
 APIドキュメント（JavaDocドキュメント）の生成方法:
-
-2.生成
 
   - build.xmlのjavadocターゲットを実行します。
     hifiveSyncServer/target/doc の下にドキュメントが生成されます。
@@ -43,4 +40,6 @@ APIドキュメント（JavaDocドキュメント）の生成方法:
 
 hifiveSyncServerのテスト実行方法:
 
- (under construction)
+  - build.xmlのtestターゲットを実行します。
+
+------------------------------------------------------------
