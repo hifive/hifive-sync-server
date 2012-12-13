@@ -103,7 +103,7 @@ public class UploadRequest {
 	/**
 	 * @param resourceItems セットする resourceItems
 	 */
-	public void setResourceItems(List<? extends ResourceItemWrapper<? extends Map<String, Object>>> resourceItems) {
+	public void setResourceItems(List<? extends ResourceItemWrapper<?>> resourceItems) {
 		this.resourceItems = resourceItems;
 	}
 }
