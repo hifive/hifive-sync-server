@@ -53,7 +53,7 @@ public class ScheduleQuerySpecifications extends AbstractResourceQuerySpecificat
 
         for (String cond : conditions.keySet()) {
             switch (cond) {
-            case ("sceduleId"):
+            case ("scheduleId"):
                 specList.add(isInIds(conditions.get(cond)));
                 break;
             case ("personIds"):
