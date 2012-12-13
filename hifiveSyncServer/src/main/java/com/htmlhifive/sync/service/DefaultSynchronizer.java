@@ -243,7 +243,7 @@ public class DefaultSynchronizer implements Synchronizer {
 		}
 
 		// AVOID_DEADLOCKタイプの場合は更新順をソートした結果に変更する
-		List<? extends ResourceItemWrapper<? extends Map<String, Object>>> itemsToUpload = request.getResourceItems();
+		List<? extends ResourceItemWrapper<?>> itemsToUpload = request.getResourceItems();
 
 		if (this.syncConfiguration.uploadControl() == UploadControlType.AVOID_DEADLOCK) {
 			itemsToUpload = new ArrayList<>(request.getResourceItems());
@@ -256,10 +256,10 @@ public class DefaultSynchronizer implements Synchronizer {
 		responseCommon.setConflictType(SyncConflictType.NONE);
 
 		// リソースアイテムごとに処理(上り更新リクエストデータでは、ResourceItemWrapperにリソース名を持つ)
-		for (Iterator<? extends ResourceItemWrapper<? extends Map<String, Object>>> itr = itemsToUpload.iterator(); itr
+		for (Iterator<? extends ResourceItemWrapper<?>> itr = itemsToUpload.iterator(); itr
 				.hasNext();) {
 
-			ResourceItemWrapper<? extends Map<String, Object>> uploadingItemWrapper = itr.next();
+			ResourceItemWrapper<?> uploadingItemWrapper = itr.next();
 
 			String resourceName = uploadingItemWrapper.getItemCommonData().getId().getResourceName();
 
@@ -351,7 +351,7 @@ public class DefaultSynchronizer implements Synchronizer {
 	 * @return 更新後のリソースアイテム
 	 */
 	private <T> ResourceItemWrapper<T> doUpload(SyncResource<T> resource, UploadCommonData requestCommon,
-			ResourceItemWrapper<? extends Map<String, Object>> itemWrapper) throws ConflictException {
+			ResourceItemWrapper<?> itemWrapper) throws ConflictException {
 
 		ResourceItemCommonData itemCommon = itemWrapper.getItemCommonData();
 		T item;
