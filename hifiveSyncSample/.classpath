@@ -55,6 +55,6 @@
 	<classpathentry kind="lib" path="lib/test/spring-web-3.1.2.RELEASE.jar"/>
 	<classpathentry kind="lib" path="lib/test/spring-webmvc-3.1.2.RELEASE.jar"/>
 	<classpathentry kind="lib" path="lib/test/xml-apis-1.0.b2.jar"/>
-	<classpathentry kind="lib" path="lib/hifiveSyncServer/hifive-sync-server-1.0.0-beta-1.jar"/>
+	<classpathentry kind="lib" path="lib/hifiveSyncServer/hifive-sync-server-1.2.0rp.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

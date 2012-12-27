@@ -9,7 +9,7 @@
     <extraInfo></extraInfo>
     <webPath>hifiveSyncSample</webPath>
     <webClassPathEntries>
-        <webClassPathEntry>/hifiveSyncSample/lib/hifiveSyncServer/hifive-sync-server-1.0.0-beta-1.jar</webClassPathEntry>
+        <webClassPathEntry>/hifiveSyncSample/lib/hifiveSyncServer/hifive-sync-server-1.2.0rp.jar</webClassPathEntry>
         <webClassPathEntry>/hifiveSyncSample/lib/test/antlr-2.7.7.jar</webClassPathEntry>
         <webClassPathEntry>/hifiveSyncSample/lib/test/aopalliance-1.0.jar</webClassPathEntry>
         <webClassPathEntry>/hifiveSyncSample/lib/test/aspectjrt-1.6.12.jar</webClassPathEntry>
@@ -61,6 +61,5 @@
         <webClassPathEntry>/hifiveSyncSample/lib/test/spring-webmvc-3.1.2.RELEASE.jar</webClassPathEntry>
         <webClassPathEntry>/hifiveSyncSample/lib/test/xml-apis-1.0.b2.jar</webClassPathEntry>
         <webClassPathEntry>/hifiveSyncSample/target/classes</webClassPathEntry>
-        <webClassPathEntry>Z:/git/hifive-sync-server/hifiveSyncSample/lib/ojdbc6.jar</webClassPathEntry>
     </webClassPathEntries>
 </tomcatProjectProperties>
