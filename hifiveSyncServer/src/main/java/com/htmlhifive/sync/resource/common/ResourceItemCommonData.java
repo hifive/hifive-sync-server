@@ -31,7 +31,6 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonUnwrapped;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
-import org.codehaus.jackson.map.annotate.JsonSerialize.Inclusion;
 
 import com.htmlhifive.sync.resource.SyncAction;
 import com.htmlhifive.sync.resource.SyncConflictType;
@@ -67,15 +66,6 @@ public class ResourceItemCommonData implements Serializable, Comparable<Resource
 	 */
 	@Enumerated(EnumType.STRING)
 	private SyncAction action;
-
-	/**
-	 * このリソースアイテムのロックがリクエスト処理後も継続することを示すフラグ.<br>
-	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.<br>
-	 * また、永続化の対象外です.
-	 */
-	@Transient
-	private boolean keepLock;
 
 	/**
 	 * このリソースアイテムの競合状態.<br>
@@ -216,23 +206,6 @@ public class ResourceItemCommonData implements Serializable, Comparable<Resource
 	 */
 	public void setAction(SyncAction action) {
 		this.action = action;
-	}
-
-	/**
-	 * レスポンスから除外するため、{@link @JsonSerialize}を追加しています.
-	 *
-	 * @return keepLock
-	 */
-	@JsonSerialize(include = Inclusion.NON_EMPTY)
-	public boolean isKeepLock() {
-		return keepLock;
-	}
-
-	/**
-	 * @param keepLock セットする keepLock
-	 */
-	public void setKeepLock(boolean keepLock) {
-		this.keepLock = keepLock;
 	}
 
 	/**
