@@ -6,7 +6,27 @@
 		</encoder>
 	</appender>
 
-	<root level="INFO">
+	<appender name="FILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<FileNamePattern>logs/logFile.%d{yyyy-MM-dd}.log</FileNamePattern>
+			<MaxHistory>2</MaxHistory>
+		</rollingPolicy>
+		<encoder>
+			<charset>UTF-8</charset>
+			<Pattern>[%-5level][%d{yyyy-MM-dd HH:mm:ss.SSS}] %class - %msg%n
+			</Pattern>
+		</encoder>
+	</appender>
+
+	<logger name="com.htmlhifive.sync" additivity="false">
+		<level value="DEBUG" />
+		<appender-ref ref="FILE" />
+	</logger>
+
+	<root level="WARN">
 		<appender-ref ref="STDOUT" />
+		<appender-ref ref="FILE" />
 	</root>
+
 </configuration>
