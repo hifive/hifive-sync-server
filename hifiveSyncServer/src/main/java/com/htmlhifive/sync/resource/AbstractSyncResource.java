@@ -415,10 +415,11 @@ public abstract class AbstractSyncResource<I> implements SyncResource<I> {
 
 			// for updateで取得
 			ResourceItemCommonData currentForUpdate = commonDataService.currentCommonDataForUpdate(id);
+
+			// 同一リクエストでCREATEされるデータのUPDATEあるいはDELETEの場合、
+			// forUpdateを行う時点ではCREATEは実行されていないため、無視する
 			if (currentForUpdate == null) {
-				LOGGER.error("select ResourceItemCommonData for update failed in forUpdate action." + id.toString());
-				throw new BadRequestException("itemCommonData not found : " + id.getResourceName() + "-"
-						+ id.getResourceItemId());
+				continue;
 			}
 
 			currentForUpdate.setForUpdate(true);
