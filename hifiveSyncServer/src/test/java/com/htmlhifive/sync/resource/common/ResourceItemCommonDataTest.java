@@ -101,7 +101,6 @@ public class ResourceItemCommonDataTest {
 		assertThat(target.equals(eq), is(true));
 
 		eq.setForUpdate(target.isForUpdate());
-		eq.setKeepLock(false);
 		assertThat(target.equals(eq), is(true));
 
 		ResourceItemCommonData ne1 = new ResourceItemCommonData(new ResourceItemCommonDataId("resourceName1", target
