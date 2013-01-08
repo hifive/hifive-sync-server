@@ -45,9 +45,8 @@ public @interface SyncResourceService {
 
 	/**
 	 * リソースが使用する競合発生時のリソースアイテム更新戦略の実装クラス.<br>
-	 * requiredLockStatusが{@link ResourceLockStatusType#UNLOCK}の場合のみ使用されます.
 	 *
-	 * @return LockManagerのクラスオブジェクト
+	 * @return UpdateStrategyのクラスオブジェクト
 	 */
 	Class<? extends UpdateStrategy> updateStrategy() default ClientResolvingStrategy.class;
 }
