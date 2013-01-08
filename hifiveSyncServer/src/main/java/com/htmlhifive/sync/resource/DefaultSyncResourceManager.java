@@ -35,7 +35,6 @@ import org.springframework.core.type.filter.AnnotationTypeFilter;
 import org.springframework.stereotype.Service;
 
 import com.htmlhifive.sync.exception.SyncException;
-import com.htmlhifive.sync.resource.update.UpdateStrategy;
 
 /**
  * アプリケーション内に存在するリソースを管理するサービス実装.<br>
@@ -55,12 +54,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	/**
 	 * アプリケーション内のリソースを保持するMap
 	 */
-	private Map<String, Class<? extends SyncResource<?>>> resourceMap;
-
-	/**
-	 * リソースごとの更新戦略オブジェクトを保持するMap.<br>
-	 */
-	private Map<String, Class<? extends UpdateStrategy>> updateStrategyMap;
+	private Map<String, SyncResource<?>> resourceMap;
 
 	/**
 	 * 検索対象リソースの抽象スーパークラス名.
@@ -78,7 +72,6 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	public DefaultSyncResourceManager() {
 
 		this.resourceMap = new HashMap<>();
-		this.updateStrategyMap = new HashMap<>();
 	}
 
 	/**
@@ -118,10 +111,16 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 			if (resourceName == null || resourceName.isEmpty()) {
 				continue;
 			}
-			resourceMap.put(resourceName, resourceClass);
 
-			// 更新戦略オブジェクトを特定する
-			updateStrategyMap.put(resourceName, resourceAnnotation.updateStrategy());
+			SyncResource<?> resource = context.getBean(resourceClass);
+
+			// UpdateStrategyのセット
+			resource.setUpdateStrategy(context.getBean(resourceAnnotation.updateStrategy()));
+
+			// リソース設定情報を適用する
+			resource.applyResourceConfigurations(resourceConfigurations);
+
+			resourceMap.put(resourceName, resource);
 		}
 
 		LoggerFactory.getLogger(this.getClass()).info(
@@ -165,22 +164,7 @@ public class DefaultSyncResourceManager implements SyncResourceManager {
 	@Override
 	public SyncResource<?> locateSyncResource(String resourceName) {
 
-		Class<? extends SyncResource<?>> resourceClass = resourceMap.get(resourceName);
-
-		if (resourceClass == null) {
-			return null;
-		}
-
-		SyncResource<?> resource = context.getBean(resourceClass);
-
-		// LockStrategy,UpdateStrategyのセット
-
-		resource.setUpdateStrategy(context.getBean(updateStrategyMap.get(resourceName)));
-
-		// リソース設定情報を適用する
-		resource.applyResourceConfigurations(resourceConfigurations);
-
-		return resource;
+		return resourceMap.get(resourceName);
 	}
 
 	/**

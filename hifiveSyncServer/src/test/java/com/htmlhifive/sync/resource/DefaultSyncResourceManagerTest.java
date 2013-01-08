@@ -31,6 +31,7 @@ import javax.annotation.Resource;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.springframework.context.ApplicationContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
@@ -40,7 +41,6 @@ import com.htmlhifive.sync.resource.test.TestSyncResourceC;
 import com.htmlhifive.sync.resource.test.TestSyncResourceD;
 import com.htmlhifive.sync.resource.update.ClientResolvingStrategy;
 import com.htmlhifive.sync.resource.update.ForceUpdateStrategy;
-import com.htmlhifive.sync.resource.update.UpdateStrategy;
 
 /**
  * <H3>DefaultSyncResourceManagerのテストクラス.</H3>
@@ -50,6 +50,12 @@ import com.htmlhifive.sync.resource.update.UpdateStrategy;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(locations = "classpath:test-context-DefaultSyncResourceManager.xml")
 public class DefaultSyncResourceManagerTest {
+
+	@Resource
+	private ApplicationContext context;
+
+	@Resource
+	private Properties resourceConfigurations;
 
 	@Resource
 	private DefaultSyncResourceManager target;
@@ -76,21 +82,31 @@ public class DefaultSyncResourceManagerTest {
 			}
 		};
 
-		Map<String, Class<? extends SyncResource<?>>> expectedResourceMap = new HashMap<String, Class<? extends SyncResource<?>>>() {
+		Map<String, SyncResource<?>> expectedResourceMap = new HashMap<String, SyncResource<?>>() {
 			{
-				put("A", TestSyncResourceA.class);
-				put("B", TestSyncResourceB.class);
-				put("C", TestSyncResourceC.class);
-				put("D", TestSyncResourceD.class);
-			}
-		};
+				TestSyncResourceA a = context.getBean(TestSyncResourceA.class);
+				a.setUpdateStrategy(context.getBean(ClientResolvingStrategy.class));
+				a.applyResourceConfigurations(resourceConfigurations);
 
-		Map<String, Class<? extends UpdateStrategy>> expectedUpdateStrategyMap = new HashMap<String, Class<? extends UpdateStrategy>>() {
-			{
-				put("A", ClientResolvingStrategy.class);
-				put("B", ClientResolvingStrategy.class);
-				put("C", ForceUpdateStrategy.class);
-				put("D", ClientResolvingStrategy.class);
+				put("A", a);
+
+				TestSyncResourceB b = context.getBean(TestSyncResourceB.class);
+				b.setUpdateStrategy(context.getBean(ClientResolvingStrategy.class));
+				b.applyResourceConfigurations(resourceConfigurations);
+
+				put("B", b);
+
+				TestSyncResourceC c = context.getBean(TestSyncResourceC.class);
+				c.setUpdateStrategy(context.getBean(ForceUpdateStrategy.class));
+				c.applyResourceConfigurations(resourceConfigurations);
+
+				put("C", c);
+
+				TestSyncResourceD d = context.getBean(TestSyncResourceD.class);
+				d.setUpdateStrategy(context.getBean(ClientResolvingStrategy.class));
+				d.applyResourceConfigurations(resourceConfigurations);
+
+				put("D", d);
 			}
 		};
 
@@ -107,19 +123,9 @@ public class DefaultSyncResourceManagerTest {
 
 		assertThat(actualResourceMapObj, is(Map.class));
 		@SuppressWarnings("unchecked")
-		Map<String, Class<? extends SyncResource<?>>> actualResourceMap = (Map<String, Class<? extends SyncResource<?>>>) actualResourceMapObj;
+		Map<String, SyncResource<?>> actualResourceMap = (Map<String, SyncResource<?>>) actualResourceMapObj;
 		assertThat(actualResourceMap.size(), is(equalTo(4)));
 		assertThat(actualResourceMap, is(equalTo(expectedResourceMap)));
-
-		Field updateStrategyMapField = target.getClass().getDeclaredField("updateStrategyMap");
-		updateStrategyMapField.setAccessible(true);
-		Object actualUpdateStrategyMapObj = updateStrategyMapField.get(target);
-
-		assertThat(actualUpdateStrategyMapObj, is(Map.class));
-		@SuppressWarnings("unchecked")
-		Map<String, Class<? extends UpdateStrategy>> actualUpdateStrategyMap = (Map<String, Class<? extends UpdateStrategy>>) actualUpdateStrategyMapObj;
-		assertThat(actualUpdateStrategyMap.size(), is(equalTo(4)));
-		assertThat(actualUpdateStrategyMap, is(equalTo(expectedUpdateStrategyMap)));
 	}
 
 	/**
