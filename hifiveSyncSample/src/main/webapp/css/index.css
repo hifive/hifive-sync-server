@@ -1,21 +1,4 @@
-@charset "utf-8";
-/*
- * Copyright (C) 2012-2013 NS Solutions Corporation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
- #top * {
+#top * {
 	float: right;
 	padding: 5px;
 }
@@ -29,10 +12,10 @@
 .column {
 	overflow-y: auto;
 	display: inline;
-	/* IE7-逕ｨ */
-	/* position: relative縺ｧ縺ｪ縺�ｦ∫ｴ��縺ｮposition:relative縺ｧ縺ゅｋ隕∫ｴ��繧ｹ繧ｯ繝ｭ繝ｼ繝ｫ縺輔ｌ縺ｦ繧ゆｽ咲ｽｮ縺悟､峨ｏ繧峨↑縺�ヰ繧ｰ蟇ｾ遲�*/
+	/* IE7-用 */
+	/* position: relativeでない要素内のposition:relativeである要素はスクロールされても位置が変わらないバグ対策 */
 	position: relative;
-	/* IE7縺ｧ縺ｮ繝ｬ繧､繧｢繧ｦ繝亥ｴｩ繧悟ｯｾ遲悶�(IE6縺ｧ縺ｯ蠢�ｦ√↑縺� */
+	/* IE7でのレイアウト崩れ対策。(IE6では必要ない) */
 	zoom: 1;
 }
 
@@ -40,8 +23,8 @@ button {
 	font-size: 1em;
 }
 
-/***************** 蜷�き繝ｩ繝��險ｭ螳�*****************/
-/******** 繧ｹ繧ｱ繧ｸ繝･繝ｼ繝ｫ ********/
+/***************** 各カラムの設定 *****************/
+/******** スケジュール ********/
 #schedule {
 	width: 558px;
 	overflow-y: hidden;
@@ -142,7 +125,7 @@ button {
 
 #schedule table.calender td .category-a-Temp {
 	background-color: #CFC;
-	/** TODO IE7-縺ｧbox-sizing蜉ｹ縺九↑縺��縺ｧ縲��鄂ｮ譎ゅ↓js縺ｧ險育ｮ励☆繧�**/
+	/** TODO IE7-でbox-sizing効かないので、配置時にjsで計算する **/
 	box-sizing: border-box;
 	border: 2px dashed #0CA;
 }
@@ -190,10 +173,10 @@ button {
 #schedule table.calender td .scheduleCell {
 	padding: 0;
 	height: 0;
-	/* IE6逕ｨ */
-	/* IE6縺ｧ縺ｯ縲｛verflow:hidden繧呈欠螳壹＠縺ｪ縺�→縲∵律莉�縺薙�隕∫ｴ��谺｡縺ｮ隕∫ｴ�縺茎cheduleCell縺ｮ荳九↓陦後▲縺ｦ縺励∪縺�� */
-	/* IE7+縺ｧoverflow:hidden繧呈欠螳壹☆繧九→縺薙�隕∫ｴ��荳ｭ霄ｫ縺瑚｡ｨ遉ｺ縺輔ｌ縺ｪ縺�鬮倥＆0縺ｮ縺溘ａ縲� */
-	/* IE6縺ｧ縺ｯ蟄占ｦ∫ｴ�′position:relative謖�ｮ壹＠縺ｦ縺�ｋ縺ｨoverflow:hidden縺悟柑縺九↑縺��縺ｧ荳ｭ霄ｫ縺瑚｡ｨ遉ｺ縺輔ｌ繧�*/
+	/* IE6用 */
+	/* IE6では、overflow:hiddenを指定しないと、日付(この要素の次の要素)がscheduleCellの下に行ってしまう。 */
+	/* IE7+でoverflow:hiddenを指定するとこの要素の中身が表示されない(高さ0のため。) */
+	/* IE6では子要素がposition:relative指定しているとoverflow:hiddenが効かないので中身が表示される */
 	_overflow: hidden;
 }
 
@@ -206,8 +189,8 @@ table.calender td .date {
 	width: 100%;
 	margin-bottom: 2px;
 	position: relative;
-	/* IE6逕ｨ */
-	/* font-size:0縺ｾ縺溘�overflow:hidden縺ｫ縺励↑縺�→縲∝ｰ上＆縺�ｫ倥＆繧呈欠螳壹〒縺阪↑縺�ヰ繧ｰ蟇ｾ遲�*/
+	/* IE6用 */
+	/* font-size:0またはoverflow:hiddenにしないと、小さい高さを指定できないバグ対策 */
 	overflow: hidden;
 }
 
@@ -244,7 +227,7 @@ table.calender td .date {
 	padding: 2px;
 }
 
-/* 驕ｸ謚槭＠縺滓律莉倥�莠亥ｮ夊｡ｨ遉ｺ繧ｨ繝ｪ繧｢縺ｮ縲∽ｺ亥ｮ夊｡ｨ遉ｺ繝懊ャ繧ｯ繧ｹ */
+/* 選択した日付の予定表示エリアの、予定表示ボックス */
 #schedule #schedule-selected-date .date-str {
 	float: left;
 }
@@ -266,7 +249,7 @@ table.calender td .date {
 	font-weight: bold;
 	float: left;
 	overflow: hidden;
-	/* IE7-縺ｫ縺ｯdisplay:inline-block縺後↑縺�◆繧√�inline繧呈欠螳壹＠縲】oom:1縺ｧhasLayout繧稚rue縺ｫ縺吶ｋ */
+	/* IE7-にはdisplay:inline-blockがないため、inlineを指定し、zoom:1でhasLayoutをtrueにする */
 	zoom: 1;
 	*display: inline;
 }
@@ -354,7 +337,7 @@ table.calender td .date {
 	text-decoration: underline;
 }
 
-/******** 縺顔衍繧峨○ ********/
+/******** お知らせ ********/
 #person {
 	width: 208px;
 	overflow-x: hidden;
@@ -397,7 +380,7 @@ table.calender td .date {
 	cursor: pointer;
 }
 
-/******** 繝�う繧｢繝ｭ繧ｰ ********/
+/******** ダイアログ ********/
 #dialog {
 	text-align: left;
 	font-size: 1.5em;
@@ -415,7 +398,7 @@ table.calender td .date {
 	text-align: right;
 	display: inline-block;
 	margin: 10px 10px 0 0;
-	/* IE7-逕ｨ縲�isplay:inline-block縺悟柑縺九↑縺�◆繧�*/
+	/* IE7-用　display:inline-blockが効かないため */
 	*display: inline;
 	*zoom: 1;
 }
@@ -425,7 +408,7 @@ table.calender td .date {
 	height: 600px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	/* IE6縺ｧ繧ｹ繧ｯ繝ｭ繝ｼ繝ｫ繝舌�縺ｮ蟷��隱ｿ謨ｴ */
+	/* IE6でスクロールバーの幅分調整 */
 	_width: 520px;
 }
 
@@ -439,7 +422,7 @@ table.calender td .date {
 	height: 650px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	/* IE6縺ｧ繧ｹ繧ｯ繝ｭ繝ｼ繝ｫ繝舌�縺ｮ蟷��隱ｿ謨ｴ */
+	/* IE6でスクロールバーの幅分調整 */
 	_width: 520px;
 }
 
@@ -494,7 +477,7 @@ table.calender td .date {
 #dialog p {
 	display: inline-block;
 	margin: 12px 0 0 0;
-	/* IE7-逕ｨ縲�isplay:inline-block縺悟柑縺九↑縺�◆繧�*/
+	/* IE7-用　display:inline-blockが効かないため */
 	*display: inline;
 	*zoom: 1;
 }
