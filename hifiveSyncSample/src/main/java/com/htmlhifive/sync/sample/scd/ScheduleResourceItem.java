@@ -30,270 +30,254 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
  */
 public class ScheduleResourceItem implements Serializable {
 
-    private static final long serialVersionUID = -6507444365445886169L;
+	private static final long serialVersionUID = -6507444365445886169L;
 
-    /**
-     * このアイテムが示す予定のID.
-     */
-    private String scheduleId;
+	/**
+	 * このアイテムが示す予定のID.
+	 */
+	private String scheduleId;
 
-    /**
-     * このアイテムが示す予定の対象者(文字列IDのリスト).
-     */
-    private List<String> userIds;
+	/**
+	 * このアイテムが示す予定の対象者(文字列IDのリスト).
+	 */
+	private List<String> userIds;
 
-    /**
-     * このアイテムが示す予定のタイトル.
-     */
-    private String title;
+	/**
+	 * このアイテムが示す予定のタイトル.
+	 */
+	private String title;
 
-    /**
-     * このアイテムが示す予定の種類.
-     */
-    private String category;
+	/**
+	 * このアイテムが示す予定の種類.
+	 */
+	private String category;
 
-    /**
-     * このアイテムが示す予定の予定日(yyyy/MM/dd)のリスト.<br>
-     * Scheduleエンティティでは「yyyymmdd」形式であるため変換が必要となります.
-     */
-    private List<String> dates;
+	/**
+	 * このアイテムが示す予定の予定日(yyyy/MM/dd)のリスト.<br>
+	 * Scheduleエンティティでは「yyyymmdd」形式であるため変換が必要となります.
+	 */
+	private List<String> dates;
 
-    /**
-     * このアイテムが示す予定の開始時刻(24時間、コロン区切り).
-     */
-    private String startTime;
+	/**
+	 * このアイテムが示す予定の開始時刻(24時間、コロン区切り).
+	 */
+	private String startTime;
 
-    /**
-     * このアイテムが示す予定の終了時刻(24時間、コロン区切り).
-     */
-    private String finishTime;
+	/**
+	 * このアイテムが示す予定の終了時刻(24時間、コロン区切り).
+	 */
+	private String finishTime;
 
-    /**
-     * このアイテムが示す予定の詳細情報.
-     */
-    private String detail;
+	/**
+	 * このアイテムが示す予定の詳細情報.
+	 */
+	private String detail;
 
-    /**
-     * このアイテムが示す予定の実施場所.
-     */
-    private String place;
+	/**
+	 * このアイテムが示す予定の実施場所.
+	 */
+	private String place;
 
-    /**
-     * このアイテムが示す予定の作成者氏名.
-     */
-    private String createUserName;
+	/**
+	 * このアイテムが示す予定の作成者氏名.
+	 */
+	private String createUserName;
 
-    /**
-     * フレームワーク、ライブラリが使用するプライベートデフォルトコンストラクタ.<br>
-     */
-    @SuppressWarnings("unused")
-    private ScheduleResourceItem() {
-    }
+	/**
+	 * フレームワーク、ライブラリが使用するデフォルトコンストラクタ.<br>
+	 */
+	public ScheduleResourceItem() {
+	}
 
-    /**
-     * IDを指定して予定リソースのアイテムを生成します.
-     *
-     * @param scheduleId
-     *            予定を一意に識別するID
-     */
-    public ScheduleResourceItem(String scheduleId) {
-        this.scheduleId = scheduleId;
-    }
+	/**
+	 * IDを指定して予定リソースのアイテムを生成します.
+	 *
+	 * @param scheduleId 予定を一意に識別するID
+	 */
+	public ScheduleResourceItem(String scheduleId) {
+		this.scheduleId = scheduleId;
+	}
 
-    /**
-     * @see Object#equals(Object)
-     */
-    @Override
-    public boolean equals(Object obj) {
+	/**
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
 
-        if (obj == this) {
-            return true;
-        }
+		if (obj == this) {
+			return true;
+		}
 
-        if (!(obj instanceof ScheduleResourceItem)) {
-            return false;
-        }
+		if (!(obj instanceof ScheduleResourceItem)) {
+			return false;
+		}
 
-        ScheduleResourceItem item = (ScheduleResourceItem)obj;
+		ScheduleResourceItem item = (ScheduleResourceItem) obj;
 
-        return new EqualsBuilder().append(this.scheduleId, item.scheduleId).append(
-                this.userIds, item.userIds).append(this.title, item.title).append(
-                this.category, item.category).append(this.dates, item.dates).append(
-                this.startTime, item.startTime).append(this.finishTime, item.finishTime).append(
-                this.detail, item.detail).append(this.place, item.place).append(
-                this.createUserName, item.createUserName).isEquals();
-    }
+		return new EqualsBuilder().append(this.scheduleId, item.scheduleId).append(this.userIds, item.userIds)
+				.append(this.title, item.title).append(this.category, item.category).append(this.dates, item.dates)
+				.append(this.startTime, item.startTime).append(this.finishTime, item.finishTime)
+				.append(this.detail, item.detail).append(this.place, item.place)
+				.append(this.createUserName, item.createUserName).isEquals();
+	}
 
-    /**
-     * @see Object#hashCode()
-     */
-    @Override
-    public int hashCode() {
+	/**
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
 
-        return new HashCodeBuilder(17, 37).append(this.scheduleId).append(this.userIds).append(
-                this.title).append(this.category).append(this.dates).append(this.startTime).append(
-                this.finishTime).append(this.detail).append(this.place).append(this.createUserName).hashCode();
-    }
+		return new HashCodeBuilder(17, 37).append(this.scheduleId).append(this.userIds).append(this.title)
+				.append(this.category).append(this.dates).append(this.startTime).append(this.finishTime)
+				.append(this.detail).append(this.place).append(this.createUserName).hashCode();
+	}
 
-    /**
-     * @see Object#toString()
-     */
-    @Override
-    public String toString() {
+	/**
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
 
-        return ToStringBuilder.reflectionToString(this);
-    }
+		return ToStringBuilder.reflectionToString(this);
+	}
 
-    /**
-     * @return scheduleId
-     */
-    public String getScheduleId() {
-        return scheduleId;
-    }
+	/**
+	 * @return scheduleId
+	 */
+	public String getScheduleId() {
+		return scheduleId;
+	}
 
-    /**
-     * アプリケーションからの使用は想定されないため、privateとする.
-     *
-     * @param scheduleId
-     *            セットする scheduleId
-     */
-    @SuppressWarnings("unused")
-    private void setScheduleId(String scheduleId) {
-        this.scheduleId = scheduleId;
-    }
+	/**
+	 * @param scheduleId セットする scheduleId
+	 */
+	public void setScheduleId(String scheduleId) {
+		this.scheduleId = scheduleId;
+	}
 
-    /**
-     * @return userIds
-     */
-    public List<String> getUserIds() {
-        return userIds;
-    }
+	/**
+	 * @return userIds
+	 */
+	public List<String> getUserIds() {
+		return userIds;
+	}
 
-    /**
-     * @param userIds
-     *            セットする userIds
-     */
-    public void setUserIds(List<String> userIds) {
-        this.userIds = userIds;
-    }
+	/**
+	 * @param userIds セットする userIds
+	 */
+	public void setUserIds(List<String> userIds) {
+		this.userIds = userIds;
+	}
 
-    /**
-     * @return title
-     */
-    public String getTitle() {
-        return title;
-    }
+	/**
+	 * @return title
+	 */
+	public String getTitle() {
+		return title;
+	}
 
-    /**
-     * @param title
-     *            セットする title
-     */
-    public void setTitle(String title) {
-        this.title = title;
-    }
+	/**
+	 * @param title セットする title
+	 */
+	public void setTitle(String title) {
+		this.title = title;
+	}
 
-    /**
-     * @return category
-     */
-    public String getCategory() {
-        return category;
-    }
+	/**
+	 * @return category
+	 */
+	public String getCategory() {
+		return category;
+	}
 
-    /**
-     * @param category
-     *            セットする category
-     */
-    public void setCategory(String category) {
-        this.category = category;
-    }
+	/**
+	 * @param category セットする category
+	 */
+	public void setCategory(String category) {
+		this.category = category;
+	}
 
-    /**
-     * @return dates
-     */
-    public List<String> getDates() {
-        return dates;
-    }
+	/**
+	 * @return dates
+	 */
+	public List<String> getDates() {
+		return dates;
+	}
 
-    /**
-     * @param dates
-     *            セットする dates
-     */
-    public void setDates(List<String> dates) {
-        this.dates = dates;
-    }
+	/**
+	 * @param dates セットする dates
+	 */
+	public void setDates(List<String> dates) {
+		this.dates = dates;
+	}
 
-    /**
-     * @return startTime
-     */
-    public String getStartTime() {
-        return startTime;
-    }
+	/**
+	 * @return startTime
+	 */
+	public String getStartTime() {
+		return startTime;
+	}
 
-    /**
-     * @param startTime
-     *            セットする startTime
-     */
-    public void setStartTime(String startTime) {
-        this.startTime = startTime;
-    }
+	/**
+	 * @param startTime セットする startTime
+	 */
+	public void setStartTime(String startTime) {
+		this.startTime = startTime;
+	}
 
-    /**
-     * @return finishTime
-     */
-    public String getFinishTime() {
-        return finishTime;
-    }
+	/**
+	 * @return finishTime
+	 */
+	public String getFinishTime() {
+		return finishTime;
+	}
 
-    /**
-     * @param finishTime
-     *            セットする finishTime
-     */
-    public void setFinishTime(String finishTime) {
-        this.finishTime = finishTime;
-    }
+	/**
+	 * @param finishTime セットする finishTime
+	 */
+	public void setFinishTime(String finishTime) {
+		this.finishTime = finishTime;
+	}
 
-    /**
-     * @return detail
-     */
-    public String getDetail() {
-        return detail;
-    }
+	/**
+	 * @return detail
+	 */
+	public String getDetail() {
+		return detail;
+	}
 
-    /**
-     * @param detail
-     *            セットする detail
-     */
-    public void setDetail(String detail) {
-        this.detail = detail;
-    }
+	/**
+	 * @param detail セットする detail
+	 */
+	public void setDetail(String detail) {
+		this.detail = detail;
+	}
 
-    /**
-     * @return place
-     */
-    public String getPlace() {
-        return place;
-    }
+	/**
+	 * @return place
+	 */
+	public String getPlace() {
+		return place;
+	}
 
-    /**
-     * @param place
-     *            セットする place
-     */
-    public void setPlace(String place) {
-        this.place = place;
-    }
+	/**
+	 * @param place セットする place
+	 */
+	public void setPlace(String place) {
+		this.place = place;
+	}
 
-    /**
-     * @return createUserName
-     */
-    public String getCreateUserName() {
-        return createUserName;
-    }
+	/**
+	 * @return createUserName
+	 */
+	public String getCreateUserName() {
+		return createUserName;
+	}
 
-    /**
-     * @param createUserName
-     *            セットする createUserName
-     */
-    public void setCreateUserName(String createUserName) {
-        this.createUserName = createUserName;
-    }
+	/**
+	 * @param createUserName セットする createUserName
+	 */
+	public void setCreateUserName(String createUserName) {
+		this.createUserName = createUserName;
+	}
 }
