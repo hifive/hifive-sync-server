@@ -1,3 +1,19 @@
+/*
+ * Copyright (C) 2012-2013 NS Solutions Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 $(function() {
 
 	/**
@@ -51,7 +67,7 @@ $(function() {
 			this.logic.init();
 
 			var that = this;
-			
+
 			this.personDataModel.addEventListener('duplicateId', function(event) {
 				// 今回競合した分のデータを競合データリストに入れる
 				var conflictItems = event.conflicted;
@@ -59,23 +75,23 @@ $(function() {
 					return;
 				}
 				alert('IDがすでに使用されています。他のIDを使用してください。');
-				
+
 				var key = Object.keys(conflictItems)[0]; // ID重複で返ってくるアイテムは１つにしている
-				
+
 				scheduleSample.common.showDialog(that.view.get('conflict', {
 					conflictItem: conflictItems[key]
 				}), {
 					top: '0'
 				});
 			});
-			
+
 			// conflictのイベントリスナーを登録
 			this.personDataModel.addEventListener('conflict', function(event) {
 				for (var id in event.conflicted) {
 					var conflictItem = event.conflicted[id];
 					if (conflictItem.updateType === 'update') {
-						that.save(conflictItem.serverItem);						
-					} else { 
+						that.save(conflictItem.serverItem);
+					} else {
 						that.personDataModel.remove(id);
 					}
 				}
@@ -99,7 +115,7 @@ $(function() {
 		'{rootElement} _plot': function(context) {
 			this.plotPerson();
 		},
-		
+
 		/**
 		 * 氏名をクリック
 		 */
@@ -139,20 +155,20 @@ $(function() {
 			} else {
 				age = parseInt(age);
 			}
-						
+
 			var dialogInput = {
 					personId: $dialog.find('input[name="id"]').val(),
 					name: $dialog.find('input[name="name"]').val(),
 					age: age,
 					organization: $dialog.find('input[name="organization"]').val()
-			}; 
-			
+			};
+
 			var oldId = $dialog.find('input[name="oldId"]').val();
 			if (oldId) {
 				dialogInput.oldId = oldId;
 			}
-			
-			return dialogInput;  
+
+			return dialogInput;
 		},
 
 		/**
@@ -187,9 +203,9 @@ $(function() {
 
 			var that = this;
 			var promise = this.logic.update(person);
-			
+
 			scheduleSample.common.showIndicator(this, promise, 'データを更新中');
-			
+
 			promise.always(function() {
 				that.plotPerson();
 				scheduleSample.common.closeDialog();
@@ -212,9 +228,9 @@ $(function() {
 
 			var that = this;
 			var promise = this.logic.deletePerson(id);
-			
+
 			scheduleSample.common.showIndicator(this, promise, 'データを削除中')
-			
+
 			promise.always( function() {
 					that.plotPerson();
 					if (obj && obj.status === 409) {
@@ -224,7 +240,7 @@ $(function() {
 					$('#dialog .closebutton').trigger('click');
 			});
 		},
-		
+
 		/**
 		 * ユーザを登録ボタンをクリック
 		 */

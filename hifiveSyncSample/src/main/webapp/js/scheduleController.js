@@ -1,5 +1,21 @@
+/*
+ * Copyright (C) 2012-2013 NS Solutions Corporation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 $(function() {
-	
+
 	var personDataModel = scheduleSample.data.manager.models.person;
 
 	/**
@@ -59,7 +75,7 @@ $(function() {
 					},
 					isTransient: true
 				},
-				
+
 				createUserName: {
 					type: 'string',
 					isTransient: true
@@ -85,10 +101,10 @@ $(function() {
 		scheduleDataModel: scheduleSample.data.manager.models.schedule,
 
 		personDataModel: personDataModel,
-		
+
 		// 日付をキーにしたスケジュール
 		schedulesByDateKey: [],
-		
+
 		/** scheduleDataModel内の競合アイテム */
 		conflictItems : null,
 
@@ -102,17 +118,17 @@ $(function() {
 		__templates: ['template/schedule.ejs?' + new Date().getTime()],
 
 		$content: null,
-		
+
 		__init: function(context) {
 			var that = this;
 
 			// conflictのイベントリスナーを登録
 			this.scheduleDataModel.addEventListener('conflict', function(event) {
-				alert('スケジュールのデータが競合しています。');				
+				alert('スケジュールのデータが競合しています。');
 				that.showConflict(event.conflicted);
 				that.conflictItems = scheduleSample.sync.manager.conflictItems['schedule']; // 競合しているアイテムをキャッシュする
 			});
-			
+
 			this.logic = new scheduleSample.logic.ScheduleLogic();
 			return this.logic.init();
 		},
@@ -176,24 +192,24 @@ $(function() {
 		 * 競合したアイテムを表示する。
 		 * 引数に指定されれば、指定された競合アイテムのリストを表示し、
 		 * 指定されていなければ、すべての競合アイテムを表示する。
-		 * 
+		 *
 		 * @param conflicted 表示する競合アイテムのリスト
 		 * @memberOf ScheduleDataModel
 		 */
 		showConflict: function(conflicted) {
 			var conflictedToShow; // 表示対象の競合アイテムリスト
 			if (conflicted) {
-				conflictedToShow = conflicted; 
+				conflictedToShow = conflicted;
 			} else {
 				if (!scheduleSample.sync.manager.hasConflictItem('schedule')) {
 					alert('衝突しているデータはありません');
 					return;
 				}
 				conflictedToShow = scheduleSample.sync.manager.conflictItems['schedule'];
-			}	
-			
+			}
+
 			scheduleSample.common.showDialog(this.view.get('conflict', {
-				conflictItems: $.extend({}, conflictedToShow) 
+				conflictItems: $.extend({}, conflictedToShow)
 			}), {
 				top: '0'
 			});
@@ -238,7 +254,7 @@ $(function() {
 			var that = this;
 			var date = schedule.dates[0];
 			var promise = this.logic.regist(schedule);
-			
+
 			scheduleSample.common.showIndicator(this, promise, 'データを登録中');
 
 			promise.always( function() {
@@ -263,9 +279,9 @@ $(function() {
 			var that = this;
 			var date = schedule.dates[0];
 			var promise = this.logic.update(schedule, scheduleId, isConflict);
-			
+
 			scheduleSample.common.showIndicator(this, promise, 'データを更新中');
-			
+
 			promise.always(function(obj) {
 				that.plotSchedule();
 				that.showScheduleByDate(date);
@@ -273,7 +289,7 @@ $(function() {
 				if (obj && obj.status === 409) {
 					return;
 				}
-				alert('スケジュールを変更しました。');					
+				alert('スケジュールを変更しました。');
 			});
 		},
 
@@ -290,9 +306,9 @@ $(function() {
 
 			var that = this;
 			var promise = this.logic.deleteSchedule(scheduleId);
-			
+
 			scheduleSample.common.showIndicator(this, promise, 'データを削除中');
-			
+
 			promise.always( function(obj) {
 					that.plotSchedule();
 					that.showScheduleByDate(date);
@@ -367,9 +383,9 @@ $(function() {
 			var conflictItem = this.conflictItems[scheduleId];
 			var schedule = conflictItem.localItem;
 			var serverItem = conflictItem.serverItem;
-						
+
 			this.$fromDialog = $('#dialog .content>*').clone();
-			
+
 			var conflict = {};
 			if (serverItem) {
 				// ローカルとサーバの異なるプロパティを抜き出す。
@@ -392,9 +408,9 @@ $(function() {
 
 				if (serverItem.userIds && !scheduleSample.common.equalArrays(schedule.get('userIds'), serverItem.userIds)) {
 					conflict.userIds = serverItem.userIds;
-				}	
+				}
 			}
-			
+
 			scheduleSample.common.showDialog(this.view.get('edit', {
 				schedule: schedule,
 				conflict: conflict
@@ -409,9 +425,9 @@ $(function() {
 		'{#dialog #schedule_conflict button.registSchedule} click': function(context) {
 			var scheduleId = $(context.event.target).nextAll('input[name="scheduleId"]').val();
 			var conflictItem = this.conflictItems[scheduleId];
-			
+
 			this.$fromDialog = $('#dialog .content>*').clone();
-			
+
 			this.openRegistDialog(dates, conflictItem.serverItem, true);
 		},
 
@@ -462,7 +478,7 @@ $(function() {
 			if (schedule && schedule.userIds) {
 				userIds = scheduele.userIds;
 			}
-			
+
 			scheduleSample.common.showDialog(this.view.get('regist', {
 				category: schedule ? schedule.category : null,
 				dateFrom: {
@@ -470,7 +486,7 @@ $(function() {
 				},
 				title: schedule ? schedule.title : '',
 				detail: schedule ? schedule.detail : '',
-				userIds: userIds, 
+				userIds: userIds,
 				isConflict: isConflict ? true : false
 			}), {
 				top: 0
