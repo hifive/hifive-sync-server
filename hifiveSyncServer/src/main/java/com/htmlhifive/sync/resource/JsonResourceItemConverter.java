@@ -16,13 +16,19 @@
  */
 package com.htmlhifive.sync.resource;
 
-import org.codehaus.jackson.map.ObjectMapper;
+import java.util.Map;
+
+import org.springframework.beans.BeanUtils;
+import org.springframework.beans.BeanWrapper;
+import org.springframework.beans.InvalidPropertyException;
+import org.springframework.beans.PropertyAccessException;
+import org.springframework.beans.PropertyAccessorFactory;
 import org.springframework.stereotype.Service;
 
 import com.htmlhifive.sync.exception.BadRequestException;
 
 /**
- * JSON形式のデータとリソースアイテムの型を相互変換するコンバータ実装.
+ * JSONデータなど、Map<String,Object>オブジェクトをリソースアイテムの型に変換するコンバータ実装.
  *
  * @author kishigam
  */
@@ -30,26 +36,33 @@ import com.htmlhifive.sync.exception.BadRequestException;
 public class JsonResourceItemConverter<I> implements ResourceItemConverter<I> {
 
 	/**
-	 * JSON形式のアイテムデータをアイテム型に変換して返します.
+	 * JSON形式のアイテムデータをアイテム型に変換して返します.<br>
+	 * 実際の型が、JSONデータを基にしたMap<String,Object>である場合に使用できます.
 	 *
-	 * @param itemObj アイテムデータ(JSON形式)
+	 * @param itemObj アイテムデータ
 	 * @param to アイテム型のクラスオブジェクト
 	 * @return アイテム
 	 * @throws BadRequestException アイテムデータがアイテムの型に適合しないとき
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public I convertToItem(Object itemObj, Class<I> to) {
 
-		I item = null;
+		BeanWrapper wrapper;
 		try {
-			// JSONデータからの型へ変換
-			item = new ObjectMapper().convertValue(itemObj, to);
 
-		} catch (IllegalArgumentException e) {
+			wrapper = PropertyAccessorFactory.forBeanPropertyAccess(BeanUtils.instantiateClass(to));
+
+			Map<String, Object> itemMap = (Map<String, Object>) itemObj;
+			for (String propName : itemMap.keySet()) {
+				wrapper.setPropertyValue(propName, itemMap.get(propName));
+			}
+
+		} catch (InvalidPropertyException | PropertyAccessException e) {
 			e.printStackTrace();
 			throw new BadRequestException("JSON data of sync resource cannot accept. ", e);
 		}
 
-		return item;
+		return to.cast(wrapper.getWrappedInstance());
 	}
 }

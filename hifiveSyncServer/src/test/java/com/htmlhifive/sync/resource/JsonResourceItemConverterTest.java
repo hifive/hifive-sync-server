@@ -19,11 +19,16 @@ package com.htmlhifive.sync.resource;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.fail;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.junit.Test;
+import org.springframework.beans.BeanInstantiationException;
+
+import com.htmlhifive.sync.exception.BadRequestException;
 
 /**
  * <H3>JsonResourceItemConverterのテストクラス.</H3>
@@ -56,53 +61,177 @@ public class JsonResourceItemConverterTest {
 	public void testConvertToItem() throws Exception {
 
 		// Arrange：正常系
-		JsonResourceItemConverter<String> target1 = new JsonResourceItemConverter<>();
+		JsonResourceItemConverter<Item> target1 = new JsonResourceItemConverter<>();
 
-		String item1 = "json";
-		Object itemObj1 = item1;
-		final Class<String> to1 = String.class;
+		final Item item = new Item() {
+			{
+				setItem1("json");
+				setItem2(1);
+			}
+		};
+
+		@SuppressWarnings("serial")
+		Map<String, Object> itemObj = new HashMap<String, Object>() {
+			{
+				put("item1", item.getItem1());
+				put("item2", item.getItem2());
+			}
+		};
+		final Class<Item> to = Item.class;
 
 		// Act
-		String actual1 = target1.convertToItem(itemObj1, to1);
+		Item actual = target1.convertToItem(itemObj, to);
+
 		// Assert：結果が正しいこと
-		assertThat(actual1, is(equalTo(item1)));
+		assertThat(actual.getItem1(), is(equalTo(item.getItem1())));
+		assertThat(actual.getItem2(), is(equalTo(item.getItem2())));
 	}
 
 	/**
 	 * {@link JsonResourceItemConverter#convertToItem(Object, Class)}用テストメソッド.<br>
-	 * オブジェクトがnullのときは結果もnullになる.
-	 */
-	@Test
-	public void testConvertToItemReturnsNullBecauseOfNullItem() throws Exception {
-
-		// Arrange：例外系
-		JsonResourceItemConverter<String> target1 = new JsonResourceItemConverter<>();
-
-		final Class<String> to1 = String.class;
-
-		// Act
-		String actual1 = target1.convertToItem(null, to1);
-		// Assert：結果が正しいこと
-		assertThat(actual1, is(nullValue()));
-	}
-
-	/**
-	 * {@link JsonResourceItemConverter#convertToItem(Object, Class)}用テストメソッド.<br>
-	 * 変換後の型がnullの時は{@link NullPointerException}がスローされる.
+	 * オブジェクトがnullのときは{@link NullPointerException}がスローされる.
 	 */
 	@Test(expected = NullPointerException.class)
-	public void testConvertToItemReturnsNullBecauseOfNullType() throws Exception {
+	public void testConvertToItemFailBecauseOfNullItem() throws Exception {
 
 		// Arrange：異常系
-		JsonResourceItemConverter<String> target1 = new JsonResourceItemConverter<>();
+		JsonResourceItemConverter<Item> target1 = new JsonResourceItemConverter<>();
 
-		String item1 = "json";
-		Object itemObj1 = item1;
+		final Class<Item> to1 = Item.class;
 
 		// Act
-		target1.convertToItem(itemObj1, null);
+		target1.convertToItem(null, to1);
+
+		fail();
+	}
+
+	/**
+	 * {@link JsonResourceItemConverter#convertToItem(Object, Class)}用テストメソッド.<br>
+	 * 変換後の型がnullの時は{@link IllegalArgumentException}がスローされる.
+	 */
+	@Test(expected = IllegalArgumentException.class)
+	public void testConvertToItemFailBecauseOfNullType() throws Exception {
+
+		// Arrange：異常系
+		JsonResourceItemConverter<Item> target1 = new JsonResourceItemConverter<>();
+
+		final Item item = new Item() {
+			{
+				setItem1("json");
+				setItem2(1);
+			}
+		};
+		@SuppressWarnings("serial")
+		Map<String, Object> itemObj = new HashMap<String, Object>() {
+			{
+				put("item1", item.getItem1());
+				put("item2", item.getItem2());
+			}
+		};
+
+		// Act
+		target1.convertToItem(itemObj, null);
 
 		// Assert：例外以外は失敗
 		fail();
+	}
+
+	/**
+	 * {@link JsonResourceItemConverter#convertToItem(Object, Class)}用テストメソッド.<br>
+	 * アイテムクラスにデフォルトコンストラクタがない場合、インスタンスを作れないため {@link BeanInstantiationException}がスローされる.
+	 */
+	@Test(expected = BeanInstantiationException.class)
+	public void testConvertToItemFailIfItemTypeHasNoDefaultConstructor() throws Exception {
+
+		// Arrange：異常系
+		JsonResourceItemConverter<ItemNoDefaultConstructor> target1 = new JsonResourceItemConverter<>();
+
+		final ItemNoDefaultConstructor item = new ItemNoDefaultConstructor("json");
+
+		@SuppressWarnings("serial")
+		Map<String, Object> itemObj = new HashMap<String, Object>() {
+			{
+				put("item1", item.getItem1());
+			}
+		};
+
+		final Class<ItemNoDefaultConstructor> to = ItemNoDefaultConstructor.class;
+
+		// Act
+		target1.convertToItem(itemObj, to);
+
+		// Assert：例外以外は失敗
+		fail();
+	}
+
+	/**
+	 * {@link JsonResourceItemConverter#convertToItem(Object, Class)}用テストメソッド.<br>
+	 * Mapに含まれるデータがアイテムクラスのプロパティに含まれない場合 {@link BadRequestException}がスローされる.
+	 */
+	@Test(expected = BadRequestException.class)
+	public void testConvertToItemFailIfItemTypeMismatch() throws Exception {
+
+		// Arrange：異常系
+		JsonResourceItemConverter<Item> target1 = new JsonResourceItemConverter<>();
+
+		final Item item = new Item() {
+			{
+				setItem1("json");
+				setItem2(1);
+			}
+		};
+
+		@SuppressWarnings("serial")
+		Map<String, Object> itemObj = new HashMap<String, Object>() {
+			{
+				put("item1", item.getItem1());
+				put("item2", item.getItem2());
+				put("item3", "illegal");
+			}
+		};
+		final Class<Item> to = Item.class;
+
+		// Act
+		target1.convertToItem(itemObj, to);
+
+		// Assert：例外以外は失敗
+		fail();
+	}
+}
+
+class Item {
+	private String item1;
+	private int item2;
+
+	public String getItem1() {
+		return item1;
+	}
+
+	public void setItem1(String item1) {
+		this.item1 = item1;
+	}
+
+	public int getItem2() {
+		return item2;
+	}
+
+	public void setItem2(int item2) {
+		this.item2 = item2;
+	}
+}
+
+class ItemNoDefaultConstructor {
+	private String item1;
+
+	ItemNoDefaultConstructor(String item1) {
+		this.item1 = item1;
+	}
+
+	public String getItem1() {
+		return item1;
+	}
+
+	public void setItem1(String item1) {
+		this.item1 = item1;
 	}
 }
