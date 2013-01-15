@@ -9,6 +9,7 @@ import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 import mockit.Expectations;
 import mockit.Mocked;
 
@@ -18,7 +19,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
+import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.ConflictException;
+import com.htmlhifive.sync.exception.NoSuchResourceException;
 import com.htmlhifive.sync.service.Synchronizer;
 import com.htmlhifive.sync.service.download.DownloadCommonData;
 import com.htmlhifive.sync.service.download.DownloadRequest;
@@ -227,6 +230,43 @@ public class JsonSyncControllerTest {
 	}
 
 	/**
+	 * {@link JsonSyncController#download(DownloadRequest)}用テストメソッド.<br>
+	 * Synchronizerが{@link NoSuchResourceException}をスローした場合、 BadRequestException}がスローされる.
+	 *
+	 * @param request 引数のモック
+	 */
+	@Test(expected = BadRequestException.class)
+	public void testDownloadReturnsBadRequestExceptionBecauseOfNoSuchResource(@Mocked final DownloadRequest request) {
+
+		// Arrange：異常系
+		final JsonSyncController target = new JsonSyncController();
+
+		String storageId = "storageId";
+
+		final DownloadCommonData requestCommon = new DownloadCommonData(storageId);
+
+		new Expectations() {
+			{
+				setField(target, synchronizer);
+
+				request.getDownloadCommonData();
+				result = requestCommon;
+
+				request.getDownloadCommonData();
+				result = requestCommon;
+
+				synchronizer.download(request);
+				result = new NoSuchResourceException();
+			}
+		};
+
+		// Act
+		target.download(request);
+
+		fail();
+	}
+
+	/**
 	 * {@link JsonSyncController#upload(UploadRequest)}用テストメソッド.
 	 *
 	 * @param request 引数のモック
@@ -308,5 +348,32 @@ public class JsonSyncControllerTest {
 
 		assertThat(actual.getBody().getUploadCommonData().getStorageId(), is(nullValue()));
 		assertThat(actual.getBody().getUploadCommonData().getConflictType(), is(nullValue()));
+	}
+
+	/**
+	 * {@link JsonSyncController#upload(UploadRequest)}用テストメソッド. <br>
+	 * Synchronizerが{@link NoSuchResourceException}をスローした場合、 BadRequestException}がスローされる.
+	 *
+	 * @param request 引数のモック
+	 */
+	@Test(expected = BadRequestException.class)
+	public void testUploadReturnsBadRequestExceptionBecauseOfNoSuchResource(@Mocked final UploadRequest request) {
+
+		// Arrange：異常系
+		final JsonSyncController target = new JsonSyncController();
+
+		new Expectations() {
+			{
+				setField(target, synchronizer);
+
+				synchronizer.upload(request);
+				result = new NoSuchResourceException();
+			}
+		};
+
+		// Act
+		target.upload(request);
+
+		fail();
 	}
 }

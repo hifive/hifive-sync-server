@@ -33,7 +33,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.ConflictException;
+import com.htmlhifive.sync.exception.NoSuchResourceException;
 import com.htmlhifive.sync.service.Synchronizer;
 import com.htmlhifive.sync.service.download.DownloadCommonData;
 import com.htmlhifive.sync.service.download.DownloadRequest;
@@ -114,6 +116,12 @@ public class JsonSyncController {
 			// ロック解除待ちタイムアウト
 			LOGGER.warn(e.getMessage());
 			return createHttpResponseEntity(null, HttpStatus.LOCKED);
+
+		} catch (NoSuchResourceException e) {
+
+			// 存在しないリソースに対するリクエストが含まれていた
+			LOGGER.error("download request includes query for unknown resource.");
+			throw new BadRequestException(e);
 		}
 	}
 
@@ -163,6 +171,12 @@ public class JsonSyncController {
 			// ロック解除待ちタイムアウト
 			LOGGER.warn(e.getMessage());
 			return createHttpResponseEntity(null, HttpStatus.LOCKED);
+
+		} catch (NoSuchResourceException e) {
+
+			// 存在しないリソースに対するリクエストが含まれていた
+			LOGGER.error("upload request includes query for unknown resource.");
+			throw new BadRequestException(e);
 		}
 	}
 
