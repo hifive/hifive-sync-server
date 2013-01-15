@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 
 import com.htmlhifive.sync.exception.BadRequestException;
 import com.htmlhifive.sync.exception.ConflictException;
+import com.htmlhifive.sync.exception.NoSuchResourceException;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.ResourceQueryConditions;
 import com.htmlhifive.sync.resource.SyncAction;
@@ -137,8 +138,9 @@ public class DefaultSynchronizer implements Synchronizer {
 			for (ResourceQueryConditions queryConditions : queries.get(resourceName)) {
 
 				// リソースアイテムを取得、リソース名ごとに結果をマージ(同一アイテムは1つのみ含む)
-				SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
-				resultBuilder.addAll(resourceName, resource.getByQuery(syncCommon, queryConditions));
+				List<? extends ResourceItemWrapper<?>> items = getSyncResource(resourceName).getByQuery(syncCommon,
+						queryConditions);
+				resultBuilder.addAll(resourceName, items);
 			}
 		}
 		return resultBuilder.build();
@@ -159,7 +161,7 @@ public class DefaultSynchronizer implements Synchronizer {
 		// リソースごとに再取得
 		for (String resourceName : reservedCommonDataMap.keySet()) {
 
-			SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
+			SyncResource<?> resource = getSyncResource(resourceName);
 			List<? extends ResourceItemWrapper<?>> gotItemWrappers = resource.get(syncCommon,
 					reservedCommonDataMap.get(resourceName));
 
@@ -256,16 +258,15 @@ public class DefaultSynchronizer implements Synchronizer {
 		responseCommon.setConflictType(SyncConflictType.NONE);
 
 		// リソースアイテムごとに処理(上り更新リクエストデータでは、ResourceItemWrapperにリソース名を持つ)
-		for (Iterator<? extends ResourceItemWrapper<?>> itr = itemsToUpload.iterator(); itr
-				.hasNext();) {
+		for (Iterator<? extends ResourceItemWrapper<?>> itr = itemsToUpload.iterator(); itr.hasNext();) {
 
 			ResourceItemWrapper<?> uploadingItemWrapper = itr.next();
 
 			String resourceName = uploadingItemWrapper.getItemCommonData().getId().getResourceName();
 
 			// 上り更新を実行
-			ResourceItemWrapper<?> itemWrapperAfterUpload = doUpload(resourceManager.locateSyncResource(resourceName),
-					requestCommon, uploadingItemWrapper);
+			ResourceItemWrapper<?> itemWrapperAfterUpload = doUpload(getSyncResource(resourceName), requestCommon,
+					uploadingItemWrapper);
 
 			SyncConflictType conflictType = itemWrapperAfterUpload.getItemCommonData().getConflictType();
 
@@ -437,7 +438,7 @@ public class DefaultSynchronizer implements Synchronizer {
 
 		for (String resourceName : sortedItemsMap.keySet()) {
 
-			SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
+			SyncResource<?> resource = getSyncResource(resourceName);
 			reservedCommonDataMap.put(resourceName, resource.forUpdate(sortedItemsMap.get(resourceName)));
 		}
 
@@ -453,6 +454,24 @@ public class DefaultSynchronizer implements Synchronizer {
 	private long generateSyncTime() {
 
 		return syncConfiguration.generateSyncTime();
+	}
+
+	/**
+	 * 指定されたリソース名で{@link SyncResource}を実装したリソースインスタンスを取得します.<br>
+	 * リソースが{@link SyncResourceManager}で管理されているリソースでない場合、{@link NoSuchResourceException}をスローします.
+	 *
+	 * @param resourceName リソース名
+	 * @return リソースインスタンス
+	 * @throws NoSuchResourceException 管理されていないリソース名が指定された場合
+	 */
+	private SyncResource<?> getSyncResource(String resourceName) {
+		SyncResource<?> resource = resourceManager.locateSyncResource(resourceName);
+
+		if (resource == null) {
+			throw new NoSuchResourceException("resource '" + resourceName + "' is not found.");
+		}
+
+		return resource;
 	}
 
 	/**

@@ -39,6 +39,7 @@ import mockit.VerificationsInOrder;
 import org.junit.Test;
 
 import com.htmlhifive.sync.exception.ConflictException;
+import com.htmlhifive.sync.exception.NoSuchResourceException;
 import com.htmlhifive.sync.resource.ResourceItemConverter;
 import com.htmlhifive.sync.resource.ResourceItemWrapper;
 import com.htmlhifive.sync.resource.ResourceQueryConditions;
@@ -695,6 +696,67 @@ public class DefaultSynchronizerTest {
 				setField(target, syncConfiguration);
 				setField(target, resourceManager);
 				setField(target, repository);
+			}
+		};
+
+		// Act
+		target.download(request);
+
+		fail();
+	}
+
+	/**
+	 * {@link DefaultSynchronizer#download(DownloadRequest)}用テストメソッド.<br>
+	 * リソース名に対応するリソースが見つからない場合、{@link NoSuchResourceException}がスローされる.
+	 */
+	@Test(expected = NoSuchResourceException.class)
+	public void testDownloadFailBecauseOfUnknownResource() {
+
+		// Arrange：異常系
+		final DefaultSynchronizer target = new DefaultSynchronizer();
+
+		final DownloadCommonData requestCommon = new DownloadCommonData("storageId");
+
+		final ResourceQueryConditions resource1QueryConditions1 = new ResourceQueryConditions() {
+			{
+				setLastDownloadTime(1000);
+				setConditions(new HashMap<String, String[]>() {
+					{
+						put("id", new String[] { "a", "b" });
+						put("no", new String[] { "1" });
+					}
+				});
+			}
+		};
+
+		final DownloadRequest request = new DownloadRequest() {
+			{
+				setDownloadCommonData(requestCommon);
+				setQueries(new HashMap<String, List<ResourceQueryConditions>>() {
+					{
+						put("unknown", new ArrayList<ResourceQueryConditions>() {
+							{
+								add(resource1QueryConditions1);
+							}
+						});
+					}
+				});
+			}
+		};
+
+		final long syncTime = 4000;
+
+		new NonStrictExpectations() {
+			{
+				setField(target, syncConfiguration);
+				setField(target, resourceManager);
+				setField(target, repository);
+
+				syncConfiguration.generateSyncTime();
+				result = syncTime;
+
+				resourceManager.locateSyncResource("unknown");
+				result = null;
 			}
 		};
 
@@ -2117,6 +2179,78 @@ public class DefaultSynchronizerTest {
 
 			throw e;
 		}
+	}
+
+	/**
+	 * {@link DefaultSynchronizer#upload(UploadRequest)}用テストメソッド.<br>
+	 * リソース名に対応するリソースが見つからない場合、{@link NoSuchResourceException}がスローされる.
+	 */
+	@Test(expected = NoSuchResourceException.class)
+	public void testUploadFailBecauseOfUnknownResource() {
+
+		// Arrange：異常系
+		final DefaultSynchronizer target = new DefaultSynchronizer();
+
+		final String storageId = "storageId";
+
+		final UploadCommonData requestCommon = new UploadCommonData() {
+			{
+				setStorageId(storageId);
+				setLastUploadTime(1000);
+			}
+		};
+
+		final UploadCommonData responseCommon = new UploadCommonData() {
+			{
+				setStorageId(storageId);
+			}
+		};
+
+		final ResourceItemWrapper<? extends Map<String, Object>> item1_1_1 = createUploadItemWrapper("unknown", "1",
+				SyncAction.CREATE);
+
+		final UploadRequest request = new UploadRequest() {
+			{
+				setUploadCommonData(requestCommon);
+				setResourceItems(new ArrayList<ResourceItemWrapper<? extends Map<String, Object>>>() {
+					{
+						add(item1_1_1);
+					}
+				});
+			}
+		};
+
+		final long syncTime = 4000;
+
+		new Expectations() {
+			{
+				setField(target, syncConfiguration);
+				setField(target, resourceManager);
+				setField(target, repository);
+
+				syncConfiguration.generateSyncTime();
+				result = syncTime;
+
+				repository.findOne(storageId);
+				result = responseCommon;
+
+				syncConfiguration.uploadControl();
+				result = UploadControlType.NONE;
+
+				syncConfiguration.uploadControl();
+				result = UploadControlType.NONE;
+
+				// resource1(1)
+
+				resourceManager.locateSyncResource("resourceunknown");
+				result = null;
+			}
+		};
+
+		// Act
+		target.upload(request);
+
+		fail();
 	}
 
 	/**
