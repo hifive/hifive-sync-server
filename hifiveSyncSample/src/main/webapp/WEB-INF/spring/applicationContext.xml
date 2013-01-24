@@ -12,6 +12,7 @@
 
 	<context:property-placeholder location="/WEB-INF/database.properties" />
 
+	<import resource="applicationContext-security.xml" />
 	<import resource="classpath:META-INF/spring/applicationContext-*.xml" />
 
 	<!-- SyncResource base configuration -->
