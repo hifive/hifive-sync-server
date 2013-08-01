@@ -1,0 +1,4 @@
+/target
+/lib
+!/lib/hifive-*
+!/lib/sources/hifive-*
