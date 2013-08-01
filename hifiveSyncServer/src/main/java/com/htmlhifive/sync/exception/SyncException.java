@@ -17,33 +17,19 @@
 package com.htmlhifive.sync.exception;
 
 /**
- * 同期の各処理において発生する基底実行時例外.
+ * sync機能に関する標準の実行時例外.
  *
  * @author kishigam
  */
 public class SyncException extends RuntimeException {
 
-	private static final long serialVersionUID = 4598815832929604945L;
+	private static final long serialVersionUID = -6470838516051442502L;
 
 	/**
 	 * @see RuntimeException
 	 */
 	public SyncException() {
 		super();
-	}
-
-	/**
-	 * @see RuntimeException
-	 */
-	public SyncException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-		super(message, cause, enableSuppression, writableStackTrace);
-	}
-
-	/**
-	 * @see RuntimeException
-	 */
-	public SyncException(String message, Throwable cause) {
-		super(message, cause);
 	}
 
 	/**
@@ -59,5 +45,19 @@ public class SyncException extends RuntimeException {
 	public SyncException(Throwable cause) {
 		super(cause);
 
+	}
+
+	/**
+	 * @see RuntimeException
+	 */
+	public SyncException(String message, Throwable cause) {
+		super(message, cause);
+	}
+
+	/**
+	 * @see RuntimeException
+	 */
+	protected SyncException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+		super(message, cause, enableSuppression, writableStackTrace);
 	}
 }

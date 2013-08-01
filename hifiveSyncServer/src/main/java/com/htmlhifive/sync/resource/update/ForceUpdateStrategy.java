@@ -18,11 +18,11 @@ package com.htmlhifive.sync.resource.update;
 
 import org.springframework.stereotype.Service;
 
-import com.htmlhifive.sync.exception.ItemUpdatedException;
 import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.common.SyncAction;
 
 /**
- * サーバー側の更新を強制的に上書きし、今回の更新を有効にする更新戦略実装クラス.<br>
+ * サーバー側の更新を強制的に上書きし、今回の更新を有効にする競合時更新戦略実装クラス.<br>
  *
  * @author kishigam
  */
@@ -30,13 +30,12 @@ import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 public class ForceUpdateStrategy implements UpdateStrategy {
 
 	/**
-	 * 競合解決結果として、無条件に今回の更新のアイテムを返します.
+	 * 競合解決結果として、無条件に今回の更新で指定されているアクションを返します.
 	 */
 	@Override
-	public <T> T resolveConflict(ResourceItemCommonData itemCommon, T item, ResourceItemCommonData serverCommon,
-			T serverItem) throws ItemUpdatedException {
+	public SyncAction resolveConflict(ResourceItemCommonData clientCommon, Object clientItem,
+			ResourceItemCommonData serverCommon, Object serverItem) {
 
-		return item;
+		return clientCommon.getSyncAction();
 	}
-
 }

@@ -1,95 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="hifiveSyncServer" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
 
-	<property name="version" value="1.2.0rp" />
+	<property name="version" value="1.0.0" />
 	<property name="source" value="./src/main/java" />
 	<property name="resources" value="./src/main/resources" />
-	<property name="test.source" value="./src/test/java" />
-	<property name="test.stub.source" value="./src/test/resources" />
-	<property name="test.resources" value="./src/test/resources" />
 	<property name="lib" value="./lib" />
+	<property name="webapp" value="./src/testwar/webapp" />
 	<property name="dest" value="./target" />
-	<property name="dest.compile" value="./target/classes" />
-	<property name="dest.test" value="./target/test-classes" />
+	<property name="dest.main" value="./target/classes" />
 	<property name="dest.doc" value="./target/doc" />
 
-	<path id="test.srcdir">
-		<pathelement path="${test.source}" />
-		<pathelement path="${test.stub.source}" />
-	</path>
-
 	<path id="classpath">
+		<pathelement location="${dest.main}" />
 		<fileset dir="${lib}" includes="**/*.jar" />
 	</path>
 
-	<target name="all" depends="clean,test,build,javadoc" />
+	<target name="all" depends="clean,build,javadoc" />
 
 	<target name="compile">
-		<mkdir dir="${dest.compile}" />
-		<javac srcdir="${source}" destdir="${dest.compile}" includes="**/*.java" includeantruntime="false">
+		<javac srcdir="${source}" destdir="${dest.main}" includes="**/*.java" includeantruntime="false" encoding="UTF-8">
 			<classpath refid="classpath" />
 		</javac>
 	</target>
 
-	<target name="test-compile" depends="compile">
-		<mkdir dir="${dest.test}" />
-		<javac destdir="${dest.test}" includes="**/*.java" includeantruntime="false">
-			<src refid="test.srcdir" />
-			<classpath>
-				<path refid="classpath" />
-				<pathelement location="${dest.compile}" />
-			</classpath>
-		</javac>
-	</target>
-
-	<target name="test" depends="test-compile,filecopy">
-		<junit fork="yes" haltonfailure="yes">
-			<batchtest todir="${dest}">
-				<fileset dir="${test.source}" includes="**/*Test*.java" />
-			</batchtest>
-			<formatter type="plain" usefile="false" />
-			<classpath>
-				<path refid="classpath" />
-				<pathelement location="${dest.compile}" />
-				<pathelement location="${dest.test}" />
-			</classpath>
-		</junit>
-	</target>
-
 	<target name="filecopy">
-		<copy todir="${dest.compile}">
+		<copy todir="${dest.main}">
 			<fileset dir="${resources}" />
-		</copy>
-		<copy todir="${dest.test}">
-			<fileset dir="${test.resources}" excludes="**/*.java" />
 		</copy>
 	</target>
 
 	<target name="build" depends="compile,filecopy">
-		<jar destfile="./target/hifive-sync-server-${version}.jar">
-			<fileset dir="${dest.compile}" />
+		<jar destfile="${dest}/hifive-sync-server-${version}.jar">
+			<fileset dir="${dest.main}" />
+		</jar>
+		<jar destfile="${dest}/hifive-sync-server-sources-${version}.jar">
+			<fileset dir="${source}" includes="**/*.java" />
 		</jar>
 	</target>
 
 	<target name="javadoc" depends="compile">
-		<javadoc destdir="${dest.doc}" encoding="UTF-8" source="1.7" author="true" version="true" access="public" use="true" nonavbar="false" notree="true" nodeprecated="false" nodeprecatedlist="false" noindex="false" splitindex="true" nohelp="true" windowtitle="hifive-sync-server" docencoding="UTF-8" charset="UTF-8">
+		<javadoc destdir="${dest.doc}" encoding="UTF-8" source="1.7" author="true" version="true" access="public" use="true" nonavbar="false" notree="true" nodeprecated="false" nodeprecatedlist="false" noindex="false" splitindex="true" nohelp="true" windowtitle="hifiveSyncServer" docencoding="UTF-8" charset="UTF-8">
+			<classpath refid="classpath" />
 			<link href="http://docs.oracle.com/javase/7/docs/api/" />
 			<sourcepath path="${source}" />
 			<package name="com.htmlhifive.sync.*" />
 		</javadoc>
 	</target>
 
-	<target name="convertpom">
-		<ivy:convertpom pomFile="pom.xml" ivyFile="ivy.xml" />
-	</target>
-
 	<target name="clean">
-		<delete dir="${dest.compile}" />
-		<delete dir="${dest.test}" />
+		<delete dir="${dest.main}" />
 		<delete dir="${dest.doc}" />
-		<delete>
-			<fileset dir="${dest}" includes="**/*" />
-		</delete>
+		<mkdir dir="${dest.main}" />
 	</target>
 
 </project>

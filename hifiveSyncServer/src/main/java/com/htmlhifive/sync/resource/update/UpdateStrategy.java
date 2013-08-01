@@ -16,8 +16,8 @@
  */
 package com.htmlhifive.sync.resource.update;
 
-import com.htmlhifive.sync.exception.ItemUpdatedException;
 import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.common.SyncAction;
 
 /**
  * リソースアイテムの競合解決ロジッククラスのインターフェース.<br>
@@ -27,17 +27,18 @@ import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 public interface UpdateStrategy {
 
 	/**
-	 * 競合しているリソースアイテムから戦略に従って解決を行います.<br>
-	 * 競合が解決できた場合、更新を行うリソースアイテムを返します.<br>
-	 * 競合が解決できない場合、ItemUpdatedExceptionをスローします.
+	 * 競合しているリソースアイテムから戦略に従って解決を試み、解決結果としての更新状態を表す{@link SyncAction SyncActionStatus}を返します.<br/>
+	 * 更新しようとしているデータを、この解決結果で更新することが基本的な対応になりますが、 例えば{@link SyncAction#NONE NONE}
+	 * が返された場合、サーバデータの状態を維持する形で解決したことを表しているため、更新を行う必要はありません.<br/>
+	 * {@link SyncAction#DUPLICATE DUPLICATE}や{@link SyncAction#CONFLICT CONFLICT}
+	 * が返された場合は競合が解決できていないため、例外をスローするなどして対処する必要があります.<br/>
 	 *
-	 * @param itemCommon 更新しようとしているリソースアイテムの共通データ
-	 * @param item 更新しようとしているリソースアイテム
+	 * @param clientCommon 更新しようとしているリソースアイテムの共通データ
+	 * @param clientItem 更新しようとしているリソースアイテム
 	 * @param serverCommon サーバで保持しているリソースアイテムの共通データ
 	 * @param serverItem サーバで保持しているリソースアイテム
-	 * @return 競合解決済リソースアイテム
-	 * @throws ItemUpdatedException 競合が解決できない場合
+	 * @return 競合解決の結果となるSyncActionStatus
 	 */
-	public <T> T resolveConflict(ResourceItemCommonData itemCommon, T item, ResourceItemCommonData serverCommon,
-			T serverItem) throws ItemUpdatedException;
+	public SyncAction resolveConflict(ResourceItemCommonData clientCommon, Object clientItem,
+			ResourceItemCommonData serverCommon, Object serverItem);
 }

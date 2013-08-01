@@ -1,26 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="ivy" default="resolve" xmlns:ivy="antlib:org.apache.ivy.ant">
 
-	<description>
-		このAntを実行するとivy.xmlの定義を元に必要なライブラリを自動的にダウンロードします。
-		ivyがインストールされていない場合は先にダウンロードを行います。
-		外部接続にプロキシ設定が必要な場合は、Eclipseの設定で変更後、
-		Ant実行時のVMをワークスペースのものに変更(Run in the same JRE as the workspace)して下さい。
-	</description>
-
 	<!-- ivy導入バージョン -->
 	<property name="ivy.install.version" value="2.3.0-rc1" />
 	<!-- ivy導入フォルダ -->
 	<property name="ivy.install.dir" location="lib/ivy" />
 	<!-- 取得ライブラリ展開フォルダ -->
 	<property name="lib.dir" location="lib" />
+
 	<!-- ivy取得URL -->
 	<property name="ivy.url" value="http://repo1.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" />
 
 	<target name="check-ivy" description="--> ivy installation check">
 		<condition property="skip.download">
 			<and>
-				<available file="${ivy.install.dir}"/>
+				<available file="${ivy.install.dir}" />
 				<resourcecount when="greater" count="0">
 					<fileset dir="${ivy.install.dir}" includes="ivy-${ivy.install.version}.jar" />
 				</resourcecount>
@@ -43,6 +37,8 @@
 
 	<target name="resolve" depends="install-ivy" description="--> retrieve dependencies with ivy">
 		<xmlproperty file="ivy.xml" prefix="ivy" collapseattributes="true" />
+		<ivy:retrieve pattern="${lib.dir}/[artifact]-[revision].[ext]" type="bundle,jar" conf="test" />
+		<ivy:retrieve pattern="${lib.dir}/[artifact]-[revision].[ext]" type="bundle,jar" conf="default" />
 		<script language="JavaScript">
 			<![CDATA[
 			var project = self.getProject();
@@ -52,18 +48,12 @@
 				project.setProperty("conf.name", confList[i]);
 				targetResolve.execute();
 			}
-		]]></script>
+		]]>
+		</script>
 	</target>
 
 	<target name="resolve-sub" description="--> call ivy">
-		<ivy:retrieve pattern="${lib.dir}/[conf]/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="${conf.name}" />
-		<ivy:retrieve pattern="${lib.dir}/[conf]/[artifact]-[revision].[ext]" type="bundle,jar" conf="${conf.name}" />
-	</target>
-
-	<target name="resolve-for-m2e" depends="install-ivy">
-		<ivy:configure />
-		<ivy:resolve file="pom.xml" type="runtime,sources" />
-		<ivy:retrieve />
+		<ivy:retrieve pattern="${lib.dir}/sources/[artifact]-[revision]-sources.[ext]" type="source" conf="${conf.name}" />
 	</target>
 
 </project>

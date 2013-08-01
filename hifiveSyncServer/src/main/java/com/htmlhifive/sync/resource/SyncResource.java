@@ -17,114 +17,55 @@
 package com.htmlhifive.sync.resource;
 
 import java.util.List;
-import java.util.Properties;
 
+import com.htmlhifive.resourcefw.exception.AbstractResourceException;
+import com.htmlhifive.resourcefw.message.RequestMessage;
+import com.htmlhifive.resourcefw.message.ResponseMessage;
 import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 import com.htmlhifive.sync.resource.update.UpdateStrategy;
-import com.htmlhifive.sync.service.SyncCommonData;
-import com.htmlhifive.sync.service.upload.UploadCommonData;
 
 /**
- * 「リソース」を表すインターフェース.<br>
- * このフレームワークにおけるリソースとは、 ある形を持ったデータの集合を表します.<br>
- * このデータはリソースアイテムと呼ばれ、データ同期の最小単位になります.
- *
- * @param <I> アイテムのデータ型
+ * 同期可能なリソースの操作を規定したインターフェース.<br>
+ * 同期のためのバージョン管理を行い、クライアントデータとサーバデータのバージョン比較によって上り/下りの更新処理を制御します.
  */
-public interface SyncResource<I> {
+public interface SyncResource {
 
 	/**
-	 * 指定されたリソースアイテム共通データに対応するリソースアイテムをそれぞれ取得します.
+	 * 同期上り更新.<br/>
+	 * クライアントのデータをサーバに反映します.<br/>
+	 * 更新結果をリソースアイテムのようなオブジェクト、または{@link ResponseMessage RequestMessage}で返します.
+	 * 上り更新するためには、クライアントのデータはサーバデータの次バージョンである必要があります.そうでない場合、IDの重複や更新の競合として検出されます.<br/>
 	 *
-	 * @param syncCommon 同期共通データ
-	 * @param itemCommonDataList リソースアイテム共通データのリスト
-	 * @return リソースアイテムのラッパーオブジェクトのリスト
+	 * @param requestMessage リクエストメッセージ
+	 * @return 上り更新結果
 	 */
-	List<ResourceItemWrapper<I>> get(SyncCommonData syncCommon, List<ResourceItemCommonData> itemCommonDataList);
+	Object upload(RequestMessage requestMessage) throws AbstractResourceException;
 
 	/**
-	 * クエリの条件に合致する全リソースアイテムを取得します.
+	 * 同期下り更新.<br/>
+	 * 指定されたリソースアイテムのサーバデータのうち、クライアントデータのバージョン以降の更新があるものを返します.<br/>
+	 * 更新結果をリソースアイテムのようなオブジェクト、または{@link ResponseMessage RequestMessage}で返します. バージョン管理は更新時刻の保持・比較によって行います.
 	 *
-	 * @param downloadCommon 共通データ
-	 * @param query クエリオブジェクト
-	 * @return 条件に合致するリソースアイテムのリスト
+	 * @param requestMessage リクエストメッセージ
+	 * @return 下り更新結果
 	 */
-	List<ResourceItemWrapper<I>> getByQuery(SyncCommonData syncCommon, ResourceQueryConditions query);
+	Object download(RequestMessage requestMessage) throws AbstractResourceException;
 
 	/**
-	 * リソースアイテムを新規登録します.
+	 * リソースアイテム共通データを悲観的ロックによって取得します.<br/>
+	 * downloadまたはuploadの事前に行うことで、対象リソースアイテムに対する他のユーザーからのリクエストの影響を最小限にすることができます.
 	 *
-	 * @param uploadCommon 上り更新共通データ
-	 * @param itemCommon リソースアイテム共通データ
-	 * @param item アイテム
-	 * @return 新規登録されたアイテムの情報を含むラッパーオブジェクト
+	 * @param requestMessage リクエストメッセージ
+	 * @return リソースアイテム共通データのリスト
+	 * @throws AbstractResourceException
 	 */
-	ResourceItemWrapper<I> create(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon, I item);
+	List<ResourceItemCommonData> getForUpdate(RequestMessage requestMessage) throws AbstractResourceException;
 
-	/**
-	 * リソースアイテムを指定されたアイテムの内容で更新します. <br>
-	 * 競合が発生し、その解決方法によってはアイテムが新規登録、削除される可能性があります.
-	 *
-	 * @param uploadCommon 上り更新共通データ
-	 * @param itemCommon リソースアイテム共通データ
-	 * @param item アイテム
-	 * @return 更新されたアイテムの情報を含むラッパーオブジェクト
-	 */
-	ResourceItemWrapper<I> update(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon, I item);
+	Synchronizer getSynchronizer();
 
-	/**
-	 * リソースアイテムを削除します. 競合が発生し、その解決方法によってはアイテムが新規登録、更新される可能性があります.
-	 *
-	 * @param uploadCommon 上り更新共通データ
-	 * @param itemCommon リソースアイテム共通データ
-	 * @return 更新されたアイテムの情報を含むラッパーオブジェクト
-	 */
-	ResourceItemWrapper<I> delete(UploadCommonData uploadCommon, ResourceItemCommonData itemCommon);
+	void setSynchronizer(Synchronizer synchronizer);
 
-	/**
-	 * 他のリクエストの影響を防止するために、指定されたリソースアイテムを"for update"状態にします.<br>
-	 * この操作は、常にリソースおよびリソースアイテムの順序で実行する必要があります.
-	 *
-	 * @param itemCommonList リソースアイテム共通データのリスト
-	 * @return アクセス権を取得したリソースアイテム共通データのリスト
-	 */
-	List<ResourceItemCommonData> forUpdate(List<ResourceItemCommonData> itemCommonList);
+	UpdateStrategy getUpdateStrategy();
 
-	/**
-	 * このリソースのリソース名を返します.
-	 *
-	 * @return リソース名
-	 */
-	String name();
-
-	/**
-	 * このリソースのアイテム型を返します.
-	 *
-	 * @return アイテムの型を表すClassオブジェクト
-	 */
-	Class<I> itemType();
-
-	/**
-	 * このリソースのアイテム型に変換するためのコンバータオブジェクトを返します.
-	 *
-	 * @return アイテムの型を表すClassオブジェクト
-	 */
-	ResourceItemConverter<I> itemConverter();
-
-	/**
-	 * 全てのリソースに共通の設定情報を適用します.<br>
-	 * リソース実装クラス(あるいはその抽象スーパークラス)では、この設定情報を参照することができます. <br>
-	 * 通常、アプリケーションから使用することはありません.<br>
-	 *
-	 * @param resourceConfigurations 適用する設定情報
-	 */
-	void applyResourceConfigurations(Properties resourceConfigurations);
-
-	/**
-	 * ロックエラー発生時の更新方法を指定するストラテジーオブジェクトを設定します.<br>
-	 * 通常、アプリケーションから使用することはありません.
-	 *
-	 * @param updateStrategy セットする updateStrategy
-	 */
 	void setUpdateStrategy(UpdateStrategy updateStrategy);
 }

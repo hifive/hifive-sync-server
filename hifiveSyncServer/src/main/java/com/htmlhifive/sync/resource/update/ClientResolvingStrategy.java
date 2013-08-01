@@ -18,11 +18,11 @@ package com.htmlhifive.sync.resource.update;
 
 import org.springframework.stereotype.Service;
 
-import com.htmlhifive.sync.exception.ItemUpdatedException;
 import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
+import com.htmlhifive.sync.resource.common.SyncAction;
 
 /**
- * 更新を行わず、クライアントに判断を求める更新戦略実装クラス.<br>
+ * 更新を行わず、クライアントに判断を求める競合時更新戦略実装クラス.<br>
  *
  * @author kishigam
  */
@@ -30,13 +30,12 @@ import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 public class ClientResolvingStrategy implements UpdateStrategy {
 
 	/**
-	 * 競合を解決せず、ItemUpdateExceptionをスローします.
+	 * 競合を解決せず、{@link SyncAction#CONFLICT CONFLICT}を返します.
 	 */
 	@Override
-	public <T> T resolveConflict(ResourceItemCommonData itemCommon, T item, ResourceItemCommonData serverCommon,
-			T serverItem) throws ItemUpdatedException {
+	public SyncAction resolveConflict(ResourceItemCommonData clientCommon, Object clientItem,
+			ResourceItemCommonData serverCommon, Object serverItem) {
 
-		throw new ItemUpdatedException("return client to resolve.", serverCommon, serverItem);
+		return SyncAction.CONFLICT;
 	}
-
 }

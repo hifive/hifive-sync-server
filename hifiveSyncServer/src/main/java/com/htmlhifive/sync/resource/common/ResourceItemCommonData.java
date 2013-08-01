@@ -23,20 +23,14 @@ import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonUnwrapped;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
-
-import com.htmlhifive.sync.resource.SyncAction;
-import com.htmlhifive.sync.resource.SyncConflictType;
 
 /**
- * リソースを同期するために必要な共通データを管理するエンティティ.<br>
+ * リソースアイテムを同期するために必要な共通データを管理するエンティティ.<br>
  * リソースアイテムごとに1つの共通データが生成されます.
  *
  * @author kishigam
@@ -45,19 +39,17 @@ import com.htmlhifive.sync.resource.SyncConflictType;
 @Table(name = "RESOURCE_ITEM_COMMON_DATA")
 public class ResourceItemCommonData implements Serializable, Comparable<ResourceItemCommonData> {
 
-	private static final long serialVersionUID = 5255673990208411208L;
+	private static final long serialVersionUID = -9200797333301417852L;
 
 	/**
 	 * IDオブジェクト.<br>
-	 * このオブジェクトのプロパティを展開して使用するため、getterメソッドに{@link JsonUnwrapped}を付加しています.
 	 */
+	@JsonUnwrapped
 	@EmbeddedId
 	private ResourceItemCommonDataId id;
 
 	/**
 	 * この共通データが対象とするリソースアイテムのID.<br>
-	 * このフィールドはクライアントと通信するリクエスト、レスポンスに含みません.<br>
-	 * リクエスト、レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
 	 */
 	private String targetItemId;
 
@@ -65,29 +57,12 @@ public class ResourceItemCommonData implements Serializable, Comparable<Resource
 	 * このリソースアイテムを現在の状態に登録したアクション.<br>
 	 */
 	@Enumerated(EnumType.STRING)
-	private SyncAction action;
-
-	/**
-	 * このリソースアイテムの競合状態.<br>
-	 * このフィールドはクライアントと通信するリクエスト、レスポンスに含みません.<br>
-	 * リクエスト、レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonIgnore}を追加しています.
-	 */
-	@Transient
-	private SyncConflictType conflictType;
+	private SyncAction syncAction;
 
 	/**
 	 * リソースアイテムの最終更新時刻(ミリ秒)
 	 */
 	private long lastModified;
-
-	/**
-	 * この共通データが"for update"状態となっていることを示すフラグ.<br>
-	 * このフィールドはクライアントへのレスポンスに含みません.<br>
-	 * レスポンスから除外するため、このフィールドのgetterメソッドに{@link JsonSerialize}を追加しています.<br>
-	 * また、永続化の対象外です.
-	 */
-	@Transient
-	private boolean forUpdate;
 
 	/**
 	 * フレームワーク、ライブラリが使用するプライベートデフォルトコンストラクタ.
@@ -99,14 +74,11 @@ public class ResourceItemCommonData implements Serializable, Comparable<Resource
 	/**
 	 * IDオブジェクト、対象リソースアイテムのIDを指定して共通データを生成します.
 	 *
-	 * @param syncDataId 同期データID
-	 * @param requestHeader リソースへのリクエストヘッダ
-	 * @param targetResourceIdStr リソースID文字列
+	 * @param id 同期共通データID
 	 */
-	public ResourceItemCommonData(ResourceItemCommonDataId id, String targetItemId) {
+	public ResourceItemCommonData(ResourceItemCommonDataId id) {
 
 		this.id = id;
-		this.targetItemId = targetItemId;
 	}
 
 	/**
@@ -133,7 +105,7 @@ public class ResourceItemCommonData implements Serializable, Comparable<Resource
 
 		// 一時的な状態を保持するフィールド以外を比較
 		return new EqualsBuilder().append(this.id, common.id).append(this.targetItemId, common.targetItemId)
-				.append(this.action, common.action).append(this.lastModified, common.lastModified).isEquals();
+				.append(this.syncAction, common.syncAction).append(this.lastModified, common.lastModified).isEquals();
 	}
 
 	/**
@@ -142,7 +114,7 @@ public class ResourceItemCommonData implements Serializable, Comparable<Resource
 	@Override
 	public int hashCode() {
 
-		return new HashCodeBuilder(17, 37).append(id).append(this.targetItemId).append(this.action)
+		return new HashCodeBuilder(17, 37).append(id).append(this.targetItemId).append(this.syncAction)
 				.append(this.lastModified).hashCode();
 	}
 
@@ -158,101 +130,68 @@ public class ResourceItemCommonData implements Serializable, Comparable<Resource
 	/**
 	 * リソースアイテムの更新内容をこのオブジェクトに反映します.
 	 *
-	 * @param action 更新アクション
+	 * @param syncAction 更新アクション
 	 * @param uploadTime 更新時刻
 	 */
-	public void modify(SyncAction actionToModify, long uploadTime) {
+	public void modify(SyncAction syncAction, long uploadTime) {
 
-		this.action = actionToModify;
+		this.syncAction = syncAction;
 		this.lastModified = uploadTime;
 	}
 
 	/**
-	 * このオブジェクトのプロパティを展開して使用するため、@JsonUnwrappedを付加しています.
-	 *
-	 * @return id
+	 * @return the id
 	 */
-	@JsonUnwrapped
 	public ResourceItemCommonDataId getId() {
 		return id;
 	}
 
 	/**
-	 * リクエスト、レスポンスから除外するため、{@link JsonIgnore}を追加しています.
-	 *
-	 * @return targetItemId
+	 * @param id the id to set
 	 */
-	@JsonIgnore
+	public void setId(ResourceItemCommonDataId id) {
+		this.id = id;
+	}
+
+	/**
+	 * @return the targetItemId
+	 */
 	public String getTargetItemId() {
 		return targetItemId;
 	}
 
 	/**
-	 * @param targetItemId セットする targetItemId
+	 * @param targetItemId the targetItemId to set
 	 */
 	public void setTargetItemId(String targetItemId) {
 		this.targetItemId = targetItemId;
 	}
 
 	/**
-	 * @return action
+	 * @return the syncAction
 	 */
-	public SyncAction getAction() {
-		return action;
+	public SyncAction getSyncAction() {
+		return syncAction;
 	}
 
 	/**
-	 * @param action セットする action
+	 * @param syncAction the syncAction to set
 	 */
-	public void setAction(SyncAction action) {
-		this.action = action;
+	public void setSyncAction(SyncAction syncAction) {
+		this.syncAction = syncAction;
 	}
 
 	/**
-	 * リクエスト、レスポンスから除外するため、{@link JsonIgnore}を追加しています.
-	 *
-	 * @return conflictType
-	 */
-	@JsonIgnore
-	public SyncConflictType getConflictType() {
-		return conflictType;
-	}
-
-	/**
-	 * @param conflictType セットする conflictType
-	 */
-	public void setConflictType(SyncConflictType conflictType) {
-		this.conflictType = conflictType;
-	}
-
-	/**
-	 * @return lastModified
+	 * @return the lastModified
 	 */
 	public long getLastModified() {
 		return lastModified;
 	}
 
 	/**
-	 * @param lastModified セットする lastModified
+	 * @param lastModified the lastModified to set
 	 */
 	public void setLastModified(long lastModified) {
 		this.lastModified = lastModified;
-	}
-
-	/**
-	 * リクエスト、レスポンスから除外するため、{@link JsonIgnore}を追加しています.
-	 *
-	 * @return forUpdate
-	 */
-	@JsonIgnore
-	public boolean isForUpdate() {
-		return forUpdate;
-	}
-
-	/**
-	 * @param forUpdate セットする forUpdate
-	 */
-	public void setForUpdate(boolean forUpdate) {
-		this.forUpdate = forUpdate;
 	}
 }

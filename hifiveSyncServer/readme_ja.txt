@@ -1,12 +1,14 @@
-﻿hifive-sync-sever
+﻿hifiveSyncServer
+
 ----------------------------------------------
-hifive syncフレームワークのサーバサイド実装の開発用です。
+
+hifive sync serverの開発用プロジェクトです。
 以下にビルド方法を記述します。
 
 1.リポジトリのクローン
   $ git clone git@github.com:hifive/hifive-sync-server.git
 
-2.Apache ivyを利用しhifive-sync-serverに必要なライブラリを追加
+2.Apache ivyを利用しhifiveSyncServerプロジェクトに必要なライブラリを追加
   hifiveSyncServer/ivy_build.xmlのresolveターゲットを実行します。
 
   -コマンドラインから
@@ -27,19 +29,14 @@ hifive syncフレームワークのサーバサイド実装の開発用です。
    hifiveSyncServer/build.xmlを右クリック -> 実行 -> Antビルド
 
   hifiveSyncServer/target/
-    hifive-sync-server-1.2.0.jar
+    hifive-sync-server-(バージョン).jar
      が生成されます。
+
 ------------------------------------------------------------
 
 APIドキュメント（JavaDocドキュメント）の生成方法:
 
   - build.xmlのjavadocターゲットを実行します。
     hifiveSyncServer/target/doc の下にドキュメントが生成されます。
-
-------------------------------------------------------------
-
-hifiveSyncServerのテスト実行方法:
-
-  - build.xmlのtestターゲットを実行します。
 
 ------------------------------------------------------------
