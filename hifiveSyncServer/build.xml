@@ -6,9 +6,9 @@
 	<property name="resources" value="./src/main/resources" />
 	<property name="lib" value="./lib" />
 	<property name="webapp" value="./src/testwar/webapp" />
-	<property name="dest" value="./target" />
+	<property name="dest" value="./build" />
+	<property name="dest.doc" value="./build/doc" />
 	<property name="dest.main" value="./target/classes" />
-	<property name="dest.doc" value="./target/doc" />
 
 	<path id="classpath">
 		<pathelement location="${dest.main}" />

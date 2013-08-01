@@ -2,3 +2,4 @@
 /lib
 !/lib/hifive-*
 !/lib/sources/hifive-*
+/build
