@@ -1,0 +1,8 @@
+/src/main/webapp/WEB-INF/classes
+/src/main/webapp/WEB-INF/lib
+!/src/main/webapp/WEB-INF/lib/hifive-*
+/lib
+!/lib/sources/hifive-*
+/target
+/build
+/work
