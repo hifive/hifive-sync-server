@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hifiveResourceSample" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<property name="version" value="1.0.0" />
+	<property name="source" value="./src/main/java" />
+	<property name="resources" value="./src/main/resources" />
+	<property name="webapp" value="./src/main/webapp" />
+	<property name="dest" value="./target" />
+	<property name="dest.doc" value="./target/doc" />
+
+	<path id="classpath">
+		<fileset dir="${webapp}/WEB-INF/lib" includes="**/*.jar" />
+	</path>
+
+	<target name="all" depends="clean,build,javadoc" />
+
+	<target name="build">
+		<war destfile="./target/hifive-resource-sample-${version}.war" webxml="${webapp}/WEB-INF/web.xml">
+			<fileset dir="${webapp}" excludes="WEB-INF/web.xml" />
+		</war>
+	</target>
+
+	<target name="javadoc">
+		<javadoc destdir="${dest.doc}" encoding="UTF-8" source="1.7" author="true" version="true" access="public" use="true" nonavbar="false" notree="true" nodeprecated="false" nodeprecatedlist="false" noindex="false" splitindex="true" nohelp="true" windowtitle="hifiveResourceSample" docencoding="UTF-8" charset="UTF-8">
+			<classpath refid="classpath" />
+			<link href="http://docs.oracle.com/javase/7/docs/api/" />
+			<sourcepath path="${source}" />
+			<package name="com.htmlhifive.*" />
+		</javadoc>
+	</target>
+
+	<target name="clean">
+		<delete>
+			<fileset dir="${dest}" includes="**/*" />
+		</delete>
+	</target>
+
+</project>

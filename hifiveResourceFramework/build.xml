@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="hifiveResourceFramework" default="build" xmlns:ivy="antlib:org.apache.ivy.ant">
+
+	<property name="version" value="1.0.0" />
+	<property name="source" value="./src/main/java" />
+	<property name="resources" value="./src/main/resources" />
+	<property name="lib" value="./lib" />
+	<property name="dest" value="./target" />
+	<property name="dest.main" value="./target/classes" />
+	<property name="dest.doc" value="./target/doc" />
+
+	<path id="classpath">
+		<pathelement location="${dest.main}" />
+		<fileset dir="${lib}" includes="**/*.jar" />
+	</path>
+
+	<target name="all" depends="clean,build,javadoc" />
+
+	<target name="compile">
+		<javac srcdir="${source}" destdir="${dest.main}" includes="**/*.java" includeantruntime="false" encoding="UTF-8">
+			<classpath refid="classpath" />
+		</javac>
+	</target>
+
+	<target name="filecopy">
+		<copy todir="${dest.main}">
+			<fileset dir="${resources}" />
+		</copy>
+	</target>
+
+	<target name="build" depends="compile,filecopy">
+		<jar destfile="${dest}/hifive-resource-framework-${version}.jar">
+			<fileset dir="${dest.main}" />
+		</jar>
+		<jar destfile="${dest}/hifive-resource-framework-sources-${version}.jar">
+			<fileset dir="${source}" includes="**/*.java" />
+		</jar>
+	</target>
+
+	<target name="javadoc" depends="compile">
+		<javadoc destdir="${dest.doc}" encoding="UTF-8" source="1.7" author="true" version="true" access="public" use="true" nonavbar="false" notree="true" nodeprecated="false" nodeprecatedlist="false" noindex="false" splitindex="true" nohelp="true" windowtitle="hifiveResourceFramework" docencoding="UTF-8" charset="UTF-8">
+			<classpath refid="classpath" />
+			<link href="http://docs.oracle.com/javase/7/docs/api/" />
+			<sourcepath path="${source}" />
+			<package name="com.htmlhifive.resourcefw.*" />
+		</javadoc>
+	</target>
+
+	<target name="clean">
+		<delete dir="${dest.main}" />
+		<delete dir="${dest.doc}" />
+		<mkdir dir="${dest.main}" />
+	</target>
+
+</project>
