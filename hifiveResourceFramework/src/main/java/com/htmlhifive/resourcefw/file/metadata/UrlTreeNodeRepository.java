@@ -62,8 +62,8 @@ public interface UrlTreeNodeRepository extends JpaRepository<UrlTreeNode, UrlTre
 	 * @param parent 親ノード
 	 */
 	@Modifying
-	@Query("UPDATE UrlTreeNode u SET DELETED=1 WHERE u.name = :name and u.parent = :parent")
-	void logicalDeleteByPK(@Param("name") String name, @Param("parent") String parent);
+	@Query("UPDATE UrlTreeNode u SET DELETED=true, UPDATEDTIME=:utime WHERE u.name = :name and u.parent = :parent")
+	void logicalDeleteByPK(@Param("name") String name, @Param("parent") String parent, @Param("utime") long utime);
 
 	/**
 	 * 指定された親ノード配下のすべての子ノードを検索します.

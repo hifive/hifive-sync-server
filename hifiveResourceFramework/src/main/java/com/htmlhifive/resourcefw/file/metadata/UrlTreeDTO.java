@@ -70,6 +70,9 @@ public class UrlTreeDTO implements Serializable {
 	/** これがディレクトリかどうか */
 	private boolean isDirectory;
 
+	/** このノードは削除済みであるかどうか */
+	private boolean deleted = false;
+
 	/**
 	 * 識別子に対応する値.<br/>
 	 * 具体的にはURL形式の持つ文字列です.
@@ -287,6 +290,20 @@ public class UrlTreeDTO implements Serializable {
 	 */
 	public void setLockStartTime(long lockStartTime) {
 		this.lockStartTime = lockStartTime;
+	}
+
+	/**
+	 * @return deleted
+	 */
+	public boolean isDeleted() {
+		return deleted;
+	}
+
+	/**
+	 * @param deleted セットする deleted
+	 */
+	public void setDeleted(boolean deleted) {
+		this.deleted = deleted;
 	}
 
 }

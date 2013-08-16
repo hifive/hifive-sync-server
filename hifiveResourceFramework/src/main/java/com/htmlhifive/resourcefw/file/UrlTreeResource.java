@@ -310,7 +310,7 @@ public class UrlTreeResource<T> {
 		try {
 			UrlTreeNodePrimaryKey utnpk = UrlTreeUtil.generateUrlTreeNodePrimaryKey(id);
 
-			List<UrlTreeDTO> orgList = urlTreeMetaDataManager.getAllChild(utnpk, ctx);
+			List<UrlTreeDTO> orgList = urlTreeMetaDataManager.getChild(utnpk, ctx, false);
 			for (UrlTreeDTO dto : orgList) {
 				//表示不可でないかパーミッションチェック
 				boolean permission = urlTreeMetaDataManager.checkPermission(dto, AccessMode.READ, ctx);
