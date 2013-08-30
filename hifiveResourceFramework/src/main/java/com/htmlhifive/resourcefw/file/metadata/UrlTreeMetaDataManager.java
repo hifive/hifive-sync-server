@@ -272,22 +272,22 @@ public class UrlTreeMetaDataManager {
 
 		long timeStamp = this.getTimeStamp();
 		// 作成処理
-		UrlTreeDirectory utd = new UrlTreeDirectory(name, normPath);
-		utd.setCreatedTime(timeStamp);
-		utd.setUpdatedTime(timeStamp);
-		utd.setOwnerId(ctx.getUserName());
-		utd.setGroupId(ctx.getPrimaryGroup());
-		utd.setPermission(ctx.getDefaultPermission());
+		UrlTreeDirectory newEntry = new UrlTreeDirectory(name, normPath);
+		newEntry.setCreatedTime(timeStamp);
+		newEntry.setUpdatedTime(timeStamp);
+		newEntry.setOwnerId(ctx.getUserName());
+		newEntry.setGroupId(ctx.getPrimaryGroup());
+		newEntry.setPermission(ctx.getDefaultPermission());
 
 		// 一度削除
 		if (targetNode != null && targetNode.isDeleted() && !(targetNode instanceof UrlTreeDirectory)) {
 			urlTreeNodeRepository.delete(targetNode);
 		}
 
-		urlTreeNodeRepository.save(utd);
+		urlTreeNodeRepository.save(newEntry);
 
 		// 親ディレクトリのタイムスタンプ更新
-		updateParentTimeStamp(targetNode, timeStamp);
+		updateParentTimeStamp(newEntry, timeStamp);
 	}
 
 	@PersistenceContext
@@ -383,7 +383,7 @@ public class UrlTreeMetaDataManager {
 	public void rmdir(String path, UrlTreeContext ctx) throws TargetNotFoundException, HasChildException,
 			TargetTypeException, PermissionDeniedException {
 		try {
-			this.rmdirWithVersionCheck(path, ctx, -1);
+			this.rmdirWithVersionCheck(path, ctx, System.currentTimeMillis());
 		} catch (UpdateConflictException e) {
 			// TODO この場合どうする？（実質はバグになるはず）
 			throw new PermissionDeniedException();
@@ -469,7 +469,7 @@ public class UrlTreeMetaDataManager {
 		}
 
 		urlTreeNodeRepository.save(newEntry);
-		updateParentTimeStamp(targetNode, timeStamp);
+		updateParentTimeStamp(newEntry, timeStamp);
 	}
 
 	/**
@@ -520,7 +520,7 @@ public class UrlTreeMetaDataManager {
 	public void removeEntry(String path, UrlTreeContext ctx) throws TargetNotFoundException, TargetTypeException,
 			PermissionDeniedException, FileLockedException {
 			try {
-				this.removeEntryWithVersionCheck(path, ctx, -1);
+				this.removeEntryWithVersionCheck(path, ctx, System.currentTimeMillis());
 			} catch (UpdateConflictException e) {
 				// TODO この場合どうする？（実質はバグになるはず）
 				throw new PermissionDeniedException();
@@ -589,7 +589,7 @@ public class UrlTreeMetaDataManager {
 	public void updateEntry(String path, UrlTreeDTO value, UrlTreeContext ctx) throws TargetNotFoundException,
 			TargetTypeException, PermissionDeniedException, FileLockedException {
 		try {
-			this.updateEntryWithVersionCheck(path, value, ctx, -1);
+			this.updateEntryWithVersionCheck(path, value, ctx, System.currentTimeMillis());
 		} catch (UpdateConflictException e) {
 			// TODO この場合どうする？（実質はバグになるはず）
 			throw new PermissionDeniedException();
@@ -899,7 +899,7 @@ public class UrlTreeMetaDataManager {
 	private List<UrlTreeNode> findAllParentRecursive(UrlTreeNode node, List<UrlTreeNode> list) {
 
 		// rootなら親はないのでなにもしない
-		if (node.getName().equals(ROOT_NAME)) {
+		if (node == null || node.getName().equals(ROOT_NAME)) {
 			return list;
 		}
 
