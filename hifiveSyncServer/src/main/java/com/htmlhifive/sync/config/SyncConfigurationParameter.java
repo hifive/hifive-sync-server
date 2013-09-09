@@ -51,6 +51,13 @@ public class SyncConfigurationParameter {
 	@Value("${URL_PATH_DOWNLOAD}")
 	public String URL_PATH_DOWNLOAD;
 
+	/**
+	 * syncリクエストが、上り下りをHTTPメソッドで判定するためのパスの値.<br/>
+	 * URLのパス部分は、 "/ (リソース名) / (URL_PATH_UPLOADまたはURL_PATH_DOWNLOADの値) / (IDなど)" のようになります.
+	 */
+	@Value("${URL_PATH_SYNC_BY_HTTP_METHODS}")
+	public String URL_PATH_SYNC_BY_HTTP_METHODS;
+
 	/** syncリクエスト、レスポンスに含まれる「ストレージID」メタデータのキー名.syncリクエストの発行元クライアントを識別するために使用します. */
 	@Value("#{'${PREFIX_METADATA}' + '${STORAGE_ID}'}")
 	public String STORAGE_ID;

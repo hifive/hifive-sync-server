@@ -20,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.LinkedMultiValueMap;
@@ -71,6 +73,12 @@ public class SyncResourceProcessor extends DefaultResourceProcessor {
 	private SyncRequestCommonDataRepository syncRequestCommonDataRepository;
 
 	/**
+	 * HttpServletRequest メソッドによる動作判定のために使用
+	 */
+	@Autowired
+	private HttpServletRequest httpServletRequest;
+
+	/**
 	 * リソース処理の事前処理として、二重送信判定、悲観的ロックなどの同期制御を実行します.
 	 */
 	@Override
@@ -80,6 +88,18 @@ public class SyncResourceProcessor extends DefaultResourceProcessor {
 
 		boolean uploadRequest = isUploadRequest(requestPathStr);
 		boolean downloadRequest = isDownloadRequest(requestPathStr);
+		boolean syncByHttpMethodRequest = isSyncByHttpMethodRequest(requestPathStr);
+
+		if(syncByHttpMethodRequest) {
+			// FIXME もうちょっと別の方法でHTTPメソッドが取得/判定できないか？
+			String method = httpServletRequest.getMethod();
+
+			if(method.equals("GET")) {
+				downloadRequest = true;
+			} else if(method.equals("POST") || method.equals("PUT") || method.equals("DELETE")) {
+				uploadRequest = true;
+			}
+		}
 
 		// syncリクエストでなければ事前処理なし
 		if (!(uploadRequest || downloadRequest)) {
@@ -200,6 +220,17 @@ public class SyncResourceProcessor extends DefaultResourceProcessor {
 		String[] pathStr = ResourcePathUtil.down(requestPathStr);
 
 		return pathStr[0].equals(syncConfigurationParameter.URL_PATH_DOWNLOAD);
+	}
+
+	/**
+	 * URLパスがsync下り更新リクエストを示しているときtrueを返します.
+	 *
+	 * @param requestPathStr URLパス
+	 * @return sync下り更新リクエストであればtrue
+	 */
+	private boolean isSyncByHttpMethodRequest(String requestPathStr) {
+		String[] pathStr = ResourcePathUtil.down(requestPathStr);
+		return pathStr[0].equals(syncConfigurationParameter.URL_PATH_SYNC_BY_HTTP_METHODS);
 	}
 
 	/**
