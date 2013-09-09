@@ -2,7 +2,7 @@
 <ivy-module version="2.0" xmlns:m="http://ant.apache.org/ivy/maven">
 	<info organisation="com.htmlhifive"
 		module="hifive resource framework"
-		revision="1.2.0rp"
+		revision="1.0.0"
 		status="release"
 		publication="20130501000000"
 	>
