@@ -72,10 +72,26 @@ public class ResourceExceptionHandler {
 				return new ResponseEntity<>(failureMessageBody, cause.getErrorStatus().getHttpStatus());
 			}
 
-			return new ResponseEntity<>(cause.getErrorStatus().getHttpStatus());
+			return new ResponseEntity<>(cause.getMessage(), cause.getErrorStatus().getHttpStatus());
 		}
 
 		throw e;
+	}
+
+	/**
+	 * {@link AbstractResourceException AbstractResourceException})をハンドリングし、HTTP ResponseEntityを生成します.
+	 *
+	 * @param e 例外オブジェクト
+	 * @return　フレームワーク例外ごとの内容を含むResponseEntity
+	 * @throws GenericResourceException
+	 */
+	@ExceptionHandler
+	public ResponseEntity<?> handleAbstractResourceException(AbstractResourceException cause) {
+		Map<String, Object> failureMessageBody = createFailureMessageBody(cause);
+		if (!failureMessageBody.isEmpty()) {
+			return new ResponseEntity<>(failureMessageBody, cause.getErrorStatus().getHttpStatus());
+		}
+		return new ResponseEntity<>(cause.getMessage(), cause.getErrorStatus().getHttpStatus());
 	}
 
 	/**
