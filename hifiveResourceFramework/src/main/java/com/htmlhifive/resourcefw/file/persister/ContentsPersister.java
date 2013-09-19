@@ -116,4 +116,14 @@ public interface ContentsPersister<T> {
 	 * @return キー情報のリスト
 	 */
 	public List<String> getChildList(String key, UrlTreeContext ctx) throws BadContentException;
+
+	/**
+	 * ストレージ上に保存されている、ファイルデータの最終更新時刻を返します.
+	 *
+	 * @param metadata urlTreeメタデータオブジェクト
+	 * @param ctx urlTreeコンテキストオブジェクト
+	 * @return ファイルデータの最終更新時刻
+	 */
+	public long getLastUpdatedTime(UrlTreeMetaData<T> metadata, UrlTreeContext ctx) throws BadContentException, TargetNotFoundException;
+
 }

@@ -56,6 +56,15 @@ public interface UrlTreeNodeRepository extends JpaRepository<UrlTreeNode, UrlTre
 	List<UrlTreeNode> findByParentAndDeletedFalse(String parent);
 
 	/**
+	 * 指定された親ノード配下のすべての子ノードを検索します.
+	 *
+	 * @param parent 親ノード
+	 * @return 子ノードのリスト
+	 */
+	@Query("SELECT u FROM UrlTreeNode u WHERE u.parent like :parent")
+	List<UrlTreeNode> getAllChildrenByParent(@Param("parent") String parent);
+
+	/**
 	 * このノードを論理削除状態するためにフラグを更新します.
 	 *
 	 * @param name　キー情報
@@ -66,13 +75,14 @@ public interface UrlTreeNodeRepository extends JpaRepository<UrlTreeNode, UrlTre
 	void logicalDeleteByPK(@Param("name") String name, @Param("parent") String parent, @Param("utime") long utime);
 
 	/**
-	 * 指定された親ノード配下のすべての子ノードを検索します.
+	 * 指定した親ノードは以下のすべての子ノードを論理削除します。
 	 *
+	 * @param name　キー情報
 	 * @param parent 親ノード
-	 * @return 子ノードのリスト
 	 */
-	@Query("SELECT u FROM UrlTreeNode u WHERE u.parent like :parent")
-	List<UrlTreeNode> getAllChildrenByParent(@Param("parent") String parent);
+	@Modifying
+	@Query("UPDATE UrlTreeNode u SET DELETED=true, UPDATEDTIME=:utime WHERE u.parent like :parent")
+	void logicalDeleteByParent(@Param("parent") String parent, @Param("utime") long utime);
 
 	/**
 	 * 指定されたキーに該当するノードを物理削除します.

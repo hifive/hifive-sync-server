@@ -358,4 +358,20 @@ public class LocalFileContentsPersister implements ContentsPersister<InputStream
 		this.basePath = basePath;
 	}
 
+	@Override
+	public long getLastUpdatedTime(UrlTreeMetaData<InputStream> metadata, UrlTreeContext ctx) throws BadContentException,
+			TargetNotFoundException {
+		Path f = this.generateFileObj(metadata.getAbsolutePath());
+
+		if (!Files.exists(f) || !Files.isReadable(f)) {
+			throw new TargetNotFoundException("cannot read real file");
+		}
+
+		try {
+			return Files.getLastModifiedTime(f).toMillis();
+		} catch (IOException e) {
+			throw new GenericResourceException(e);
+		}
+	}
+
 }

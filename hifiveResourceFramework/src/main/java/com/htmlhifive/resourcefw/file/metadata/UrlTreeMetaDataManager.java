@@ -20,9 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +95,8 @@ public class UrlTreeMetaDataManager {
 			root.setOwnerId("root");
 			root.setGroupId("all");
 			root.setPermission("rwxrwxrwx");
+			root.setCreatedTime(System.currentTimeMillis());
+			root.setUpdatedTime(System.currentTimeMillis());
 			urlTreeNodeRepository.save(root);
 			logger.debug("GENERATED ROOT NODE");
 		}
@@ -146,7 +145,7 @@ public class UrlTreeMetaDataManager {
 	 * @throws TargetTypeException 対象が子ノードが持てないエントリの場合
 	 * @throws PermissionDeniedException 対象のユーザに読み取り権限がない場合
 	 */
-	public List<UrlTreeDTO> getChild(UrlTreeNodePrimaryKey utnpk, UrlTreeContext ctx,  boolean returnDeletedNode)
+	public List<UrlTreeDTO> getChild(UrlTreeNodePrimaryKey utnpk, UrlTreeContext ctx, boolean returnDeletedNode)
 			throws TargetNotFoundException, TargetTypeException, PermissionDeniedException {
 
 		// ノードの検索
@@ -290,9 +289,6 @@ public class UrlTreeMetaDataManager {
 		updateParentTimeStamp(newEntry, timeStamp);
 	}
 
-	@PersistenceContext
-	EntityManager entityManager;
-
 	/**
 	 * ディレクトリを生成します.<br/>
 	 * 途中の階層のディレクトリが存在しない場合は生成します.
@@ -353,15 +349,16 @@ public class UrlTreeMetaDataManager {
 
 		// 子供の存在確認
 		String normPath = UrlTreeUtil.normalizePath(path);
-		//		List<UrlTreeNode> childs = urlTreeNodeRepository.findByParent(path);
 		List<UrlTreeNode> childs = urlTreeNodeRepository.findByParentAndDeletedFalse(normPath);
 		// 例外処理
 		if (targetNode == null) {
 			throw new TargetNotFoundException();
 		} else if (targetNode instanceof UrlTreeEntry) {
 			throw new TargetTypeException();
-		} else if (!childs.isEmpty()) {
+		} else if (!dirRecursiveMode && !childs.isEmpty()) {
 			throw new HasChildException();
+		} else if (targetNode.getName().equals(ROOT_NAME)) {
+			throw new PermissionDeniedException("Do not delete root node");
 		}
 		// パーミッションのチェック。
 		// 権限がない場合はPermissionDeniedExceptionが飛ぶ
@@ -373,6 +370,9 @@ public class UrlTreeMetaDataManager {
 
 		// 更新時刻の確定
 		long timeStamp = this.getTimeStamp();
+
+		// 子供の論理削除
+		urlTreeNodeRepository.logicalDeleteByParent(normPath, timeStamp);
 
 		// 削除処理
 		urlTreeNodeRepository.logicalDeleteByPK(targetNode.getName(), targetNode.getParent(), timeStamp);
@@ -484,7 +484,8 @@ public class UrlTreeMetaDataManager {
 	 * @throws UpdateConflictException
 	 */
 	public void removeEntryWithVersionCheck(String path, UrlTreeContext ctx, long targetVersion)
-			throws TargetNotFoundException, TargetTypeException, PermissionDeniedException, FileLockedException, UpdateConflictException {
+			throws TargetNotFoundException, TargetTypeException, PermissionDeniedException, FileLockedException,
+			UpdateConflictException {
 
 		// 消去対象の存在確認
 		UrlTreeNodePrimaryKey pathPk = UrlTreeUtil.generateUrlTreeNodePrimaryKey(path);
@@ -519,12 +520,12 @@ public class UrlTreeMetaDataManager {
 
 	public void removeEntry(String path, UrlTreeContext ctx) throws TargetNotFoundException, TargetTypeException,
 			PermissionDeniedException, FileLockedException {
-			try {
-				this.removeEntryWithVersionCheck(path, ctx, System.currentTimeMillis());
-			} catch (UpdateConflictException e) {
-				// TODO この場合どうする？（実質はバグになるはず）
-				throw new PermissionDeniedException();
-			}
+		try {
+			this.removeEntryWithVersionCheck(path, ctx, System.currentTimeMillis());
+		} catch (UpdateConflictException e) {
+			// TODO この場合どうする？（実質はバグになるはず）
+			throw new PermissionDeniedException();
+		}
 	}
 
 	/**
@@ -540,7 +541,8 @@ public class UrlTreeMetaDataManager {
 	 * @throws UpdateConflictException
 	 */
 	public void updateEntryWithVersionCheck(String path, UrlTreeDTO value, UrlTreeContext ctx, long targetVersion)
-			throws TargetNotFoundException, TargetTypeException, PermissionDeniedException, FileLockedException, UpdateConflictException {
+			throws TargetNotFoundException, TargetTypeException, PermissionDeniedException, FileLockedException,
+			UpdateConflictException {
 
 		// 更新対象の存在確認
 		UrlTreeNode targetNode = this.getNodeWithLockCheck(path, ctx);
@@ -853,9 +855,7 @@ public class UrlTreeMetaDataManager {
 
 	/**
 	 * 指定されたノードのタイムスタンプを更新します.<br/>
-	 * そのノードの親のタイムスタンプはすべて更新されます.
-	 *
-	 * そのノード「自身」は更新されませんので注意してください.
+	 * そのノードの親のタイムスタンプはすべて更新されます. そのノード「自身」は更新されませんので注意してください.
 	 *
 	 * @param node 更新するノード
 	 * @param timeStamp 更新したいタイムスタンプ
@@ -876,16 +876,14 @@ public class UrlTreeMetaDataManager {
 	}
 
 	/**
-	 * 指定されたノードの上位ノードをすべて取得します.
-	 * 指定されたノード自身はリストに含まれず、
-	 * リストの最後は必ずルートノードになります.
+	 * 指定されたノードの上位ノードをすべて取得します. 指定されたノード自身はリストに含まれず、 リストの最後は必ずルートノードになります.
 	 *
 	 * @param node ノード
 	 * @return 上位ノードのリスト
 	 */
 	public List<UrlTreeNode> findAllParent(UrlTreeNode node) {
-		List <UrlTreeNode> list = new ArrayList<UrlTreeNode>();
-		return this.findAllParentRecursive(node,list);
+		List<UrlTreeNode> list = new ArrayList<UrlTreeNode>();
+		return this.findAllParentRecursive(node, list);
 	}
 
 	/**
@@ -904,7 +902,7 @@ public class UrlTreeMetaDataManager {
 		}
 
 		UrlTreeNode parentNode = this.getNode(node.getParent(), true);
-		if(parentNode != null) {
+		if (parentNode != null) {
 			list.add(parentNode);
 		}
 		this.findAllParentRecursive(parentNode, list);
