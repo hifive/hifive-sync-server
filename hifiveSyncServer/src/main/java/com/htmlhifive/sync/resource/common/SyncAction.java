@@ -16,6 +16,8 @@
  */
 package com.htmlhifive.sync.resource.common;
 
+import java.util.EnumSet;
+
 /**
  * 同期アクションの結果を表す列挙型.
  *
@@ -51,5 +53,25 @@ public enum SyncAction {
 	/**
 	 * リソースアイテムの更新(削除)が競合した
 	 */
-	CONFLICT,
+	CONFLICT;
+
+	/**
+	 * 使用可能なSyncActionを表す文字列であればtrueを返します.
+	 *
+	 * @param syncActionStr syncActionを表す文字列
+	 * @return SyncActionであればtrue
+	 */
+	public static boolean isSyncAction(String syncActionStr) {
+
+		if (syncActionStr == null)
+			return false;
+
+		for (SyncAction syncAction : EnumSet.allOf(SyncAction.class)) {
+			if (syncAction.toString().equals(syncActionStr))
+				return true;
+		}
+
+		return false;
+	}
+
 }

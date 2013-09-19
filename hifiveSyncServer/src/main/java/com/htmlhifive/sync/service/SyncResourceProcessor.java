@@ -44,6 +44,7 @@ import com.htmlhifive.sync.resource.SyncResource;
 import com.htmlhifive.sync.resource.Synchronizer;
 import com.htmlhifive.sync.resource.common.ResourceItemCommonData;
 import com.htmlhifive.sync.resource.common.ResourceItemCommonDataId;
+import com.htmlhifive.sync.resource.common.SyncAction;
 
 /**
  * sync機能を追加したresource frameworkのリソースプロセッサ実装.<br>
@@ -85,6 +86,7 @@ public class SyncResourceProcessor extends DefaultResourceProcessor {
 	protected void preProcess(RequestMessageContainer requestMessages) {
 
 		String requestPathStr = extractRequestPath(requestMessages);
+		String httpMethod = httpServletRequest.getMethod();
 
 		boolean uploadRequest = isUploadRequest(requestPathStr);
 		boolean downloadRequest = isDownloadRequest(requestPathStr);
@@ -92,11 +94,9 @@ public class SyncResourceProcessor extends DefaultResourceProcessor {
 
 		if(syncByHttpMethodRequest) {
 			// FIXME もうちょっと別の方法でHTTPメソッドが取得/判定できないか？
-			String method = httpServletRequest.getMethod();
-
-			if(method.equals("GET")) {
+			if(httpMethod.equals("GET")) {
 				downloadRequest = true;
-			} else if(method.equals("POST") || method.equals("PUT") || method.equals("DELETE")) {
+			} else if(httpMethod.equals("POST") || httpMethod.equals("PUT") || httpMethod.equals("DELETE")) {
 				uploadRequest = true;
 			}
 		}
@@ -122,6 +122,10 @@ public class SyncResourceProcessor extends DefaultResourceProcessor {
 			if (currentRequest.hasLastUploadTime()) {
 				checkDuplicateUpload(currentRequest, requestMessages);
 			}
+
+			// SyncActionがすべてのメソッドにセットされているかを確認し
+			// セットされていなければ適切なメソッドをセット
+			setSyncAction(requestMessages, httpMethod);
 
 			// 上り更新同期制御を実行する
 			try {
@@ -431,6 +435,32 @@ public class SyncResourceProcessor extends DefaultResourceProcessor {
 			SyncResource syncResource = (SyncResource) resource;
 			if (syncResource.getSynchronizer() == null) {
 				syncResource.setSynchronizer(this.synchronizer);
+			}
+		}
+	}
+
+	/**
+	 *
+	 */
+	private void setSyncAction(RequestMessageContainer requestMessages, String httpMethods) {
+		for (RequestMessage mes : requestMessages.getMessages()) {
+			// syncActionのチェック
+			String syncActionStr = (String) mes.get(syncConfigurationParameter.SYNC_ACTION);
+			// きちんと指定されているなら問題なし
+			if(SyncAction.isSyncAction(syncActionStr)) {
+				return;
+			}
+
+			// セット
+			switch(httpMethods) {
+				case "PUT":
+					mes.put(syncConfigurationParameter.SYNC_ACTION, SyncAction.UPDATE.name());
+					break;
+				case "DELETE":
+					mes.put(syncConfigurationParameter.SYNC_ACTION, SyncAction.DELETE.name());
+					break;
+				default:
+					break;
 			}
 		}
 	}
