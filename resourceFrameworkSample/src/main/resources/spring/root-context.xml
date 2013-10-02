@@ -104,7 +104,6 @@
 			<list merge="true">
 				<value>com.htmlhifive.resourcefw.sample.resource.person</value>
 				<value>com.htmlhifive.resourcefw.file.metadata</value>
-				<value>jp.co.nssol.resources.employees</value>
 			</list>
 		</property>
 	</bean>
